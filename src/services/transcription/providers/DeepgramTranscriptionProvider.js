@@ -1,17 +1,21 @@
 /**
  * DeepgramTranscriptionProvider - Deepgram Speech-to-Text API
  *
- * Uses Deepgram's real-time streaming transcription API.
+ * Uses Deepgram's official SDK for reliable real-time streaming transcription.
  * Fast, accurate, and great for live sessions.
  */
 
+import { createClient, LiveTranscriptionEvents } from '@deepgram/sdk';
 import { BaseTranscriptionProvider } from '../BaseTranscriptionProvider';
 
 export class DeepgramTranscriptionProvider extends BaseTranscriptionProvider {
   constructor() {
     super({});
-    this.socket = null;
+    this.deepgram = null;
+    this.connection = null;
     this.mediaRecorder = null;
+    this.mediaStream = null;
+    this.audioChunks = [];
   }
 
   /**
@@ -27,18 +31,23 @@ export class DeepgramTranscriptionProvider extends BaseTranscriptionProvider {
     }
 
     this.config = {
-      apiKey: config.apiKey,
+      apiKey: config.apiKey.trim(),
       language: config.language || 'en',
       model: config.model || 'nova-2',
       ...config,
     };
 
+    // Create Deepgram client using official SDK
+    this.deepgram = createClient(this.config.apiKey);
+
     this.initialized = true;
-    console.log('[Deepgram Transcription] Initialized with model:', this.config.model);
+    console.log('[Deepgram Transcription] ✅ Initialized with model:', this.config.model);
+    console.log('[Deepgram Transcription] API Key:', this.config.apiKey.substring(0, 8) + '...' + this.config.apiKey.slice(-4));
+    console.log('[Deepgram Transcription] SDK version: 3.x');
   }
 
   /**
-   * Start continuous speech recognition using WebSocket streaming
+   * Start continuous speech recognition using Deepgram SDK
    * @param {Function} onResult - Callback(transcript) for each result
    * @param {Function} onError - Callback(error) for errors
    */
@@ -53,98 +62,149 @@ export class DeepgramTranscriptionProvider extends BaseTranscriptionProvider {
     }
 
     try {
-      // Get microphone access
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // Get microphone access with specific constraints for Deepgram
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          channelCount: 1,
+          sampleRate: 16000,
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
+      });
+      this.mediaStream = stream;
+      console.log('[Deepgram Transcription] Microphone access granted');
 
-      // Create WebSocket connection to Deepgram with proper authentication
-      const url = new URL('wss://api.deepgram.com/v1/listen');
-      url.searchParams.append('model', this.config.model);
-      url.searchParams.append('language', this.config.language);
-      url.searchParams.append('smart_format', 'true');
-      url.searchParams.append('encoding', 'linear16');
-      url.searchParams.append('sample_rate', '16000');
-      url.searchParams.append('channels', '1');
-      url.searchParams.append('punctuate', 'true');
-      url.searchParams.append('profanity_filter', 'false');
-      url.searchParams.append('diarize', 'false');
+      // Create live transcription connection
+      this.connection = this.deepgram.listen.live({
+        model: this.config.model,
+        language: this.config.language,
+        smart_format: true,
+        interim_results: true,
+        punctuate: true,
+        profanity_filter: false,
+        diarize: false,
+        filler_words: true,
+        sample_rate: 16000,
+      });
 
-      // Deepgram authentication: Handle both API Keys and API Secrets
-      // For WebSocket connections, both API Keys and API Secrets use the same format
-      // The key parameter should work for both types of credentials
-      url.searchParams.append('key', this.config.apiKey);
-      console.log('[Deepgram Transcription] Using key parameter authentication');
+      console.log('[Deepgram Transcription] Connecting to Deepgram SDK...');
 
-      this.socket = new WebSocket(url.toString());
-      this.socket.binaryType = 'arraybuffer';
+      // Set up event handlers using Deepgram SDK events
+      this.connection.on(LiveTranscriptionEvents.Open, () => {
+        console.log('[Deepgram Transcription] ✅ Connection established via SDK');
 
-      this.socket.onopen = async () => {
-        console.log('[Deepgram Transcription] WebSocket connected');
-
-        // Send pre-recorded audio config
-        const configMessage = {
-          type: 'Configure',
-          config: {
-            smart_format: true,
-            interim_results: true,
-            punctuate: true,
-            profanity_filter: false,
-            diarize: false,
-          },
-        };
-        this.socket.send(JSON.stringify(configMessage));
-
-        const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
-        this.mediaRecorder = mediaRecorder;
-
-        mediaRecorder.ondataavailable = async event => {
-          if (event.data.size > 0 && this.socket.readyState === WebSocket.OPEN) {
-            // Convert WebM to PCM for Deepgram
-            const audioBuffer = await event.data.arrayBuffer();
-            this.socket.send(audioBuffer);
-          }
-        };
-
-        mediaRecorder.start(250); // Send data every 250ms
-        this.isRecording = true;
-        console.log('[Deepgram Transcription] Started streaming');
-      };
-
-      this.socket.onmessage = message => {
         try {
-          const response = JSON.parse(message.data);
+          // Use MediaRecorder to capture audio
+          // Try different MIME types to find one supported
+          const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+            ? 'audio/webm;codecs=opus'
+            : MediaRecorder.isTypeSupported('audio/ogg;codecs=opus')
+            ? 'audio/ogg;codecs=opus'
+            : '';
 
-          if (response.type === 'Results' && response.channel && response.channel.alternatives) {
-            const transcript = response.channel.alternatives[0]?.transcript;
+          this.mediaRecorder = mimeType
+            ? new MediaRecorder(stream, { mimeType, audioBitsPerSecond: 16000 })
+            : new MediaRecorder(stream);
 
-            if (transcript && transcript.trim().length > 0) {
-              // Only call onResult for interim results, not final
-              if (!response.is_final) {
-                onResult(transcript);
+          console.log('[Deepgram Transcription] MediaRecorder created with MIME type:', this.mediaRecorder.mimeType);
+
+          let audioDataSent = false;
+
+          this.mediaRecorder.ondataavailable = async event => {
+            if (event.data.size > 0 && this.connection && this.connection.getReadyState() === 1) {
+              try {
+                // Convert the audio blob to array buffer
+                const arrayBuffer = await event.data.arrayBuffer();
+
+                // Send the audio data to Deepgram
+                this.connection.send(arrayBuffer);
+
+                if (!audioDataSent) {
+                  console.log('[Deepgram Transcription] 🎵 First audio data sent to Deepgram');
+                  audioDataSent = true;
+                }
+              } catch (error) {
+                console.error('[Deepgram Transcription] Error sending audio data:', error);
               }
             }
-          }
-        } catch (parseError) {
-          console.warn('[Deepgram Transcription] Failed to parse message:', parseError);
-        }
-      };
+          };
 
-      this.socket.onerror = error => {
-        console.error('[Deepgram Transcription] WebSocket error:', error);
-        console.error('[Deepgram Transcription] URL used:', url.toString());
-        console.error(
-          '[Deepgram Transcription] API Key format:',
-          this.config.apiKey.substring(0, 10) + '...'
-        );
+          // Start recording with small time slices for real-time streaming
+          this.mediaRecorder.start(250); // Send data every 250ms
+
+          this.isRecording = true;
+          console.log('[Deepgram Transcription] 🎤 Started streaming audio');
+        } catch (error) {
+          console.error('[Deepgram Transcription] ❌ Error setting up audio processing:', error);
+          if (onError) {
+            onError(new Error('Failed to setup audio processing: ' + error.message));
+          }
+          this.connection.close();
+          return;
+        }
+      });
+
+      this.connection.on(LiveTranscriptionEvents.Transcript, data => {
+        if (data.channel?.alternatives?.[0]) {
+          const transcript = data.channel.alternatives[0].transcript;
+
+          if (transcript && transcript.trim().length > 0) {
+            // Only send final results for clean transcription
+            // Interim results (is_final=false) are partial and keep changing
+            if (data.is_final) {
+              console.log('[Deepgram Transcription] Final result:', transcript);
+              onResult(transcript);
+            } else {
+              // Optional: Log interim results for debugging
+              console.log('[Deepgram Transcription] Interim result (not displayed):', transcript);
+            }
+          }
+        }
+      });
+
+      this.connection.on(LiveTranscriptionEvents.Metadata, data => {
+        console.log('[Deepgram Transcription] Metadata received:', data);
+      });
+
+      this.connection.on(LiveTranscriptionEvents.SpeechStarted, () => {
+        console.log('[Deepgram Transcription] Speech started');
+      });
+
+      this.connection.on(LiveTranscriptionEvents.UtteranceEnd, () => {
+        console.log('[Deepgram Transcription] Utterance ended');
+      });
+
+      this.connection.on(LiveTranscriptionEvents.Close, () => {
+        console.log('[Deepgram Transcription] Connection closed normally');
+        this.isRecording = false;
+      });
+
+      this.connection.on(LiveTranscriptionEvents.Error, error => {
+        console.error('[Deepgram Transcription] ❌ Connection error:', error);
+
+        let errorMessage = 'Deepgram connection error.\n\n';
+
+        if (error.message) {
+          errorMessage += 'Error: ' + error.message + '\n\n';
+        } else if (error.stack) {
+          errorMessage += 'Check console for technical details.\n\n';
+        }
+
+        errorMessage += '🔧 Troubleshooting:\n';
+        errorMessage += '1. Verify API key at https://console.deepgram.com/\n';
+        errorMessage += '2. Check Deepgram status: https://status.deepgram.com/\n';
+        errorMessage += '3. Try disabling VPN/proxy temporarily\n';
+        errorMessage += '4. Ensure network allows WebSocket (port 443)\n\n';
+        errorMessage += '💡 Alternative: Use Web Speech API (no API key needed)';
 
         if (onError) {
-          onError(new Error('Deepgram WebSocket connection error. Check console for details.'));
+          onError(new Error(errorMessage));
         }
-      };
 
-      this.socket.onclose = event => {
-        console.log('[Deepgram Transcription] WebSocket closed:', event.code, event.reason);
         this.isRecording = false;
-      };
+      });
+
     } catch (error) {
       this.isRecording = false;
       console.error('[Deepgram Transcription] Error starting recognition:', error);
@@ -163,13 +223,24 @@ export class DeepgramTranscriptionProvider extends BaseTranscriptionProvider {
 
     this.isRecording = false;
 
-    if (this.mediaRecorder && this.mediaRecorder.state === 'recording') {
+    // Stop media recorder
+    if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
       this.mediaRecorder.stop();
+      this.mediaRecorder = null;
     }
 
-    if (this.socket) {
-      this.socket.close();
-      this.socket = null;
+    // Stop media stream tracks
+    if (this.mediaStream) {
+      this.mediaStream.getTracks().forEach(track => track.stop());
+      this.mediaStream = null;
+    }
+
+    // Close Deepgram connection
+    if (this.connection) {
+      if (this.connection.finish) {
+        this.connection.finish();
+      }
+      this.connection = null;
     }
 
     console.log('[Deepgram Transcription] Stopped recognition');
@@ -180,9 +251,15 @@ export class DeepgramTranscriptionProvider extends BaseTranscriptionProvider {
    */
   async validateConfig() {
     const errors = [];
+    const warnings = [];
 
     if (!this.config.apiKey) {
       errors.push('Deepgram API key is required');
+    } else {
+      // Check API key format
+      if (this.config.apiKey.length < 20) {
+        warnings.push('API key seems too short (expected 32+ chars)');
+      }
     }
 
     if (!this.config.language) {
@@ -193,13 +270,42 @@ export class DeepgramTranscriptionProvider extends BaseTranscriptionProvider {
       errors.push('Model is required');
     }
 
+    // Try to validate API key by making a simple connection test
+    try {
+      console.log('[Deepgram Transcription] Testing API key validity...');
+
+      // Create a test connection
+      const testConnection = this.deepgram.listen.live({
+        model: this.config.model,
+        language: this.config.language,
+        interim_results: false,
+      });
+
+      // Set a timeout to close the test connection
+      setTimeout(() => {
+        if (testConnection.getReadyState() === 1) {
+          testConnection.finish();
+          console.log('[Deepgram Transcription] ✅ API key test passed');
+        }
+      }, 5000);
+
+      testConnection.on(LiveTranscriptionEvents.Error, error => {
+        warnings.push('API key test failed: ' + (error.message || 'Unknown error'));
+      });
+
+    } catch (error) {
+      warnings.push('Could not test API key: ' + error.message);
+    }
+
     return {
       valid: errors.length === 0,
       errors,
+      warnings,
       diagnostics: {
         model: this.config.model,
         language: this.config.language,
         hasApiKey: !!this.config.apiKey,
+        apiKeyFormat: this.config.apiKey.substring(0, 8) + '...' + this.config.apiKey.slice(-4),
       },
     };
   }
@@ -215,16 +321,8 @@ export class DeepgramTranscriptionProvider extends BaseTranscriptionProvider {
    * Clean up resources
    */
   async cleanup() {
-    if (this.mediaRecorder && this.mediaRecorder.state === 'recording') {
-      this.mediaRecorder.stop();
-    }
-
-    if (this.socket) {
-      this.socket.close();
-      this.socket = null;
-    }
-
-    this.isRecording = false;
+    await this.stopRecognition();
+    this.deepgram = null;
     this.initialized = false;
   }
 
@@ -235,7 +333,7 @@ export class DeepgramTranscriptionProvider extends BaseTranscriptionProvider {
     return {
       id: 'deepgram',
       name: 'Deepgram',
-      description: 'Real-time streaming speech recognition with low latency',
+      description: 'Real-time streaming speech recognition with low latency using official Deepgram SDK',
       supportsContinuous: true,
       requiresApiKey: true,
       requiresLocalServer: false,
@@ -248,14 +346,14 @@ export class DeepgramTranscriptionProvider extends BaseTranscriptionProvider {
           label: 'Model',
           type: 'select',
           required: false,
-          options: ['nova-2', 'nova', 'enhanced'],
+          options: ['nova-2', 'nova-3', 'nova', 'enhanced'],
         },
         {
           name: 'language',
           label: 'Language',
           type: 'select',
           required: false,
-          options: ['en', 'zh', 'es', 'fr', 'de', 'ja', 'ko'],
+          options: ['en', 'zh', 'es', 'fr', 'de', 'ja', 'ko', 'pt', 'ru', 'hi', 'ar'],
         },
       ],
       languageSupport: [
@@ -267,6 +365,10 @@ export class DeepgramTranscriptionProvider extends BaseTranscriptionProvider {
         { code: 'it', name: 'Italian' },
         { code: 'ja', name: 'Japanese' },
         { code: 'ko', name: 'Korean' },
+        { code: 'pt', name: 'Portuguese' },
+        { code: 'ru', name: 'Russian' },
+        { code: 'hi', name: 'Hindi' },
+        { code: 'ar', name: 'Arabic' },
       ],
     };
   }
