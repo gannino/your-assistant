@@ -205,7 +205,6 @@ const BLUR_KEY = 'appearance_blur';
 const SCROLL_SPEED_KEY = 'appearance_scroll_speed';
 const WIN_WIDTH_KEY = 'electron_win_width';
 const WIN_HEIGHT_KEY = 'electron_win_height';
-const MINI_HEIGHT_KEY = 'electron_mini_height';
 const TRIGGER_DELAY_KEY = 'auto_trigger_delay_ms';
 const SCREENSHOT_INTERVAL_KEY = 'auto_screenshot_interval_ms';
 const DIFF_THRESHOLD_KEY = 'auto_diff_threshold';

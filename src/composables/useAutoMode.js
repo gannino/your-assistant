@@ -9,7 +9,6 @@
 
 import { ref, watch } from 'vue';
 import { captureScreenshot, imageChangeFraction } from '../utils/screenshot_util';
-import config from '../utils/config_util';
 
 // ── Config keys ───────────────────────────────────────────────────────────────
 const KEY_AUTO_ENABLED = 'auto_mode_enabled';

@@ -337,7 +337,6 @@
               </div>
             </div>
           </div>
-
         </div>
       </div>
     </div>
@@ -455,11 +454,7 @@
       <el-empty v-else description="No summary yet — click 'Summarize Session' to generate one" />
       <template #footer>
         <el-button @click="showSessionSummary = false">Close</el-button>
-        <el-button
-          v-if="sessionSummary"
-          type="primary"
-          @click="copySessionSummary"
-        >
+        <el-button v-if="sessionSummary" type="primary" @click="copySessionSummary">
           Copy Summary
         </el-button>
       </template>
