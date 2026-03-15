@@ -42,7 +42,10 @@ export class DeepgramTranscriptionProvider extends BaseTranscriptionProvider {
 
     this.initialized = true;
     console.log('[Deepgram Transcription] ✅ Initialized with model:', this.config.model);
-    console.log('[Deepgram Transcription] API Key:', this.config.apiKey.substring(0, 8) + '...' + this.config.apiKey.slice(-4));
+    console.log(
+      '[Deepgram Transcription] API Key:',
+      this.config.apiKey.substring(0, 8) + '...' + this.config.apiKey.slice(-4)
+    );
     console.log('[Deepgram Transcription] SDK version: 3.x');
   }
 
@@ -100,14 +103,17 @@ export class DeepgramTranscriptionProvider extends BaseTranscriptionProvider {
           const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
             ? 'audio/webm;codecs=opus'
             : MediaRecorder.isTypeSupported('audio/ogg;codecs=opus')
-            ? 'audio/ogg;codecs=opus'
-            : '';
+              ? 'audio/ogg;codecs=opus'
+              : '';
 
           this.mediaRecorder = mimeType
             ? new MediaRecorder(stream, { mimeType, audioBitsPerSecond: 16000 })
             : new MediaRecorder(stream);
 
-          console.log('[Deepgram Transcription] MediaRecorder created with MIME type:', this.mediaRecorder.mimeType);
+          console.log(
+            '[Deepgram Transcription] MediaRecorder created with MIME type:',
+            this.mediaRecorder.mimeType
+          );
 
           let audioDataSent = false;
 
@@ -204,7 +210,6 @@ export class DeepgramTranscriptionProvider extends BaseTranscriptionProvider {
 
         this.isRecording = false;
       });
-
     } catch (error) {
       this.isRecording = false;
       console.error('[Deepgram Transcription] Error starting recognition:', error);
@@ -292,7 +297,6 @@ export class DeepgramTranscriptionProvider extends BaseTranscriptionProvider {
       testConnection.on(LiveTranscriptionEvents.Error, error => {
         warnings.push('API key test failed: ' + (error.message || 'Unknown error'));
       });
-
     } catch (error) {
       warnings.push('Could not test API key: ' + error.message);
     }
@@ -333,7 +337,8 @@ export class DeepgramTranscriptionProvider extends BaseTranscriptionProvider {
     return {
       id: 'deepgram',
       name: 'Deepgram',
-      description: 'Real-time streaming speech recognition with low latency using official Deepgram SDK',
+      description:
+        'Real-time streaming speech recognition with low latency using official Deepgram SDK',
       supportsContinuous: true,
       requiresApiKey: true,
       requiresLocalServer: false,
