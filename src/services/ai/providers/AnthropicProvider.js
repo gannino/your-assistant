@@ -6,6 +6,7 @@
  */
 
 import { BaseAIProvider } from './BaseAIProvider';
+import { StreamParser } from '../streaming';
 
 export class AnthropicProvider extends BaseAIProvider {
   constructor() {
@@ -96,23 +97,9 @@ export class AnthropicProvider extends BaseAIProvider {
         );
       }
 
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-
-      try {
-        let { done, value } = await reader.read();
-        while (!done) {
-          const chunk = decoder.decode(value, { stream: true });
-          const content = this.parseStreamChunk(chunk);
-          if (content) {
-            onChunk(content);
-          }
-          ({ done, value } = await reader.read());
-        }
-      } finally {
-        // Clean up stream buffer when done
-        this.streamBuffer = '';
-      }
+      // Use shared StreamParser for Anthropic format
+      const parser = StreamParser.anthropic();
+      await parser.parseStream(response.body, onChunk);
     } catch (error) {
       throw new Error(`Anthropic request failed: ${error.message}`);
     }

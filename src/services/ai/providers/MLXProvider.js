@@ -6,6 +6,7 @@
  */
 
 import { BaseAIProvider } from './BaseAIProvider';
+import { StreamParser } from '../streaming';
 
 export class MLXProvider extends BaseAIProvider {
   constructor() {
@@ -69,23 +70,9 @@ export class MLXProvider extends BaseAIProvider {
         throw new Error(`MLX API error: ${response.status} ${response.statusText} - ${errorText}`);
       }
 
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-
-      try {
-        let { done, value } = await reader.read();
-        while (!done) {
-          const chunk = decoder.decode(value, { stream: true });
-          const content = this.parseStreamChunk(chunk);
-          if (content) {
-            onChunk(content);
-          }
-          ({ done, value } = await reader.read());
-        }
-      } finally {
-        // Clean up stream buffer when done
-        this.streamBuffer = '';
-      }
+      // Use shared StreamParser for OpenAI-compatible format
+      const parser = StreamParser.openAICompatible();
+      await parser.parseStream(response.body, onChunk);
     } catch (error) {
       throw new Error(`MLX request failed: ${error.message}`);
     }

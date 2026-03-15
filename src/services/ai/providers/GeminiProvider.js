@@ -6,6 +6,7 @@
  */
 
 import { BaseAIProvider } from './BaseAIProvider';
+import { StreamParser } from '../streaming';
 
 const GEMINI_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
 
@@ -97,17 +98,9 @@ export class GeminiProvider extends BaseAIProvider {
       return resp;
     });
 
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-
-    // eslint-disable-next-line no-constant-condition
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      const chunk = decoder.decode(value, { stream: true });
-      const content = this._parseSSEChunk(chunk);
-      if (content) onChunk(content);
-    }
+    // Use shared StreamParser for Gemini format
+    const parser = StreamParser.gemini();
+    await parser.parseStream(response.body, onChunk);
   }
 
   /**

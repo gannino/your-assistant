@@ -6,6 +6,7 @@
  */
 
 import { BaseAIProvider } from './BaseAIProvider';
+import { StreamParser } from '../streaming';
 
 export class OllamaProvider extends BaseAIProvider {
   constructor() {
@@ -71,56 +72,9 @@ export class OllamaProvider extends BaseAIProvider {
         );
       }
 
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-
-      // Initialize stream buffer
-      let streamBuffer = '';
-
-      try {
-        let shouldContinue = true;
-        let { done, value } = await reader.read();
-
-        while (!done && shouldContinue) {
-          streamBuffer += decoder.decode(value, { stream: true });
-          const lines = streamBuffer.split('\n');
-          let completeLines = [];
-
-          for (let i = 0; i < lines.length; i++) {
-            const line = lines[i].trim();
-            if (!line) continue;
-
-            try {
-              const parsed = JSON.parse(line);
-              if (parsed.message?.content) {
-                onChunk(parsed.message.content);
-              }
-              if (parsed.done) {
-                shouldContinue = false;
-                break;
-              }
-              // Successfully parsed, mark as complete
-              completeLines.push(i);
-            } catch (e) {
-              // JSON parse error - incomplete chunk, keep in buffer
-            }
-          }
-
-          // Remove complete lines from buffer (in reverse order)
-          for (let i = completeLines.length - 1; i >= 0; i--) {
-            lines.splice(completeLines[i], 1);
-          }
-          streamBuffer = lines.join('\n');
-
-          // Read next chunk if we should continue
-          if (shouldContinue) {
-            ({ done, value } = await reader.read());
-          }
-        }
-      } finally {
-        // Clean up buffer
-        streamBuffer = '';
-      }
+      // Use shared StreamParser for Ollama format (plain JSON lines)
+      const parser = StreamParser.ollama();
+      await parser.parseStream(response.body, onChunk);
     } catch (error) {
       throw new Error(`Ollama request failed: ${error.message}`);
     }

@@ -8,6 +8,7 @@
  */
 
 import { BaseAIProvider } from './BaseAIProvider';
+import { StreamParser } from '../streaming';
 
 export class ZaiProvider extends BaseAIProvider {
   constructor() {
@@ -52,9 +53,7 @@ export class ZaiProvider extends BaseAIProvider {
     const endpoint = this.config.endpoint;
     const url = endpoint.endsWith('/chat/completions') ? endpoint : `${endpoint}/chat/completions`;
 
-    console.log('[Z.ai] Request URL:', url);
-    console.log('[Z.ai] Model:', this.config.model);
-    console.log('[Z.ai] Prompt length:', prompt.length);
+    console.log('[Z.ai] Starting streaming request');
 
     try {
       const { systemPrompt, ...restOptions } = options;
@@ -62,7 +61,6 @@ export class ZaiProvider extends BaseAIProvider {
       if (systemPrompt) messages.push({ role: 'system', content: systemPrompt });
       messages.push({ role: 'user', content: prompt });
 
-      console.log('[Z.ai] Sending request...');
       const response = await fetch(url, {
         method: 'POST',
         headers: {
@@ -78,75 +76,17 @@ export class ZaiProvider extends BaseAIProvider {
         }),
       });
 
-      console.log('[Z.ai] Response status:', response.status, response.statusText);
-
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('[Z.ai] Error response:', errorText);
-        throw new Error(`Z.ai API error: ${response.status} ${response.statusText} - ${errorText}`);
+        throw new Error(`Z.ai API error: ${response.status} - ${errorText}`);
       }
 
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let chunkCount = 0;
-      let totalContent = '';
-
-      try {
-        let { done, value } = await reader.read();
-
-        while (!done) {
-          if (done) {
-            console.log(
-              '[Z.ai] Stream complete. Total chunks:',
-              chunkCount,
-              'Total content:',
-              totalContent.length
-            );
-            break;
-          }
-
-          const chunk = decoder.decode(value, { stream: true });
-          chunkCount++;
-          console.log('[Z.ai] Chunk', chunkCount, 'size:', chunk.length);
-
-          const content = this.parseStreamChunk(chunk);
-          if (content) {
-            totalContent += content;
-            console.log(
-              '[Z.ai] Extracted content:',
-              content.length,
-              'chars, total:',
-              totalContent.length
-            );
-            onChunk(content);
-          } else {
-            console.log('[Z.ai] No content extracted from chunk (buffering...)');
-          }
-
-          ({ done, value } = await reader.read());
-        }
-
-        console.log(
-          '[Z.ai] Stream complete. Total chunks:',
-          chunkCount,
-          'Total content:',
-          totalContent.length
-        );
-      } finally {
-        // Clean up stream buffer when done
-        this.streamBuffer = '';
-        console.log('[Z.ai] Stream buffer cleaned up');
-      }
+      // Use shared StreamParser for OpenAI-compatible format
+      const parser = StreamParser.openAICompatible();
+      await parser.parseStream(response.body, onChunk);
     } catch (error) {
-      console.error('[Z.ai] Request failed:', error);
-
-      // If it's a network error, try with non-streaming as fallback
-      if (error.message.includes('Failed to fetch') || error.name === 'TypeError') {
-        console.log('[Z.ai] Streaming failed, trying non-streaming fallback...');
-        return this.generateCompletion(prompt, options);
-      }
-
-      throw new Error(`Z.ai request failed: ${error.message}`);
+      console.error('[Z.ai] Streaming request failed:', error);
+      throw new Error(`Z.ai streaming failed: ${error.message}`);
     }
   }
 
