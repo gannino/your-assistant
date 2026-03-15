@@ -2,22 +2,23 @@
  * AnthropicProvider - Anthropic Claude models provider
  *
  * Supports Claude 3 models (Haiku, Sonnet, Opus).
- * Uses Anthropic's Messages API with streaming support.
+ * Uses Anthropic's official TypeScript SDK for API communication.
  */
 
 import { BaseAIProvider } from './BaseAIProvider';
-import { StreamParser } from '../streaming';
+import Anthropic from '@anthropic-ai/sdk';
 
 export class AnthropicProvider extends BaseAIProvider {
   constructor() {
     super({});
+    this.client = null;
   }
 
   /**
    * Initialize the Anthropic provider with API configuration
    * @param {Object} config - Configuration object
    * @param {string} config.apiKey - Anthropic API key
-   * @param {string} config.model - Model name (default: claude-3-sonnet-20240229)
+   * @param {string} config.model - Model name (default: claude-3-5-sonnet-20241022)
    */
   async initialize(config) {
     if (!config.apiKey) {
@@ -26,14 +27,54 @@ export class AnthropicProvider extends BaseAIProvider {
 
     this.config = {
       apiKey: config.apiKey,
-      model: config.model || 'claude-3-sonnet-20240229',
-      apiVersion: '2023-06-01',
-      maxTokens: 4096,
-      temperature: config.temperature ?? 0.3, // Anthropic supports 0-1 range
+      model: config.model || 'claude-sonnet-4.6-20250514', // Latest Claude model
+      maxTokens: 8192,
+      temperature: config.temperature ?? 0.3,
       ...config,
     };
 
+    this.client = new Anthropic({
+      apiKey: this.config.apiKey,
+      dangerouslyAllowBrowser: true,
+    });
+
     this.initialized = true;
+  }
+
+  /**
+   * Generate a non-streaming completion
+   * @param {string} prompt - The input prompt
+   * @param {Object} options - Additional options
+   * @returns {Promise<string>} The generated completion
+   */
+  async generateCompletion(prompt, options = {}) {
+    if (!this.client) {
+      throw new Error('Anthropic provider not initialized. Call initialize() first.');
+    }
+
+    const { systemPrompt, maxTokens, ...restOptions } = options;
+
+    const response = await this.executeWithRetry(
+      async () => {
+        return await this.client.messages.create({
+          model: this.config.model,
+          max_tokens: maxTokens || this.config.maxTokens,
+          temperature: this.config.temperature,
+          messages: [{ role: 'user', content: prompt }],
+          system: systemPrompt,
+          ...restOptions,
+        });
+      },
+      {
+        onRetry: (attempt, error) => {
+          console.warn(
+            `[Anthropic] Retrying completion generation (attempt ${attempt}): ${error.message}`
+          );
+        },
+      }
+    );
+
+    return response.content[0]?.text || '';
   }
 
   /**
@@ -44,143 +85,42 @@ export class AnthropicProvider extends BaseAIProvider {
    * @returns {Promise<void>}
    */
   async generateCompletionStream(prompt, onChunk, options = {}) {
-    if (!this.initialized) {
+    if (!this.client) {
       throw new Error('Anthropic provider not initialized. Call initialize() first.');
     }
 
-    const url = 'https://api.anthropic.com/v1/messages';
-    const { systemPrompt, ...restOptions } = options;
+    const { systemPrompt, maxTokens, ...restOptions } = options;
+
+    // Use retry logic for the initial request
+    const stream = await this.executeWithRetry(
+      async () => {
+        return await this.client.messages.stream({
+          model: this.config.model,
+          max_tokens: maxTokens || this.config.maxTokens,
+          temperature: this.config.temperature,
+          messages: [{ role: 'user', content: prompt }],
+          system: systemPrompt,
+          ...restOptions,
+        });
+      },
+      {
+        onRetry: (attempt, error) => {
+          console.warn(
+            `[Anthropic] Retrying stream generation (attempt ${attempt}): ${error.message}`
+          );
+        },
+      }
+    );
 
     try {
-      // Use retry logic for the initial request
-      const response = await this.executeWithRetry(
-        async () => {
-          const { controller, cleanup } = this.createTimeoutController(60000); // 60 second timeout
-
-          try {
-            const resp = await fetch(url, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'x-api-key': this.config.apiKey,
-                'anthropic-version': this.config.apiVersion,
-              },
-              body: JSON.stringify({
-                model: this.config.model,
-                max_tokens: this.config.maxTokens,
-                ...(systemPrompt ? { system: systemPrompt } : {}),
-                messages: [{ role: 'user', content: prompt }],
-                stream: true,
-                temperature: this.config.temperature,
-                ...restOptions,
-              }),
-              signal: controller.signal,
-            });
-            return resp;
-          } finally {
-            cleanup();
-          }
-        },
-        {
-          onRetry: (attempt, error) => {
-            console.warn(
-              `[Anthropic] Retrying stream generation (attempt ${attempt}): ${error.message}`
-            );
-          },
+      for await (const chunk of stream) {
+        if (chunk.type === 'content_block_delta' && chunk.delta?.text) {
+          onChunk(chunk.delta.text);
         }
-      );
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(
-          `Anthropic API error: ${response.status} ${response.statusText} - ${errorText}`
-        );
       }
-
-      // Use shared StreamParser for Anthropic format
-      const parser = StreamParser.anthropic();
-      await parser.parseStream(response.body, onChunk);
     } catch (error) {
-      throw new Error(`Anthropic request failed: ${error.message}`);
+      throw new Error(`Anthropic streaming failed: ${error.message}`);
     }
-  }
-
-  /**
-   * Parse server-sent events (SSE) format from Anthropic streaming response
-   * @param {string} chunk - Raw chunk from the stream
-   * @returns {string} Extracted content text
-   */
-  parseStreamChunk(chunk) {
-    // Initialize buffer if not exists
-    if (!this.streamBuffer) {
-      this.streamBuffer = '';
-    }
-
-    // Add new chunk to buffer
-    this.streamBuffer += chunk;
-
-    const lines = this.streamBuffer.split('\n');
-    let content = '';
-    let completeLines = [];
-
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i].trim();
-
-      // Skip empty lines and non-data lines
-      if (!line || !line.startsWith('data: ')) {
-        continue;
-      }
-
-      const data = line.slice(6); // Remove 'data: ' prefix
-
-      // Try to parse as JSON
-      try {
-        const parsed = JSON.parse(data);
-
-        // Anthropic streaming format
-        if (parsed.type === 'content_block_delta' && parsed.delta?.text) {
-          content += parsed.delta.text;
-        }
-        // Successfully parsed, so this line is complete
-        completeLines.push(i);
-      } catch (e) {
-        // JSON parse error - likely incomplete chunk
-        // Keep this line in buffer for next chunk
-        // Don't add to completeLines
-      }
-    }
-
-    // Remove complete lines from buffer (in reverse order to maintain indices)
-    for (let i = completeLines.length - 1; i >= 0; i--) {
-      lines.splice(completeLines[i], 1);
-    }
-
-    // Keep incomplete lines in buffer
-    this.streamBuffer = lines.join('\n');
-
-    return content;
-  }
-
-  /**
-   * Generate a non-streaming completion
-   * @param {string} prompt - The input prompt
-   * @param {Object} options - Additional options
-   * @returns {Promise<string>} The generated completion
-   */
-  async generateCompletion(prompt, options = {}) {
-    return new Promise((resolve, reject) => {
-      let fullResponse = '';
-
-      this.generateCompletionStream(
-        prompt,
-        chunk => {
-          fullResponse += chunk;
-        },
-        options
-      )
-        .then(() => resolve(fullResponse))
-        .catch(reject);
-    });
   }
 
   /**
@@ -209,38 +149,22 @@ export class AnthropicProvider extends BaseAIProvider {
    * @returns {Promise<Array<string>>} Array of model names
    */
   async getAvailableModels() {
-    // Anthropic doesn't have a public models endpoint, return comprehensive list
     return [
-      // Claude 3 models
-      'claude-3-haiku-20240307',
-      'claude-3-sonnet-20240229',
-      'claude-3-opus-20240229',
+      // Latest Claude 4.6 models (2025)
+      'claude-sonnet-4.6-20250514',
+      'claude-sonnet-4.5-20250514',
 
-      // Claude 3.5 models
+      // Claude 3.7 models (2025)
+      'claude-3-7-sonnet-20250219',
+      'claude-3-7-haiku-20250219',
+
+      // Claude 3.5 models (2024)
       'claude-3-5-sonnet-20241022',
       'claude-3-5-haiku-20241022',
 
-      // Claude 2 models (older)
-      'claude-2.1',
-      'claude-2.0',
-      'claude-2',
-
-      // Claude Instant (faster/cheaper)
-      'claude-instant-1.2',
-
-      // Claude with different versions
+      // Earlier Claude 3 models
       'claude-3-sonnet-20240229',
-      'claude-3-haiku-20240307',
       'claude-3-opus-20240229',
-      'claude-3-5-sonnet-20240620',
-
-      // Alias-friendly names
-      'claude-3-haiku',
-      'claude-3-sonnet',
-      'claude-3-opus',
-      'claude-3-5-sonnet',
-      'claude-3-5-haiku',
-      'claude-instant',
     ];
   }
 
@@ -252,14 +176,15 @@ export class AnthropicProvider extends BaseAIProvider {
     return {
       id: 'anthropic',
       name: 'Anthropic',
-      description: 'Claude 3 models (Haiku, Sonnet, Opus)',
+      description: 'Claude 4.6 Sonnet, 4.5, and 3.7 models (latest)',
       supportsStreaming: true,
       requiresApiKey: true,
       requiresLocalServer: false,
+      documentationUrl: 'https://docs.anthropic.com/claude/reference/messages_post',
       defaultModels: [
-        'claude-3-haiku-20240307',
-        'claude-3-sonnet-20240229',
-        'claude-3-opus-20240229',
+        'claude-sonnet-4.6-20250514',
+        'claude-sonnet-4.5-20250514',
+        'claude-3-7-sonnet-20250219',
       ],
       configFields: [
         { name: 'apiKey', label: 'API Key', type: 'password', required: true },
@@ -269,9 +194,9 @@ export class AnthropicProvider extends BaseAIProvider {
           type: 'select',
           required: false,
           options: [
-            'claude-3-haiku-20240307',
-            'claude-3-sonnet-20240229',
-            'claude-3-opus-20240229',
+            'claude-sonnet-4.6-20250514',
+            'claude-sonnet-4.5-20250514',
+            'claude-3-7-sonnet-20250219',
             'claude-3-5-sonnet-20241022',
           ],
         },
@@ -288,7 +213,6 @@ export class AnthropicProvider extends BaseAIProvider {
             'Controls randomness. 0.3 = focused, 1.0 = creative. Range: 0-1 for Claude models.',
         },
       ],
-      documentationUrl: 'https://docs.anthropic.com/claude/reference/messages_post',
     };
   }
 }
