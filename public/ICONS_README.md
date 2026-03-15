@@ -1,49 +1,94 @@
-# Icon Generation Instructions
+# Application Icons
 
-The following icon files are referenced in `index.html` and `manifest.json` but need to be created:
+This application uses SVG-based icons for modern browser compatibility and scalability.
 
-## Required Icons
+## Current Icons
 
-1. **favicon-16x16.png** (16x16 pixels)
-2. **favicon-32x32.png** (32x32 pixels)  
-3. **apple-touch-icon.png** (180x180 pixels)
+✅ **Implemented Icons:**
 
-## How to Generate Icons
+- **favicon.svg** - Main favicon (SVG format, scalable)
+- **apple-touch-icon.svg** - Apple touch icon (SVG format)
 
-### Option 1: Use an Online Tool
+## Icon Design
+
+The icons feature a chat bubble design with:
+
+- **Dark bubble body** (#020617)
+- **Blue circuit lines** (#38BDF8) representing AI/neural connectivity
+- **Green node dots** (#22C55E) representing data points
+- **Clean, modern aesthetic** that works at any size
+
+## Source Files
+
+Icon assets are located in `src/assets/`:
+
+- **icon.svg** (256x256) - Standalone icon for favicons
+- **logo.svg** (360x80) - Horizontal logo with "your-assistant" text
+
+## How to Update Icons
+
+### Option 1: Edit SVG Source Files
+
+1. Modify `src/assets/icon.svg` for the icon design
+2. Copy to public directory:
+
+   ```bash
+   cp src/assets/icon.svg public/favicon.svg
+   cp src/assets/icon.svg public/apple-touch-icon.svg
+   ```
+
+3. Rebuild the project: `npm run build`
+
+### Option 2: Use Different Format
+
+If you prefer PNG icons for broader legacy support:
+
+#### Using Online Tool
+
 - Visit https://realfavicongenerator.net/
-- Upload your logo/icon (ideally 512x512 PNG)
-- Download the generated icon pack
-- Place the files in the `/public` directory
+- Upload your icon (SVG or PNG)
+- Download generated icon pack
+- Extract PNG files to `/public` directory
+- Update `index.html` to reference PNG files
 
-### Option 2: Use ImageMagick (Command Line)
+#### Using ImageMagick
+
 ```bash
-# Install ImageMagick first
-# brew install imagemagick (macOS)
-# apt-get install imagemagick (Linux)
-
-# Convert from a source image (e.g., logo.png)
-convert logo.png -resize 16x16 public/favicon-16x16.png
-convert logo.png -resize 32x32 public/favicon-32x32.png
-convert logo.png -resize 180x180 public/apple-touch-icon.png
+# Convert SVG to PNG favicons
+convert src/assets/icon.svg -resize 16x16 public/favicon-16x16.png
+convert src/assets/icon.svg -resize 32x32 public/favicon-32x32.png
+convert src/assets/icon.svg -resize 180x180 public/apple-touch-icon.png
 ```
 
-### Option 3: Use Existing Logo
-If you have `src/assets/logo.png`, you can use it as a starting point:
-```bash
-cd public
-convert ../src/assets/logo.png -resize 16x16 favicon-16x16.png
-convert ../src/assets/logo.png -resize 32x32 favicon-32x32.png
-convert ../src/assets/logo.png -resize 180x180 apple-touch-icon.png
+Then update `public/index.html`:
+
+```html
+<link rel="apple-touch-icon" sizes="180x180" href="<%= BASE_URL %>apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="<%= BASE_URL %>favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="<%= BASE_URL %>favicon-16x16.png">
 ```
 
-## Temporary Workaround
-Until you generate proper icons, the app will work fine - browsers will just show default icons.
-The references won't cause errors, just 404s in the console.
+## Browser Support
 
-## Recommended Icon Design
-- Simple, recognizable design
-- High contrast
-- Works well at small sizes
-- Represents "interview" or "AI assistant" concept
-- Use brand color (#409eff blue)
+**SVG Icons** (current approach):
+
+- ✅ Chrome/Edge: Full support
+- ✅ Firefox: Full support
+- ✅ Safari: Full support
+- ✅ Modern mobile browsers: Full support
+
+**PNG Icons** (fallback option):
+
+- ✅ All browsers including older versions
+- ✅ Maximum compatibility
+
+## Current Status
+
+The application currently uses modern SVG icons that provide:
+
+- **Scalability** - Perfect at any size
+- **Small file size** - Optimized SVG format
+- **Modern look** - Crisp on high-DPI displays
+- **Easy maintenance** - Single source file
+
+No 404 errors for icon files! 🎉
