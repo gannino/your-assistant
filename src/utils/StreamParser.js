@@ -29,26 +29,44 @@ export function parseOpenAICompatibleStream(chunk, buffer, providerName = 'Provi
   // Add new chunk to buffer
   buffer.streamBuffer += chunk;
 
-  const lines = buffer.streamBuffer.split('\n');
+  // First, try to split by double newline to find complete SSE events
+  let tempBuffer = buffer.streamBuffer;
   let content = '';
-  let completeLines = [];
 
-  console.log(`[${providerName} Parser] Lines in buffer:`, lines.length);
+  // Keep processing until we don't have any more \n\n separators
+  while (tempBuffer.includes('\n\n')) {
+    const splitIndex = tempBuffer.indexOf('\n\n');
+    const event = tempBuffer.substring(0, splitIndex);
+    const remaining = tempBuffer.substring(splitIndex + 2);
+
+    // Process the complete event
+    const eventContent = parseEvent(event, providerName);
+    content += eventContent;
+
+    // Move to next part
+    tempBuffer = remaining;
+  }
+
+  // Now check if the remaining buffer has a [DONE] marker
+  // which should also act as a terminator
+  const lines = tempBuffer.split('\n');
+  let processedUntil = 0;
+  let foundDone = false;
 
   for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].trim();
+    const trimmedLine = lines[i].trim();
 
-    // Skip empty lines and non-data lines
-    if (!line || !line.startsWith('data: ')) {
+    if (!trimmedLine.startsWith('data: ')) {
       continue;
     }
 
-    const data = line.slice(6); // Remove 'data: ' prefix
+    const data = trimmedLine.slice(6);
 
-    // Check for stream end
     if (data === '[DONE]') {
       console.log(`[${providerName} Parser] Found [DONE] marker`);
-      continue;
+      foundDone = true;
+      processedUntil = i + 1;
+      break;
     }
 
     // Try to parse as JSON
@@ -60,36 +78,63 @@ export function parseOpenAICompatibleStream(chunk, buffer, providerName = 'Provi
         console.log(`[${providerName} Parser] Extracted:`, delta.content.length, 'chars');
       }
       // Successfully parsed, so this line is complete
-      completeLines.push(i);
+      processedUntil = i + 1;
     } catch (e) {
-      // JSON parse error - likely incomplete chunk
-      console.log(
-        `[${providerName} Parser] Incomplete JSON, keeping in buffer:`,
-        data.substring(0, 50) + '...'
-      );
-      // Keep this line in buffer for next chunk
-      // Don't add to completeLines
+      // JSON parse error - incomplete chunk, stop here
+      console.log(`[${providerName} Parser] Incomplete JSON at line ${i}`);
+      break;
     }
   }
 
-  console.log(
-    `[${providerName} Parser] Complete lines:`,
-    completeLines.length,
-    'Content extracted:',
-    content.length
-  );
-
-  // Remove complete lines from buffer (in reverse order to maintain indices)
-  for (let i = completeLines.length - 1; i >= 0; i--) {
-    lines.splice(completeLines[i], 1);
+  // Reconstruct buffer with remaining lines
+  if (foundDone) {
+    // Keep everything after the [DONE] marker
+    buffer.streamBuffer = lines.slice(processedUntil).join('\n');
+  } else if (processedUntil > 0) {
+    // Keep unprocessed lines
+    buffer.streamBuffer = lines.slice(processedUntil).join('\n');
+  } else {
+    // Keep everything in tempBuffer (which has no \n\n)
+    buffer.streamBuffer = tempBuffer;
   }
 
-  // Join remaining lines (incomplete or buffered lines)
-  buffer.streamBuffer = lines.join('\n');
+  return content;
+}
 
-  // Trim trailing newlines if no incomplete content remains
-  if (buffer.streamBuffer && !buffer.streamBuffer.trim()) {
-    buffer.streamBuffer = '';
+/**
+ * Parse a single SSE event
+ * @param {string} event - Event string (without trailing \n\n)
+ * @param {string} providerName - Provider name for logging
+ * @returns {string} Extracted content
+ */
+function parseEvent(event, providerName) {
+  let content = '';
+  const lines = event.split('\n');
+
+  for (const line of lines) {
+    const trimmedLine = line.trim();
+
+    if (!trimmedLine.startsWith('data: ')) {
+      continue;
+    }
+
+    const data = trimmedLine.slice(6);
+
+    if (data === '[DONE]') {
+      console.log(`[${providerName} Parser] Found [DONE] marker in event`);
+      continue;
+    }
+
+    try {
+      const parsed = JSON.parse(data);
+      const delta = parsed.choices?.[0]?.delta;
+      if (delta?.content) {
+        content += delta.content;
+        console.log(`[${providerName} Parser] Extracted:`, delta.content.length, 'chars');
+      }
+    } catch (e) {
+      console.warn(`[${providerName} Parser] Failed to parse JSON:`, e.message);
+    }
   }
 
   return content;
