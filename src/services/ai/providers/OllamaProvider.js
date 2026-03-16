@@ -7,6 +7,13 @@
 
 import { BaseAIProvider } from './BaseAIProvider';
 import { StreamParser } from '../streaming';
+import { getCachedModels, setCachedModels } from '@/utils/modelCacheUtil';
+import {
+  handleHttpError,
+  handleNetworkError,
+  logSuccess,
+  requireInitialized,
+} from '@/utils/apiErrorHandler';
 
 export class OllamaProvider extends BaseAIProvider {
   constructor() {
@@ -38,9 +45,7 @@ export class OllamaProvider extends BaseAIProvider {
    * @returns {Promise<void>}
    */
   async generateCompletionStream(prompt, onChunk, options = {}) {
-    if (!this.initialized) {
-      throw new Error('Ollama provider not initialized. Call initialize() first.');
-    }
+    requireInitialized(this.initialized, 'Ollama');
 
     const endpoint = this.config.endpoint.replace(/\/$/, '');
     const url = `${endpoint}/api/chat`;
@@ -66,17 +71,18 @@ export class OllamaProvider extends BaseAIProvider {
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(
-          `Ollama API error: ${response.status} ${response.statusText} - ${errorText}`
-        );
+        const fallbackModels = await handleHttpError(response, 'Ollama', {
+          fallbackModels: this.getDefaultModels(),
+        });
+        throw new Error(`Ollama API error: ${response.status} ${response.statusText}`);
       }
 
       // Use shared StreamParser for Ollama format (plain JSON lines)
       const parser = StreamParser.ollama();
       await parser.parseStream(response.body, onChunk);
     } catch (error) {
-      throw new Error(`Ollama request failed: ${error.message}`);
+      handleNetworkError(error, 'Ollama', 'Streaming request');
+      throw error;
     }
   }
 
@@ -107,31 +113,53 @@ export class OllamaProvider extends BaseAIProvider {
    * @returns {Promise<Array<string>>} Array of model names
    */
   async getAvailableModels() {
+    // Check cache first
+    const cached = getCachedModels('ollama');
+    if (cached) {
+      return cached;
+    }
+
     const endpoint = (this.config?.endpoint || 'http://localhost:11434').replace(/\/$/, '');
     const url = `${endpoint}/api/tags`;
 
     try {
+      console.log('[Ollama] Attempting to fetch models from server...');
       const response = await fetch(url, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
       });
 
       if (!response.ok) {
-        console.warn('Failed to fetch Ollama models:', response.statusText);
-        return this.getDefaultModels();
+        const fallbackModels = await handleHttpError(response, 'Ollama', {
+          fallbackModels: this.getDefaultModels(),
+          docsUrl: 'https://ollama.ai/docs',
+        });
+        // Cache the fallback list
+        setCachedModels('ollama', fallbackModels);
+        return fallbackModels;
       }
 
       const data = await response.json();
       const models = data.models?.map(m => m.name) || [];
 
       if (models.length > 0) {
-        return models.sort();
+        const sortedModels = models.sort();
+        logSuccess('Ollama', 'Fetched models from server', sortedModels.length);
+        // Cache the results
+        setCachedModels('ollama', sortedModels);
+        return sortedModels;
       }
 
-      return this.getDefaultModels();
+      // No models found, use fallback
+      const defaultModels = this.getDefaultModels();
+      console.warn('[Ollama] ⚠️ No models found on server, using default list');
+      setCachedModels('ollama', defaultModels);
+      return defaultModels;
     } catch (error) {
-      console.warn('Error fetching Ollama models:', error.message);
-      return this.getDefaultModels();
+      handleNetworkError(error, 'Ollama', 'Fetching models');
+      const defaultModels = this.getDefaultModels();
+      setCachedModels('ollama', defaultModels);
+      return defaultModels;
     }
   }
 

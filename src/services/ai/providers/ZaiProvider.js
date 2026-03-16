@@ -5,10 +5,19 @@
  * Uses OpenAI-compatible API format for streaming responses.
  *
  * API Documentation: https://z.ai
+ *
+ * Note: Zhipu AI does not provide an official JavaScript SDK.
+ * Manual HTTP implementation is the recommended approach.
  */
 
 import { BaseAIProvider } from './BaseAIProvider';
 import { StreamParser } from '../streaming';
+import {
+  validateProviderConfig,
+  createNotInitializedError,
+  handleProviderError,
+  createInitializationError,
+} from '@/utils/aiErrorHandler';
 
 export class ZaiProvider extends BaseAIProvider {
   constructor() {
@@ -23,19 +32,21 @@ export class ZaiProvider extends BaseAIProvider {
    * @param {string} config.endpoint - API endpoint URL (default: https://api.z.ai/api/coding/paas/v4)
    */
   async initialize(config) {
-    if (!config.apiKey) {
-      throw new Error('Zhipu AI API key is required');
+    try {
+      validateProviderConfig(config, 'Z.ai');
+
+      this.config = {
+        apiKey: config.apiKey,
+        model: config.model || 'glm-4.7',
+        endpoint: config.endpoint || 'https://api.z.ai/api/coding/paas/v4',
+        temperature: config.temperature ?? 0.3,
+        ...config,
+      };
+
+      this.initialized = true;
+    } catch (error) {
+      throw createInitializationError('Z.ai', error);
     }
-
-    this.config = {
-      apiKey: config.apiKey,
-      model: config.model || 'glm-4.7',
-      endpoint: config.endpoint || 'https://api.z.ai/api/coding/paas/v4',
-      temperature: config.temperature ?? 0.3,
-      ...config,
-    };
-
-    this.initialized = true;
   }
 
   /**
@@ -47,7 +58,7 @@ export class ZaiProvider extends BaseAIProvider {
    */
   async generateCompletionStream(prompt, onChunk, options = {}) {
     if (!this.initialized) {
-      throw new Error('Z.ai provider not initialized. Call initialize() first.');
+      throw createNotInitializedError('Z.ai');
     }
 
     const endpoint = this.config.endpoint;
@@ -56,10 +67,22 @@ export class ZaiProvider extends BaseAIProvider {
     console.log('[Z.ai] Starting streaming request');
 
     try {
-      const { systemPrompt, ...restOptions } = options;
+      const { systemPrompt, imageDataUrls, ...restOptions } = options;
       const messages = [];
       if (systemPrompt) messages.push({ role: 'system', content: systemPrompt });
       messages.push({ role: 'user', content: prompt });
+
+      // Add image content if provided (vision support)
+      if (imageDataUrls && imageDataUrls.length > 0) {
+        const content = [{ type: 'text', text: prompt }];
+        for (const imageUrl of imageDataUrls) {
+          content.push({
+            type: 'image_url',
+            image_url: { url: imageUrl },
+          });
+        }
+        messages[messages.length - 1] = { role: 'user', content };
+      }
 
       const response = await fetch(url, {
         method: 'POST',
@@ -85,84 +108,8 @@ export class ZaiProvider extends BaseAIProvider {
       const parser = StreamParser.openAICompatible();
       await parser.parseStream(response.body, onChunk);
     } catch (error) {
-      console.error('[Z.ai] Streaming request failed:', error);
-      throw new Error(`Z.ai streaming failed: ${error.message}`);
+      throw handleProviderError(error, 'Z.ai');
     }
-  }
-
-  /**
-   * Parse server-sent events (SSE) format from streaming response
-   * @param {string} chunk - Raw chunk from the stream
-   * @returns {string} Extracted content text
-   */
-  parseStreamChunk(chunk) {
-    // Initialize buffer if not exists
-    if (!this.streamBuffer) {
-      this.streamBuffer = '';
-    }
-
-    // Add new chunk to buffer
-    this.streamBuffer += chunk;
-
-    const lines = this.streamBuffer.split('\n');
-    let content = '';
-    let completeLines = [];
-
-    console.log('[Z.ai Parser] Lines in buffer:', lines.length);
-
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i].trim();
-
-      // Skip empty lines and non-data lines
-      if (!line || !line.startsWith('data: ')) {
-        continue;
-      }
-
-      const data = line.slice(6); // Remove 'data: ' prefix
-
-      // Check for stream end
-      if (data === '[DONE]') {
-        console.log('[Z.ai Parser] Found [DONE] marker');
-        continue;
-      }
-
-      // Try to parse as JSON
-      try {
-        const parsed = JSON.parse(data);
-        const delta = parsed.choices?.[0]?.delta;
-        if (delta?.content) {
-          content += delta.content;
-          console.log('[Z.ai Parser] Extracted:', delta.content.length, 'chars');
-        }
-        // Successfully parsed, so this line is complete
-        completeLines.push(i);
-      } catch (e) {
-        // JSON parse error - likely incomplete chunk
-        console.log(
-          '[Z.ai Parser] Incomplete JSON, keeping in buffer:',
-          data.substring(0, 50) + '...'
-        );
-        // Keep this line in buffer for next chunk
-        // Don't add to completeLines
-      }
-    }
-
-    console.log(
-      '[Z.ai Parser] Complete lines:',
-      completeLines.length,
-      'Content extracted:',
-      content.length
-    );
-
-    // Remove complete lines from buffer (in reverse order to maintain indices)
-    for (let i = completeLines.length - 1; i >= 0; i--) {
-      lines.splice(completeLines[i], 1);
-    }
-
-    // Keep incomplete lines in buffer
-    this.streamBuffer = lines.join('\n');
-
-    return content;
   }
 
   /**
@@ -178,10 +125,22 @@ export class ZaiProvider extends BaseAIProvider {
     console.log('[Z.ai Non-Streaming] Request URL:', url);
 
     try {
-      const { systemPrompt, ...restOptions } = options;
+      const { systemPrompt, imageDataUrls, ...restOptions } = options;
       const messages = [];
       if (systemPrompt) messages.push({ role: 'system', content: systemPrompt });
       messages.push({ role: 'user', content: prompt });
+
+      // Add image content if provided (vision support)
+      if (imageDataUrls && imageDataUrls.length > 0) {
+        const content = [{ type: 'text', text: prompt }];
+        for (const imageUrl of imageDataUrls) {
+          content.push({
+            type: 'image_url',
+            image_url: { url: imageUrl },
+          });
+        }
+        messages[messages.length - 1] = { role: 'user', content };
+      }
 
       const response = await fetch(url, {
         method: 'POST',
@@ -207,7 +166,7 @@ export class ZaiProvider extends BaseAIProvider {
       return data.choices?.[0]?.message?.content || data.content || '';
     } catch (error) {
       console.error('[Z.ai] Non-streaming request failed:', error);
-      throw error;
+      throw handleProviderError(error, 'Z.ai');
     }
   }
 

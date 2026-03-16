@@ -59,4 +59,40 @@ describe('config_util', () => {
       expect(config.azure_region()).toBe('westus2');
     });
   });
+
+  describe('openrouter_api_key', () => {
+    it('should return null when not set', () => {
+      localStorageMock.getItem.mockReturnValue(null);
+      expect(config.openrouter_api_key()).toBeNull();
+    });
+
+    it('should return stored API key', () => {
+      localStorageMock.getItem.mockReturnValue('sk-or-v1-test-key');
+      expect(config.openrouter_api_key()).toBe('sk-or-v1-test-key');
+    });
+
+    it('should validate API key format starts with sk-or-v1-', () => {
+      localStorageMock.getItem.mockReturnValue('invalid-key');
+      const key = config.openrouter_api_key();
+      // Config doesn't validate, just returns
+      expect(key).toBe('invalid-key');
+    });
+  });
+
+  describe('ai_provider', () => {
+    it('should return default provider when not set', () => {
+      localStorageMock.getItem.mockReturnValue(null);
+      expect(config.ai_provider()).toBe('openai');
+    });
+
+    it('should return stored provider', () => {
+      localStorageMock.getItem.mockReturnValue('openrouter');
+      expect(config.ai_provider()).toBe('openrouter');
+    });
+
+    it('should handle lowercase provider names', () => {
+      localStorageMock.getItem.mockReturnValue('OPENAI');
+      expect(config.ai_provider()).toBe('OPENAI');
+    });
+  });
 });

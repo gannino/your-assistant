@@ -1,0 +1,351 @@
+import { describe, it, expect, jest } from '@jest/globals';
+import { BaseAIProvider } from '@/services/ai/providers/BaseAIProvider';
+
+// Create a concrete implementation for testing
+class TestProvider extends BaseAIProvider {
+  async generateCompletion(prompt, options = {}) {
+    if (!this.initialized) {
+      throw new Error('Provider not initialized');
+    }
+    return `Test response to: ${prompt}`;
+  }
+
+  async generateCompletionStream(prompt, onChunk, options = {}) {
+    if (!this.initialized) {
+      throw new Error('Provider not initialized');
+    }
+    onChunk('Test ');
+    onChunk('streaming ');
+    onChunk('response');
+  }
+
+  getProviderInfo() {
+    return {
+      id: 'test-provider',
+      name: 'Test Provider',
+      description: 'A test provider',
+      supportsStreaming: true,
+      requiresApiKey: false,
+      requiresLocalServer: false,
+      defaultModels: ['test-model-1', 'test-model-2'],
+    };
+  }
+}
+
+describe('BaseAIProvider', () => {
+  let provider;
+
+  beforeEach(() => {
+    provider = new TestProvider();
+  });
+
+  describe('constructor', () => {
+    it('should create a concrete provider instance', () => {
+      expect(provider).toBeInstanceOf(BaseAIProvider);
+      expect(provider).toBeInstanceOf(TestProvider);
+    });
+
+    it('should not allow direct instantiation of BaseAIProvider', () => {
+      expect(() => new BaseAIProvider()).toThrow(
+        'BaseAIProvider is abstract and cannot be instantiated directly'
+      );
+    });
+
+    it('should initialize with default values', () => {
+      expect(provider.initialized).toBe(false);
+      expect(provider.config).toEqual({});
+      expect(provider.maxRetries).toBe(3);
+      expect(provider.initialRetryDelay).toBe(1000);
+      expect(provider.maxRetryDelay).toBe(30000);
+      expect(provider.retryBackoffMultiplier).toBe(2);
+    });
+
+    it('should accept config in constructor', () => {
+      const config = { apiKey: 'test-key', model: 'test-model' };
+      const providerWithConfig = new TestProvider(config);
+
+      expect(providerWithConfig.config).toEqual(config);
+    });
+  });
+
+  describe('initialize', () => {
+    it('should set initialized to true', async () => {
+      await provider.initialize({ apiKey: 'test-key' });
+
+      expect(provider.initialized).toBe(true);
+    });
+
+    it('should store config', async () => {
+      const config = { apiKey: 'test-key', model: 'test-model' };
+      await provider.initialize(config);
+
+      expect(provider.config).toEqual(config);
+    });
+
+    it('should allow updating config', async () => {
+      await provider.initialize({ apiKey: 'key1' });
+      expect(provider.config.apiKey).toBe('key1');
+
+      await provider.initialize({ apiKey: 'key2' });
+      expect(provider.config.apiKey).toBe('key2');
+    });
+
+    it('should return undefined', async () => {
+      const result = await provider.initialize({ apiKey: 'test-key' });
+
+      expect(result).toBeUndefined();
+    });
+  });
+
+  describe('isReady', () => {
+    it('should return false before initialization', () => {
+      expect(provider.isReady()).toBe(false);
+    });
+
+    it('should return true after initialization', async () => {
+      await provider.initialize({ apiKey: 'test-key' });
+
+      expect(provider.isReady()).toBe(true);
+    });
+  });
+
+  describe('generateCompletion', () => {
+    it('should throw error if not implemented by subclass', async () => {
+      class IncompleteProvider extends BaseAIProvider {}
+
+      const incompleteProvider = new IncompleteProvider();
+      await incompleteProvider.initialize({});
+
+      await expect(incompleteProvider.generateCompletion('test')).rejects.toThrow(
+        'generateCompletion must be implemented by subclass'
+      );
+    });
+
+    it('should work with concrete implementation', async () => {
+      await provider.initialize({});
+
+      const result = await provider.generateCompletion('Hello');
+
+      expect(result).toBe('Test response to: Hello');
+    });
+
+    it('should pass through options parameter', async () => {
+      await provider.initialize({});
+
+      const options = { systemPrompt: 'You are helpful' };
+      const spy = jest.spyOn(provider, 'generateCompletion');
+
+      await provider.generateCompletion('test', options);
+
+      expect(spy).toHaveBeenCalledWith('test', options);
+    });
+  });
+
+  describe('generateCompletionStream', () => {
+    it('should throw error if not implemented by subclass', async () => {
+      class IncompleteProvider extends BaseAIProvider {}
+
+      const incompleteProvider = new IncompleteProvider();
+      await incompleteProvider.initialize({});
+
+      await expect(
+        incompleteProvider.generateCompletionStream('test', () => {})
+      ).rejects.toThrow('generateCompletionStream must be implemented by subclass');
+    });
+
+    it('should call onChunk callback for each chunk', async () => {
+      await provider.initialize({});
+
+      const chunks = [];
+      const onChunk = chunk => chunks.push(chunk);
+
+      await provider.generateCompletionStream('test', onChunk);
+
+      expect(chunks).toEqual(['Test ', 'streaming ', 'response']);
+    });
+
+    it('should pass through options parameter', async () => {
+      await provider.initialize({});
+
+      const options = { systemPrompt: 'You are helpful' };
+      const onChunk = jest.fn();
+      const spy = jest.spyOn(provider, 'generateCompletionStream');
+
+      await provider.generateCompletionStream('test', onChunk, options);
+
+      expect(spy).toHaveBeenCalledWith('test', onChunk, options);
+    });
+  });
+
+  describe('validateConfig', () => {
+    it('should return valid result by default', async () => {
+      const result = await provider.validateConfig();
+
+      expect(result).toEqual({ valid: true, errors: [] });
+    });
+
+    it('should allow subclasses to override validation', async () => {
+      class ValidatedProvider extends BaseAIProvider {
+        async validateConfig(config = {}) {
+          const errors = [];
+          if (!config.apiKey) {
+            errors.push('API key is required');
+          }
+          return { valid: errors.length === 0, errors };
+        }
+
+        async generateCompletion(prompt) {
+          return prompt;
+        }
+
+        async generateCompletionStream(prompt, onChunk) {
+          onChunk(prompt);
+        }
+      }
+
+      const validatedProvider = new ValidatedProvider();
+
+      const result1 = await validatedProvider.validateConfig({});
+      expect(result1.valid).toBe(false);
+      expect(result1.errors).toContain('API key is required');
+
+      const result2 = await validatedProvider.validateConfig({ apiKey: 'test-key' });
+      expect(result2.valid).toBe(true);
+      expect(result2.errors).toEqual([]);
+    });
+  });
+
+  describe('getAvailableModels', () => {
+    it('should return empty array by default', async () => {
+      const models = await provider.getAvailableModels();
+
+      expect(models).toEqual([]);
+    });
+
+    it('should allow subclasses to override', async () => {
+      class ModelProvider extends BaseAIProvider {
+        async getAvailableModels() {
+          return ['model-1', 'model-2', 'model-3'];
+        }
+
+        async generateCompletion(prompt) {
+          return prompt;
+        }
+
+        async generateCompletionStream(prompt, onChunk) {
+          onChunk(prompt);
+        }
+      }
+
+      const modelProvider = new ModelProvider();
+      const models = await modelProvider.getAvailableModels();
+
+      expect(models).toEqual(['model-1', 'model-2', 'model-3']);
+    });
+  });
+
+  describe('getProviderInfo', () => {
+    it('should return default provider info', () => {
+      const info = provider.getProviderInfo();
+
+      expect(info).toMatchObject({
+        id: 'test-provider',
+        name: 'Test Provider',
+        description: 'A test provider',
+        supportsStreaming: true,
+        requiresApiKey: false,
+        requiresLocalServer: false,
+        defaultModels: ['test-model-1', 'test-model-2'],
+      });
+    });
+
+    it('should generate id from class name', () => {
+      class CustomNamedProvider extends BaseAIProvider {
+        async generateCompletion(prompt) {
+          return prompt;
+        }
+
+        async generateCompletionStream(prompt, onChunk) {
+          onChunk(prompt);
+        }
+      }
+
+      const customProvider = new CustomNamedProvider();
+      const info = customProvider.getProviderInfo();
+
+      expect(info.id).toBe('customnamed');
+    });
+
+    it('should allow subclasses to override all fields', () => {
+      const customInfo = provider.getProviderInfo();
+
+      expect(customInfo).toHaveProperty('id');
+      expect(customInfo).toHaveProperty('name');
+      expect(customInfo).toHaveProperty('description');
+      expect(customInfo).toHaveProperty('supportsStreaming');
+      expect(customInfo).toHaveProperty('requiresApiKey');
+      expect(customInfo).toHaveProperty('requiresLocalServer');
+      expect(customInfo).toHaveProperty('defaultModels');
+    });
+  });
+
+  describe('retry configuration', () => {
+    it('should have default retry values', () => {
+      expect(provider.maxRetries).toBe(3);
+      expect(provider.initialRetryDelay).toBe(1000);
+      expect(provider.maxRetryDelay).toBe(30000);
+      expect(provider.retryBackoffMultiplier).toBe(2);
+    });
+
+    it('should allow custom retry configuration', () => {
+      const customProvider = new TestProvider();
+      customProvider.maxRetries = 5;
+      customProvider.initialRetryDelay = 2000;
+      customProvider.maxRetryDelay = 60000;
+      customProvider.retryBackoffMultiplier = 3;
+
+      expect(customProvider.maxRetries).toBe(5);
+      expect(customProvider.initialRetryDelay).toBe(2000);
+      expect(customProvider.maxRetryDelay).toBe(60000);
+      expect(customProvider.retryBackoffMultiplier).toBe(3);
+    });
+  });
+
+  describe('error handling', () => {
+    it('should throw descriptive errors for unimplemented methods', async () => {
+      class IncompleteProvider extends BaseAIProvider {}
+
+      const incompleteProvider = new IncompleteProvider();
+
+      expect(() => incompleteProvider.generateCompletion()).rejects.toThrow(
+        'generateCompletion must be implemented by subclass'
+      );
+      expect(() => incompleteProvider.generateCompletionStream()).rejects.toThrow(
+        'generateCompletionStream must be implemented by subclass'
+      );
+    });
+  });
+
+  describe('configuration management', () => {
+    it('should store arbitrary config properties', async () => {
+      const config = {
+        apiKey: 'test-key',
+        model: 'test-model',
+        temperature: 0.7,
+        maxTokens: 1000,
+        customProperty: 'custom-value',
+      };
+
+      await provider.initialize(config);
+
+      expect(provider.config).toEqual(config);
+    });
+
+    it('should allow config to be updated after initialization', async () => {
+      await provider.initialize({ apiKey: 'key1' });
+
+      provider.config.model = 'new-model';
+      expect(provider.config.model).toBe('new-model');
+    });
+  });
+});

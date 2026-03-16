@@ -117,6 +117,22 @@ function gemini_temperature() {
 }
 
 // ============================================
+// OpenRouter Configuration
+// ============================================
+
+function openrouter_api_key() {
+  return localStorage.getItem('openrouter_api_key');
+}
+
+function openrouter_model() {
+  return localStorage.getItem('openrouter_model') || 'anthropic/claude-sonnet-4';
+}
+
+function openrouter_temperature() {
+  return parseFloat(localStorage.getItem('openrouter_temperature')) || 0.3;
+}
+
+// ============================================
 // Transcription Provider Selection
 // ============================================
 
@@ -233,6 +249,11 @@ export default {
   gemini_api_key,
   gemini_model,
   gemini_temperature,
+
+  // OpenRouter
+  openrouter_api_key,
+  openrouter_model,
+  openrouter_temperature,
 
   // Transcription Provider selection
   transcription_provider,

@@ -5,6 +5,9 @@
  * This provides a consistent interface for the application to interact with
  * different AI services (OpenAI, Z.ai, Ollama, MLX, Anthropic, etc.)
  */
+
+import { withRetry, RetryPresets } from '@/utils/retryUtil';
+
 export class BaseAIProvider {
   constructor(config = {}) {
     if (new.target === BaseAIProvider) {
@@ -13,10 +16,10 @@ export class BaseAIProvider {
     this.config = config;
     this.initialized = false;
 
-    // Retry configuration
+    // Retry configuration (used as defaults for withRetry)
     this.maxRetries = 3;
     this.initialRetryDelay = 1000; // 1 second
-    this.maxRetryDelay = 10000; // 10 seconds
+    this.maxRetryDelay = 30000; // 30 seconds
     this.retryBackoffMultiplier = 2;
   }
 
@@ -33,6 +36,8 @@ export class BaseAIProvider {
    * Generate a completion from a prompt (non-streaming)
    * @param {string} prompt - The input prompt
    * @param {Object} options - Additional options
+   * @param {string[]} options.imageDataUrls - Array of base64 image data URLs (vision support)
+   * @param {string} options.systemPrompt - System prompt to override default
    * @returns {Promise<string>} The generated completion
    */
   async generateCompletion() {
@@ -44,6 +49,8 @@ export class BaseAIProvider {
    * @param {string} prompt - The input prompt
    * @param {Function} onChunk - Callback function for each chunk (receives text string)
    * @param {Object} options - Additional options
+   * @param {string[]} options.imageDataUrls - Array of base64 image data URLs (vision support)
+   * @param {string} options.systemPrompt - System prompt to override default
    * @returns {Promise<void>}
    */
   async generateCompletionStream() {
@@ -92,92 +99,78 @@ export class BaseAIProvider {
 
   /**
    * Execute a function with retry logic and exponential backoff
+   * Uses the shared retry utility with jitter and intelligent error detection.
    * @param {Function} fn - Async function to execute
    * @param {Object} options - Retry options
    * @returns {Promise<*>} Result of the function
    */
   async executeWithRetry(fn, options = {}) {
-    const {
-      maxRetries = this.maxRetries,
-      initialDelay = this.initialRetryDelay,
-      maxDelay = this.maxRetryDelay,
-      backoffMultiplier = this.retryBackoffMultiplier,
-      onRetry = null, // Callback for retry attempts
-    } = options;
+    const providerName = this.getProviderInfo().name;
 
-    let lastError;
-    let delay = initialDelay;
-
-    for (let attempt = 0; attempt <= maxRetries; attempt++) {
-      try {
-        return await fn();
-      } catch (error) {
-        lastError = error;
-
-        // Don't retry if this is the last attempt or error is not retryable
-        if (attempt === maxRetries || !this.isRetryableError(error)) {
-          throw error;
-        }
-
-        // Log retry attempt
-        console.warn(
-          `[${this.getProviderInfo().name}] Request failed (attempt ${attempt + 1}/${maxRetries + 1}): ${error.message}. Retrying in ${delay}ms...`
-        );
-
-        // Call retry callback if provided
-        if (onRetry) {
-          onRetry(attempt + 1, error, delay);
-        }
-
-        // Wait before retry
-        await this.sleep(delay);
-
-        // Calculate next delay with exponential backoff
-        delay = Math.min(delay * backoffMultiplier, maxDelay);
-      }
-    }
-
-    throw lastError;
+    return withRetry(fn, {
+      maxRetries: options.maxRetries ?? this.maxRetries,
+      initialDelayMs: options.initialDelay ?? this.initialRetryDelay,
+      maxDelayMs: options.maxDelay ?? this.maxRetryDelay,
+      backoffMultiplier: options.backoffMultiplier ?? this.retryBackoffMultiplier,
+      onRetry: options.onRetry,
+      context: providerName,
+    });
   }
 
   /**
-   * Check if an error is retryable
+   * Execute a function with a specific retry preset
+   * Convenience method for common retry scenarios.
+   * @param {Function} fn - Async function to execute
+   * @param {string} preset - Preset name: 'rateLimit', 'serverError', 'network', 'quick'
+   * @param {Object} options - Additional options to override preset
+   * @returns {Promise<*>} Result of the function
+   */
+  async executeWithRetryPreset(fn, preset = 'rateLimit', options = {}) {
+    const providerName = this.getProviderInfo().name;
+    const presetConfig = RetryPresets[preset];
+
+    if (!presetConfig) {
+      throw new Error(
+        `Unknown retry preset: ${preset}. Available: ${Object.keys(RetryPresets).join(', ')}`
+      );
+    }
+
+    return withRetry(fn, {
+      ...presetConfig,
+      ...options,
+      context: providerName,
+    });
+  }
+
+  /**
+   * @deprecated Use executeWithRetry with RetryPresets instead
+   * Check if an error is retryable (kept for backward compatibility)
    * @param {Error} error - The error to check
    * @returns {boolean} True if the error is retryable
    */
   isRetryableError(error) {
     // Network errors
     if (
-      error.message.includes('Failed to fetch') ||
-      error.message.includes('Network error') ||
-      error.message.includes('ECONNRESET') ||
-      error.message.includes('ETIMEDOUT') ||
-      error.message.includes('ENOTFOUND')
+      error.message?.includes('Failed to fetch') ||
+      error.message?.includes('Network error') ||
+      error.message?.includes('ECONNRESET') ||
+      error.message?.includes('ETIMEDOUT') ||
+      error.message?.includes('ENOTFOUND')
     ) {
       return true;
     }
 
     // HTTP status codes that are retryable
     if (
-      error.message.includes('429') || // Rate limit
-      error.message.includes('503') || // Service unavailable
-      error.message.includes('502') || // Bad gateway
-      error.message.includes('504')
+      error.message?.includes('429') || // Rate limit
+      error.message?.includes('503') || // Service unavailable
+      error.message?.includes('502') || // Bad gateway
+      error.message?.includes('504') // Gateway timeout
     ) {
-      // Gateway timeout
       return true;
     }
 
     return false;
-  }
-
-  /**
-   * Sleep for a specified duration
-   * @param {number} ms - Milliseconds to sleep
-   * @returns {Promise<void>}
-   */
-  sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
   }
 
   /**

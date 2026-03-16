@@ -22,11 +22,18 @@
           <el-option label="MLX (Apple Silicon, Free)" value="mlx" />
           <el-option label="Anthropic Claude" value="anthropic" />
           <el-option label="Google Gemini (Vision)" value="gemini" />
+          <el-option label="OpenRouter (300+ Models)" value="openrouter" />
         </el-select>
 
         <div v-if="ai_provider" class="test-section">
           <el-button size="small" :loading="loading_models" :icon="Refresh" @click="refreshModels">
-            {{ loading_models ? 'Loading...' : 'Refresh Models' }}
+            <span v-if="loading_models">
+              <span class="loading-dots">Loading models</span>
+              <span class="loading-dots">Loading models.</span>
+              <span class="loading-dots">Loading models..</span>
+              <span class="loading-dots">Loading models...</span>
+            </span>
+            <span v-else>Refresh Models</span>
           </el-button>
           <el-button
             size="small"
@@ -418,6 +425,66 @@
           />
         </div>
       </section>
+
+      <!-- OpenRouter Settings -->
+      <section v-show="ai_provider === 'openrouter'" class="settings-section">
+        <h2>OpenRouter</h2>
+        <p class="section-desc">
+          Access to 300+ LLMs including GPT-4, Claude, Gemini, Llama, and more through a single API.
+          <a href="https://openrouter.ai/keys" target="_blank">Get API key</a>
+          •
+          <a href="https://openrouter.ai/models" target="_blank">View all models</a>
+        </p>
+
+        <div class="form-group">
+          <label>API Key</label>
+          <el-input
+            v-model="openrouter_api_key"
+            placeholder="sk-or-v1-..."
+            show-password
+            @change="onKeyChange('openrouter_api_key')"
+          />
+          <p class="field-hint">Your API key starts with "sk-or-v1-"</p>
+        </div>
+
+        <div class="form-group">
+          <label>Model</label>
+          <el-select
+            v-model="openrouter_model"
+            style="width: 100%"
+            allow-create
+            filterable
+            @change="onKeyChange('openrouter_model')"
+          >
+            <el-option
+              v-for="model in openrouter_models"
+              :key="model"
+              :label="model"
+              :value="model"
+            />
+          </el-select>
+          <p class="field-hint">
+            Choose from 300+ models. Popular: anthropic/claude-sonnet-4, openai/gpt-4o,
+            google/gemini-pro-1.5
+          </p>
+        </div>
+
+        <div class="form-group">
+          <label>Temperature: {{ openrouter_temperature }}</label>
+          <el-slider
+            v-model="openrouter_temperature"
+            :min="0"
+            :max="2"
+            :step="0.1"
+            :show-tooltip="true"
+            style="width: 100%"
+            @change="onKeyChange('openrouter_temperature')"
+          />
+          <p class="field-hint">
+            Controls randomness. 0.3 = focused, 1.0 = creative. Range varies by model.
+          </p>
+        </div>
+      </section>
     </div>
   </SettingsLayout>
 </template>
@@ -468,6 +535,12 @@ const gemini_api_key = ref('');
 const gemini_model = ref('gemini-1.5-flash');
 const gemini_models = ref([]);
 const gemini_temperature = ref(0.3);
+
+// OpenRouter
+const openrouter_api_key = ref('');
+const openrouter_model = ref('anthropic/claude-sonnet-4');
+const openrouter_models = ref([]);
+const openrouter_temperature = ref(0.3);
 
 // State
 const loading_models = ref(false);
@@ -542,6 +615,12 @@ const getProviderConfig = providerId => {
         model: gemini_model.value,
         temperature: gemini_temperature.value,
       };
+    case 'openrouter':
+      return {
+        apiKey: openrouter_api_key.value,
+        model: openrouter_model.value,
+        temperature: openrouter_temperature.value,
+      };
     default:
       return {};
   }
@@ -563,11 +642,14 @@ const setDefaultModels = providerId => {
     ollama: ['llama2', 'mistral', 'codellama', 'gemma', 'phi', 'mixtral'],
     mlx: ['mlx-quantized', 'mlx-full', 'llama-mlx', 'mistral-mlx'],
     anthropic: [
-      'claude-3-haiku-20240307',
-      'claude-3-sonnet-20240229',
-      'claude-3-opus-20240229',
-      'claude-3-5-sonnet-20241022',
-      'claude-3-5-haiku-20241022',
+      'claude-sonnet-4-6',
+      'claude-opus-4-6',
+      'claude-haiku-4-5-20251001',
+      'claude-opus-4-5-20251101',
+      'claude-opus-4-1-20250805',
+      'claude-opus-4-20250514',
+      'claude-sonnet-4-5-20250929',
+      'claude-sonnet-4-20250514',
     ],
     gemini: [
       'gemini-1.5-flash',
@@ -575,6 +657,16 @@ const setDefaultModels = providerId => {
       'gemini-1.5-pro',
       'gemini-2.0-flash',
       'gemini-2.0-flash-lite',
+    ],
+    openrouter: [
+      'anthropic/claude-sonnet-4',
+      'anthropic/claude-opus-4',
+      'openai/gpt-4o',
+      'openai/gpt-4o-mini',
+      'google/gemini-pro-1.5',
+      'google/gemini-flash-1.5',
+      'meta-llama/llama-3.1-70b-instruct',
+      'mistralai/mistral-large',
     ],
   };
   const models = defaults[providerId] || [];
@@ -596,6 +688,9 @@ const setDefaultModels = providerId => {
       break;
     case 'gemini':
       gemini_models.value = models;
+      break;
+    case 'openrouter':
+      openrouter_models.value = models;
       break;
   }
 };
@@ -637,6 +732,9 @@ const loadModelsForProvider = async providerId => {
           break;
         case 'gemini':
           gemini_models.value = models;
+          break;
+        case 'openrouter':
+          openrouter_models.value = models;
           break;
       }
     } catch {
@@ -723,6 +821,9 @@ const onKeyChange = key_name => {
     gemini_api_key: gemini_api_key.value,
     gemini_model: gemini_model.value,
     gemini_temperature: gemini_temperature.value,
+    openrouter_api_key: openrouter_api_key.value,
+    openrouter_model: openrouter_model.value,
+    openrouter_temperature: openrouter_temperature.value,
   };
   localStorage.setItem(key_name, map[key_name]);
 
@@ -735,6 +836,7 @@ const onKeyChange = key_name => {
     ollama_endpoint: 'ollama',
     mlx_endpoint: 'mlx',
     gemini_api_key: 'gemini',
+    openrouter_api_key: 'openrouter',
   };
   if (reloadTriggers[key_name] && reloadTriggers[key_name] === ai_provider.value) {
     loadModelsForProvider(ai_provider.value);
@@ -774,6 +876,10 @@ onMounted(() => {
   gemini_model.value = config_util.gemini_model();
   gemini_temperature.value = config_util.gemini_temperature();
 
+  openrouter_api_key.value = config_util.openrouter_api_key();
+  openrouter_model.value = config_util.openrouter_model();
+  openrouter_temperature.value = config_util.openrouter_temperature();
+
   loadModelsForProvider(ai_provider.value);
 });
 </script>
@@ -781,6 +887,23 @@ onMounted(() => {
 <style scoped>
 .ai-settings {
   max-width: 100%;
+}
+
+.loading-dots {
+  animation: dots 1.4s infinite;
+}
+
+@keyframes dots {
+  0%,
+  20% {
+    opacity: 0.2;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.2;
+  }
 }
 
 .info-text {

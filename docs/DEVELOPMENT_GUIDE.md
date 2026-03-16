@@ -62,7 +62,7 @@ your-assistant/
 │   └── main.js               # Application entry point
 │
 ├── docs/                     # Documentation
-│   ├── azure_speech_service_tutorial.md
+│   ├── AZURE_SERVICE_TUTORIAL.md
 │   ├── AI_PROVIDERS_SETUP.md
 │   ├── TRANSCRIPTION_PROVIDERS_SETUP.md
 │   ├── TROUBLESHOOTING.md

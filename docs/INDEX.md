@@ -31,7 +31,7 @@ Quick reference to all Your Assistant documentation.
   - Detailed setup for each provider
   - Language support comparison
 
-- **[Azure Speech Service Tutorial](./azure_speech_service_tutorial.md)**
+- **[Azure Speech Service Tutorial](./AZURE_SERVICE_TUTORIAL.md)**
   - Step-by-step Azure setup with screenshots
 
 - **[Custom Language & Model Configuration](./CUSTOM_LANGUAGE_MODEL.md)**
@@ -57,6 +57,18 @@ Quick reference to all Your Assistant documentation.
 - **[Development Guide](./DEVELOPMENT_GUIDE.md)**
   - Project structure, architecture, provider system, adding new providers, contributing
 
+## CI/CD & Builds
+
+- **[Downloads & Installation](./DOWNLOADS.md)**
+  - Pre-built Electron apps for macOS, Windows, Linux
+  - Installation instructions for all platforms
+  - System requirements and troubleshooting
+
+- **[GitHub Actions Build](./GITHUB_ACTIONS_BUILD.md)**
+  - Automated Electron app builds for macOS, Windows, Linux
+  - GitHub Releases with installers
+  - Build artifacts and checksums
+
 ## Document Overview
 
 | Document | Purpose | Audience |
@@ -65,7 +77,7 @@ Quick reference to all Your Assistant documentation.
 | [Provider Comparison](./PROVIDER_COMPARISON.md) | Choose providers | Everyone |
 | [AI Providers Setup](./AI_PROVIDERS_SETUP.md) | Detailed AI setup | Users |
 | [Transcription Setup](./TRANSCRIPTION_PROVIDERS_SETUP.md) | Detailed transcription setup | Users |
-| [Azure Tutorial](./azure_speech_service_tutorial.md) | Azure specific | Azure users |
+| [Azure Tutorial](./AZURE_SERVICE_TUTORIAL.md) | Azure specific | Azure users |
 | [Custom Language & Model](./CUSTOM_LANGUAGE_MODEL.md) | Custom config | Power users |
 | [FAQ](./FAQ.md) | Common questions | Everyone |
 | [Troubleshooting](./TROUBLESHOOTING.md) | Fix issues | Users with issues |

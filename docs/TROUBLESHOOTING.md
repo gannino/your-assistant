@@ -569,7 +569,7 @@ Always check browser console for errors:
 1. **Documentation**
    - [AI Providers Setup](./AI_PROVIDERS_SETUP.md)
    - [Transcription Providers Setup](./TRANSCRIPTION_PROVIDERS_SETUP.md)
-   - [Azure Tutorial](./azure_speech_service_tutorial.md)
+   - [Azure Tutorial](./AZURE_SERVICE_TUTORIAL.md)
 
 2. **Provider Documentation**
    - OpenAI: https://platform.openai.com/docs

@@ -44,6 +44,8 @@ export class OpenAIProvider extends BaseAIProvider {
    * Generate a non-streaming completion
    * @param {string} prompt - The input prompt
    * @param {Object} options - Additional options
+   * @param {string[]} options.imageDataUrls - Array of base64 image data URLs (vision support)
+   * @param {string} options.systemPrompt - System prompt to override default
    * @returns {Promise<string>} The generated completion
    */
   async generateCompletion(prompt, options = {}) {
@@ -51,10 +53,26 @@ export class OpenAIProvider extends BaseAIProvider {
       throw new Error('OpenAI provider not initialized. Call initialize() first.');
     }
 
-    const { systemPrompt, max_tokens, max_completion_tokens, ...restOptions } = options;
+    const { systemPrompt, imageDataUrls, max_tokens, max_completion_tokens, ...restOptions } =
+      options;
     const messages = [];
     if (systemPrompt) messages.push({ role: 'system', content: systemPrompt });
-    messages.push({ role: 'user', content: prompt });
+
+    // Build user message with vision support
+    if (imageDataUrls && imageDataUrls.length > 0) {
+      // Multimodal request with images
+      const content = [{ type: 'text', text: prompt }];
+      for (const imageUrl of imageDataUrls) {
+        content.push({
+          type: 'image_url',
+          image_url: { url: imageUrl },
+        });
+      }
+      messages.push({ role: 'user', content });
+    } else {
+      // Text-only request
+      messages.push({ role: 'user', content: prompt });
+    }
 
     // Convert max_tokens to max_completion_tokens for newer models
     // Newer models (o1, o3, etc.) require max_completion_tokens instead of max_tokens
@@ -92,6 +110,8 @@ export class OpenAIProvider extends BaseAIProvider {
    * @param {string} prompt - The input prompt
    * @param {Function} onChunk - Callback function for each chunk
    * @param {Object} options - Additional options
+   * @param {string[]} options.imageDataUrls - Array of base64 image data URLs (vision support)
+   * @param {string} options.systemPrompt - System prompt to override default
    * @returns {Promise<void>}
    */
   async generateCompletionStream(prompt, onChunk, options = {}) {
@@ -99,10 +119,26 @@ export class OpenAIProvider extends BaseAIProvider {
       throw new Error('OpenAI provider not initialized. Call initialize() first.');
     }
 
-    const { systemPrompt, max_tokens, max_completion_tokens, ...restOptions } = options;
+    const { systemPrompt, imageDataUrls, max_tokens, max_completion_tokens, ...restOptions } =
+      options;
     const messages = [];
     if (systemPrompt) messages.push({ role: 'system', content: systemPrompt });
-    messages.push({ role: 'user', content: prompt });
+
+    // Build user message with vision support
+    if (imageDataUrls && imageDataUrls.length > 0) {
+      // Multimodal request with images
+      const content = [{ type: 'text', text: prompt }];
+      for (const imageUrl of imageDataUrls) {
+        content.push({
+          type: 'image_url',
+          image_url: { url: imageUrl },
+        });
+      }
+      messages.push({ role: 'user', content });
+    } else {
+      // Text-only request
+      messages.push({ role: 'user', content: prompt });
+    }
 
     // Build request options with proper token limit parameter
     const requestOptions = {

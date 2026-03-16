@@ -15,20 +15,27 @@ Get Your Assistant running in 5 minutes.
 
 **Cost:** $0/hour
 
-## Option 2: Recommended (Best Balance)
+## Option 2: OpenRouter (300+ Models)
 
-**Best for:** Most users — good quality at low cost
+**Best for:** Access to all major AI models through a single API
 
-1. Get **OpenAI API key**: https://platform.openai.com/api-keys
+1. Get **OpenRouter API key**: https://openrouter.ai/keys
 2. Go to **Settings → AI Provider**
-   - Select **OpenAI**
+   - Select **OpenRouter (300+ Models)**
    - Paste your API key
-   - Choose model: `gpt-3.5-turbo` (fast) or `gpt-4` (best quality)
+   - Choose model: `anthropic/claude-sonnet-4` (balanced) or `openai/gpt-4o` (latest)
 3. Go to **Settings → Speech Recognition**
    - Select **Web Speech API** (free) or **Azure** (5 free hours/month)
 4. Click **Start Session**
 
-**Cost:** $0.10–0.20/hour
+**Cost:** $0.10–1.00/hour (varies by model)
+
+**Why OpenRouter?**
+- ✅ Access to GPT-4, Claude, Gemini, Llama, and 300+ more
+- ✅ Unified billing across all providers
+- ✅ Cost tracking included
+- ✅ Automatic model updates
+- ✅ No vendor lock-in
 
 ## Option 3: Premium (Best Quality)
 
@@ -86,6 +93,10 @@ You can add your own messages alongside the transcribed speech:
 | Microphone fails in Electron | Use `npm run electron:dev:https` instead of `electron:dev` |
 
 ## Electron Desktop App
+
+**💡 Want to skip building?** Download pre-built apps for macOS, Windows, and Linux from [GitHub Releases](https://github.com/gma/your-assistant/releases). See [Downloads & Installation Guide](./DOWNLOADS.md) for detailed instructions.
+
+---
 
 Run Your Assistant as a transparent always-on-top overlay on your desktop.
 

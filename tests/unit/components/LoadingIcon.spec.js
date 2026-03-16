@@ -1,6 +1,6 @@
 import { describe, it, expect } from '@jest/globals';
 import { mount } from '@vue/test-utils';
-import LoadingIcon from './LoadingIcon.vue';
+import LoadingIcon from '@/components/LoadingIcon.vue';
 
 describe('LoadingIcon.vue', () => {
   it('renders correctly', () => {

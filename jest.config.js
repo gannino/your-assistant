@@ -19,6 +19,7 @@ module.exports = {
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'html'],
   testMatch: [
+    '<rootDir>/tests/**/*.(spec|test).(js|ts)',
     '<rootDir>/src/**/__tests__/**/*.(js|ts)',
     '<rootDir>/src/**/*.spec.(js|ts)'
   ],

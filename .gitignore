@@ -54,6 +54,7 @@ sessionStorage.json
 build/
 coverage/
 .nyc_output/
+release/
 
 # Environment-specific files
 .env

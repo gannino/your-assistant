@@ -7,6 +7,10 @@ const isDev = process.env.NODE_ENV === 'development';
 const DEV_URL = process.env.VUE_APP_HTTPS === 'true'
   ? 'https://localhost:8080'
   : 'http://localhost:8080';
+
+// In production, load from the dist directory
+// In Electron apps, __dirname is inside the app.asar archive
+// The dist folder should be at the same level as the electron folder
 const PROD_FILE = path.join(__dirname, '../dist/index.html');
 
 const OVERLAY_WIDTH = 1920;
@@ -47,17 +51,58 @@ function createWindow() {
     },
   });
 
+  // Open DevTools in development for debugging
   if (isDev) {
-    mainWindow.loadURL(DEV_URL);
-  } else {
-    mainWindow.loadFile(PROD_FILE);
+    mainWindow.webContents.openDevTools();
   }
+
+  if (isDev) {
+    console.log('[Electron] Loading dev URL:', DEV_URL);
+    mainWindow.loadURL(DEV_URL).catch(err => {
+      console.error('[Electron] Failed to load dev URL:', err);
+    });
+  } else {
+    console.log('[Electron] Loading prod file:', PROD_FILE);
+    console.log('[Electron] __dirname:', __dirname);
+    console.log('[Electron] File exists:', require('fs').existsSync(PROD_FILE));
+
+    mainWindow.loadFile(PROD_FILE).catch(err => {
+      console.error('[Electron] Failed to load prod file:', err);
+      // Try loading from alternative locations
+      const alternatives = [
+        path.join(process.resourcesPath, 'app', 'dist', 'index.html'),
+        path.join(process.resourcesPath, 'dist', 'index.html'),
+      ];
+
+      for (const altPath of alternatives) {
+        console.log('[Electron] Trying alternative path:', altPath);
+        if (require('fs').existsSync(altPath)) {
+          mainWindow.loadFile(altPath).catch(e => console.error('[Electron] Failed:', e));
+          return;
+        }
+      }
+    });
+  }
+
+  // Log page loading events for debugging
+  mainWindow.webContents.on('did-start-loading', () => {
+    console.log('[Electron] Page started loading');
+  });
+
+  mainWindow.webContents.on('did-finish-load', () => {
+    console.log('[Electron] Page finished loading');
+  });
+
+  mainWindow.webContents.on('did-fail-load', (_event, errorCode, errorDescription) => {
+    console.error('[Electron] Page failed to load:', errorCode, errorDescription);
+  });
 
   mainWindow.on('blur', () => {
     mainWindow.setAlwaysOnTop(true, 'floating');
   });
 
   mainWindow.once('ready-to-show', () => {
+    console.log('[Electron] Window ready to show');
     // Window starts hidden — user shows it via tray or Cmd+Shift+Space
   });
 

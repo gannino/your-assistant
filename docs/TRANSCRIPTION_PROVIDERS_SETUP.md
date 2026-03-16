@@ -24,7 +24,7 @@ This guide walks you through setting up each transcription provider available in
 ### Setup Steps
 
 1. **Get Azure Speech Service Key**
-   - Follow the [Azure Speech Service Tutorial](./azure_speech_service_tutorial.md)
+   - Follow the [Azure Speech Service Tutorial](./AZURE_SERVICE_TUTORIAL.md)
    - Create a free Azure account
    - Create a Speech resource
    - Get your API Key and Region
@@ -553,4 +553,4 @@ You can switch providers at any time:
 For more information, see:
 - [AI Providers Setup](./AI_PROVIDERS_SETUP.md)
 - [Troubleshooting Guide](./TROUBLESHOOTING.md)
-- [Azure Speech Tutorial](./azure_speech_service_tutorial.md)
+- [Azure Speech Tutorial](./AZURE_SERVICE_TUTORIAL.md)

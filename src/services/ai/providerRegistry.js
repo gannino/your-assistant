@@ -5,13 +5,14 @@
  * Provides a simple interface to get providers by ID.
  */
 
-// Import providers (will be implemented next)
+// Import providers
 import { OpenAIProvider } from './providers/OpenAIProvider';
 import { ZaiProvider } from './providers/ZaiProvider';
 import { OllamaProvider } from './providers/OllamaProvider';
 import { MLXProvider } from './providers/MLXProvider';
 import { AnthropicProvider } from './providers/AnthropicProvider';
 import { GeminiProvider } from './providers/GeminiProvider';
+import { OpenRouterProvider } from './providers/OpenRouterProvider';
 
 class ProviderRegistry {
   constructor() {
@@ -57,6 +58,12 @@ class ProviderRegistry {
       this.register(new GeminiProvider());
     } catch (e) {
       console.warn('Failed to register Gemini provider:', e.message);
+    }
+
+    try {
+      this.register(new OpenRouterProvider());
+    } catch (e) {
+      console.warn('Failed to register OpenRouter provider:', e.message);
     }
   }
 

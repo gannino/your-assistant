@@ -51,7 +51,7 @@
         <p class="section-desc">
           High accuracy speech recognition.
           <a
-            href="https://github.com/gannino/your-assistant/blob/main/docs/azure_speech_service_tutorial.md"
+            href="https://github.com/gannino/your-assistant/blob/main/docs/AZURE_SERVICE_TUTORIAL.md"
             target="_blank"
             >Get free API key</a
           >

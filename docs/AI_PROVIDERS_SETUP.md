@@ -9,6 +9,8 @@ This guide walks you through setting up each AI provider available in Your Assis
 - [Ollama](#ollama)
 - [MLX](#mlx)
 - [Anthropic Claude](#anthropic-claude)
+- [Google Gemini](#google-gemini)
+- [OpenRouter](#openrouter)
 - [Choosing the Right Provider](#choosing-the-right-provider)
 
 ---
@@ -319,6 +321,80 @@ This guide walks you through setting up each AI provider available in Your Assis
 - Install MLX: `pip install mlx`
 - Install MLX server: `pip install mlx-server`
 - Check Python version compatibility
+
+---
+
+## OpenRouter
+
+### Overview
+- **Models**: 300+ models including GPT-4, Claude, Gemini, Llama, Mistral, and more
+- **API Key Required**: Yes
+- **Streaming Support**: Yes
+- **Vision Support**: Yes (for multimodal models)
+- **Best For**: Access to all major AI models through a single API
+
+### Setup Steps
+
+1. **Get API Key**
+   - Visit <https://openrouter.ai/keys>
+   - Sign up or log in
+   - Generate an API key
+   - Copy the key (starts with `sk-or-v1-`)
+
+2. **Configure in Your Assistant**
+   - Open Settings
+   - Select "OpenRouter (300+ Models)" as AI Provider
+   - Paste your API Key
+   - Choose a model (recommended: `anthropic/claude-sonnet-4`)
+
+3. **Test Connection**
+   - Click "Test Connection" button
+   - Verify connection is successful
+
+### Popular Models
+
+**Claude Models:**
+- `anthropic/claude-sonnet-4` - Best balance of speed/capability
+- `anthropic/claude-opus-4` - Most capable Claude model
+
+**OpenAI Models:**
+- `openai/gpt-4o` - OpenAI's latest GPT-4
+- `openai/gpt-4o-mini` - Faster and cheaper
+
+**Google Models:**
+- `google/gemini-pro-1.5` - Google's Gemini Pro
+- `google/gemini-flash-1.5` - Faster Gemini model
+
+**Open Source:**
+- `meta-llama/llama-3.1-70b-instruct` - Meta's Llama
+- `mistralai/mistral-large` - Mistral's large model
+
+Browse all models at <https://openrouter.ai/models>
+
+### Pricing
+- Pricing varies by model (provider-specific)
+- Unified billing across all providers
+- Cost tracking included in API responses
+- No minimum commitments
+- Generally comparable to direct provider pricing
+
+### Pros & Cons
+✅ Access to 300+ models through single API
+✅ Unified billing and cost tracking
+✅ Automatic model updates
+✅ No vendor lock-in
+✅ Vision support for multimodal models
+✅ Competitive pricing
+❌ Requires API key
+❌ Another account to manage
+❌ Dependent on OpenRouter service availability
+
+### Why Choose OpenRouter?
+- **Flexibility**: Switch between models instantly without changing API keys
+- **Cost Optimization**: Compare costs and choose the best model for each task
+- **Future-Proof**: New models added automatically as they're released
+- **Transparent**: Built-in cost tracking shows exactly what you're spending
+- **Reliable**: Smart caching and retry logic prevent rate limiting
 
 ---
 

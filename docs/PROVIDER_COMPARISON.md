@@ -17,6 +17,10 @@ Quick reference for choosing the right providers.
 **Best Value**
 - Z.ai GLM-4.7 ($0.05-0.10/hour)
 - Ollama (free, local)
+- OpenRouter (competitive pricing, 300+ models)
+
+**Best for Flexibility**
+- OpenRouter (switch between 300+ models instantly)
 
 **Best for Chinese**
 - Z.ai GLM-4 series
@@ -28,16 +32,18 @@ Quick reference for choosing the right providers.
 
 ### Detailed Comparison
 
-| Feature | OpenAI | Z.ai | Ollama | MLX | Anthropic |
-|---------|--------|------|--------|-----|-----------|
-| **Cost/hour** | $0.10-2.00 | $0.05-0.10 | Free | Free | $0.20-1.50 |
-| **Quality** | Excellent | Good | Good | Good | Excellent |
-| **Speed** | Fast | Fast | Slow | Medium | Fast |
-| **Setup** | API key | API key | Local install | Local install | API key |
-| **Privacy** | Cloud | Cloud | Local | Local | Cloud |
-| **Chinese** | Good | Excellent | Good | Good | Good |
-| **Streaming** | Yes | Yes | Yes | Yes | Yes |
-| **Free tier** | No | No | Yes | Yes | No |
+| Feature | OpenAI | Z.ai | Ollama | MLX | Anthropic | Gemini | OpenRouter |
+|---------|--------|------|--------|-----|-----------|---------|------------|
+| **Cost/hour** | $0.10-2.00 | $0.05-0.10 | Free | Free | $0.20-1.50 | $0.10-0.50 | $0.10-1.00 |
+| **Quality** | Excellent | Good | Good | Good | Excellent | Excellent | Excellent |
+| **Speed** | Fast | Fast | Slow | Medium | Fast | Fast | Fast |
+| **Setup** | API key | API key | Local install | Local install | API key | API key | API key |
+| **Privacy** | Cloud | Cloud | Local | Local | Cloud | Cloud | Cloud |
+| **Chinese** | Good | Excellent | Good | Good | Good | Good | Good |
+| **Streaming** | Yes | Yes | Yes | Yes | Yes | Yes | Yes |
+| **Vision** | Yes | Yes | No | No | Yes | Yes | Yes |
+| **Free tier** | No | No | Yes | Yes | No | No | No |
+| **Model count** | 5 | 4 | 50+ | 10+ | 6 | 5 | 300+ |
 
 ### Pricing Breakdown (per hour)
 
@@ -57,6 +63,12 @@ Quick reference for choosing the right providers.
 
 **Ollama/MLX**
 - Free (local)
+
+**OpenRouter** (varies by model)
+- Claude Sonnet 4: $0.30-0.50/hour
+- GPT-4o: $0.20-0.40/hour
+- Gemini Pro 1.5: $0.10-0.20/hour
+- Llama 3.1 70B: $0.05-0.10/hour
 
 ---
 
@@ -124,7 +136,7 @@ Quick reference for choosing the right providers.
 - **Setup:** 30 minutes
 
 ### For Learning (Low Cost)
-- **AI:** Z.ai GLM-4.7 ($0.05-0.10/hour)
+- **AI:** Z.ai GLM-4.7 ($0.05-0.10/hour) or OpenRouter with Llama 3.1 70B ($0.05-0.10/hour)
 - **Transcription:** Web Speech API (free)
 - **Cost:** $0.05-0.10/hour
 - **Setup:** 10 minutes
@@ -136,10 +148,17 @@ Quick reference for choosing the right providers.
 - **Setup:** 15 minutes
 
 ### For Quality (Premium)
-- **AI:** OpenAI GPT-4 ($0.80-1.50/hour)
+- **AI:** OpenAI GPT-4 ($0.80-1.50/hour) or OpenRouter with Claude Opus 4 ($0.80-1.20/hour)
 - **Transcription:** Whisper ($0.36/hour)
 - **Cost:** $1.16-1.86/hour
 - **Setup:** 15 minutes
+
+### For Maximum Flexibility
+- **AI:** OpenRouter (300+ models, $0.10-1.00/hour depending on model)
+- **Transcription:** Web Speech API (free) or Azure (5 free hours)
+- **Cost:** $0.10-1.00/hour
+- **Setup:** 10 minutes
+- **Benefits:** Switch between GPT-4, Claude, Gemini, and more instantly
 
 ### For Real-time (live sessions)
 - **AI:** OpenAI GPT-3.5 Turbo ($0.10-0.20/hour)

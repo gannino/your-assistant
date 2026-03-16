@@ -183,7 +183,7 @@
               </div>
             </div>
 
-            <div class="panel-content">
+            <div ref="asrResponseContainer" class="panel-content" @scroll="onAsrContainerScroll">
               <div v-if="!currentText" class="empty-state">
                 <el-icon :size="isMobile ? 64 : 48" color="#c0c4cc">
                   <Microphone />
@@ -512,6 +512,7 @@ const copilot_stopping = ref(false);
 const show_ai_thinking_effect = ref(false);
 const transcriptionProvider = ref(null);
 const aiResponseContainer = ref(null); // Reference to AI response container for auto-scrolling
+const asrResponseContainer = ref(null); // Reference to ASR response container for auto-scrolling
 const responseCount = ref(0); // Track number of AI responses for better formatting
 const hasStartedResponse = ref(false); // Track if we've started a response (to avoid duplicate separators)
 const currentQuestion = ref(''); // Track the current question being asked
@@ -1241,6 +1242,51 @@ function onContainerScroll() {
   userScrolledUp.value = distanceFromBottom > 80;
 }
 
+// ── Speech panel auto-scroll ─────────────────────────────────────────────────
+const userScrolledUpAsr = ref(false);
+let asrScrollRafId = null;
+let lastAsrScrollTime = null;
+
+function startAsrSmoothScroll() {
+  if (asrScrollRafId) return;
+
+  function step(timestamp) {
+    const el = asrResponseContainer.value;
+    if (!el || userScrolledUpAsr.value) {
+      asrScrollRafId = null;
+      lastAsrScrollTime = null;
+      return;
+    }
+
+    if (lastAsrScrollTime === null) lastAsrScrollTime = timestamp;
+    const delta = ((timestamp - lastAsrScrollTime) / 1000) * SCROLL_SPEED.value;
+    lastAsrScrollTime = timestamp;
+
+    const target = el.scrollHeight - el.clientHeight;
+    const remaining = target - el.scrollTop;
+
+    if (remaining <= 1) {
+      // Already at bottom — idle until next content arrives
+      asrScrollRafId = null;
+      lastAsrScrollTime = null;
+      return;
+    }
+
+    el.scrollTop = Math.min(el.scrollTop + delta, target);
+    asrScrollRafId = requestAnimationFrame(step);
+  }
+
+  asrScrollRafId = requestAnimationFrame(step);
+}
+
+function onAsrContainerScroll() {
+  const el = asrResponseContainer.value;
+  if (!el) return;
+  const distanceFromBottom = el.scrollHeight - el.clientHeight - el.scrollTop;
+  // If user scrolled more than 80px from bottom, consider it intentional
+  userScrolledUpAsr.value = distanceFromBottom > 80;
+}
+
 watch(
   () => ai_result.value,
   async () => {
@@ -1257,6 +1303,15 @@ watch(
       userScrolledUp.value = false;
       startSmoothScroll();
     }
+  }
+);
+
+// Auto-scroll speech panel when new text arrives
+watch(
+  () => currentText.value,
+  async () => {
+    await nextTick();
+    if (!userScrolledUpAsr.value) startAsrSmoothScroll();
   }
 );
 
@@ -1597,6 +1652,12 @@ const getProviderConfig = providerId => {
         model: config_util.gemini_model(),
         temperature: config_util.gemini_temperature(),
       };
+    case 'openrouter':
+      return {
+        apiKey: config_util.openrouter_api_key(),
+        model: config_util.openrouter_model(),
+        temperature: config_util.openrouter_temperature(),
+      };
     default:
       throw new Error(`Unknown provider: ${providerId}`);
   }
@@ -1605,6 +1666,23 @@ const getProviderConfig = providerId => {
 const clearASRContent = () => {
   currentText.value = '';
   resetProcessedPosition();
+
+  // Clear from localStorage to persist the clear operation
+  if (isMobile.value) {
+    try {
+      const saved = localStorage.getItem(MOBILE_SESSION_KEY);
+      if (saved) {
+        const session = JSON.parse(saved);
+        session.currentText = '';
+        session.timestamp = Date.now();
+        localStorage.setItem(MOBILE_SESSION_KEY, JSON.stringify(session));
+        console.log('[Transcript] Cleared transcript from localStorage');
+      }
+    } catch (e) {
+      console.warn('[Transcript] Failed to clear transcript from localStorage:', e.message);
+    }
+  }
+
   console.log('[Transcript] Cleared transcript and reset position tracking');
 };
 
@@ -1748,6 +1826,24 @@ const clearAIResponse = () => {
   responseCount.value = 0; // Reset response counter
   hasStartedResponse.value = false; // Reset response start flag
   currentQuestion.value = ''; // Reset current question
+
+  // Clear from localStorage to persist the clear operation
+  if (isMobile.value) {
+    try {
+      const saved = localStorage.getItem(MOBILE_SESSION_KEY);
+      if (saved) {
+        const session = JSON.parse(saved);
+        session.aiResult = '';
+        session.conversationHistory = null;
+        session.sessionSummary = null;
+        session.timestamp = Date.now();
+        localStorage.setItem(MOBILE_SESSION_KEY, JSON.stringify(session));
+        console.log('[AI Response] Cleared from localStorage');
+      }
+    } catch (e) {
+      console.warn('[AI Response] Failed to clear from localStorage:', e.message);
+    }
+  }
 };
 
 const startCopilot = async () => {
@@ -1762,6 +1858,10 @@ const startCopilot = async () => {
     console.warn('[Session] Preventing auto-activation - already processing');
     return;
   }
+
+  // Reset scroll state for new session
+  userScrolledUpAsr.value = false;
+  userScrolledUp.value = false;
 
   copilot_starting.value = true;
 
@@ -2425,11 +2525,16 @@ const getTranscriptionProviderConfig = providerId => {
   }
 
   /* Ensure AI response panel is scrollable */
-  .panel-content:has(.markdown-body) {
+  .panel-content:has(.markdown-content) {
     overflow-y: auto;
     max-height: calc(
       100vh - 280px
     ); /* Leave room for header (~60px) and action bar (~184px) + spacing */
+  }
+
+  /* Fallback for browsers without :has() support - ensures all panel-content containers have max-height on mobile */
+  .panel-content {
+    max-height: calc(100vh - 280px);
   }
 
   /* Mobile: Ensure panel-actions are properly styled and don't cause overlap */

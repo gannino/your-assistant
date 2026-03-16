@@ -7,6 +7,13 @@
 
 import { BaseAIProvider } from './BaseAIProvider';
 import { StreamParser } from '../streaming';
+import { getCachedModels, setCachedModels } from '@/utils/modelCacheUtil';
+import {
+  handleHttpError,
+  handleNetworkError,
+  logSuccess,
+  requireInitialized,
+} from '@/utils/apiErrorHandler';
 
 export class MLXProvider extends BaseAIProvider {
   constructor() {
@@ -38,9 +45,7 @@ export class MLXProvider extends BaseAIProvider {
    * @returns {Promise<void>}
    */
   async generateCompletionStream(prompt, onChunk, options = {}) {
-    if (!this.initialized) {
-      throw new Error('MLX provider not initialized. Call initialize() first.');
-    }
+    requireInitialized(this.initialized, 'MLX');
 
     const endpoint = this.config.endpoint.replace(/\/$/, '');
     const url = `${endpoint}/v1/chat/completions`;
@@ -66,76 +71,20 @@ export class MLXProvider extends BaseAIProvider {
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`MLX API error: ${response.status} ${response.statusText} - ${errorText}`);
+        await handleHttpError(response, 'MLX', {
+          fallbackModels: this.getDefaultModels(),
+          docsUrl: 'https://github.com/ml-explore/mlx',
+        });
+        throw new Error(`MLX API error: ${response.status} ${response.statusText}`);
       }
 
       // Use shared StreamParser for OpenAI-compatible format
       const parser = StreamParser.openAICompatible();
       await parser.parseStream(response.body, onChunk);
     } catch (error) {
-      throw new Error(`MLX request failed: ${error.message}`);
+      handleNetworkError(error, 'MLX', 'Streaming request');
+      throw error;
     }
-  }
-
-  /**
-   * Parse server-sent events (SSE) format from streaming response
-   * @param {string} chunk - Raw chunk from the stream
-   * @returns {string} Extracted content text
-   */
-  parseStreamChunk(chunk) {
-    // Initialize buffer if not exists
-    if (!this.streamBuffer) {
-      this.streamBuffer = '';
-    }
-
-    // Add new chunk to buffer
-    this.streamBuffer += chunk;
-
-    const lines = this.streamBuffer.split('\n');
-    let content = '';
-    let completeLines = [];
-
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i].trim();
-
-      // Skip empty lines and non-data lines
-      if (!line || !line.startsWith('data: ')) {
-        continue;
-      }
-
-      const data = line.slice(6); // Remove 'data: ' prefix
-
-      // Check for stream end
-      if (data === '[DONE]') {
-        continue;
-      }
-
-      // Try to parse as JSON
-      try {
-        const parsed = JSON.parse(data);
-        const delta = parsed.choices?.[0]?.delta;
-        if (delta?.content) {
-          content += delta.content;
-        }
-        // Successfully parsed, so this line is complete
-        completeLines.push(i);
-      } catch (e) {
-        // JSON parse error - likely incomplete chunk
-        // Keep this line in buffer for next chunk
-        // Don't add to completeLines
-      }
-    }
-
-    // Remove complete lines from buffer (in reverse order to maintain indices)
-    for (let i = completeLines.length - 1; i >= 0; i--) {
-      lines.splice(completeLines[i], 1);
-    }
-
-    // Keep incomplete lines in buffer
-    this.streamBuffer = lines.join('\n');
-
-    return content;
   }
 
   /**
@@ -165,10 +114,17 @@ export class MLXProvider extends BaseAIProvider {
    * @returns {Promise<Array<string>>} Array of model names
    */
   async getAvailableModels() {
+    // Check cache first
+    const cached = getCachedModels('mlx');
+    if (cached) {
+      return cached;
+    }
+
     // Try to fetch from MLX server if available, otherwise return common models
     const endpoint = (this.config?.endpoint || 'http://localhost:8080').replace(/\/$/, '');
 
     try {
+      console.log('[MLX] Attempting to fetch models from server...');
       const response = await fetch(`${endpoint}/v1/models`, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
@@ -177,14 +133,37 @@ export class MLXProvider extends BaseAIProvider {
       if (response.ok) {
         const data = await response.json();
         if (data.data && Array.isArray(data.data)) {
-          return data.data.map(m => m.id);
+          const models = data.data.map(m => m.id);
+          logSuccess('MLX', 'Fetched models from server', models.length);
+          // Cache the results
+          setCachedModels('mlx', models);
+          return models;
         }
+      } else {
+        // Handle HTTP errors
+        const fallbackModels = await handleHttpError(response, 'MLX', {
+          fallbackModels: this.getDefaultModels(),
+          docsUrl: 'https://github.com/ml-explore/mlx',
+        });
+        setCachedModels('mlx', fallbackModels);
+        return fallbackModels;
       }
     } catch (error) {
-      console.warn('Could not fetch MLX models from server:', error.message);
+      handleNetworkError(error, 'MLX', 'Fetching models');
     }
 
     // Return comprehensive list of common MLX models
+    const defaultModels = this.getDefaultModels();
+    console.log('[MLX] Using default model list');
+    setCachedModels('mlx', defaultModels);
+    return defaultModels;
+  }
+
+  /**
+   * Get default model list
+   * @returns {Array<string>} Default model names
+   */
+  getDefaultModels() {
     return [
       // Quantized variants
       'mlx-quantized',

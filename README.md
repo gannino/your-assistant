@@ -4,7 +4,7 @@
 
 **Online Demo:** https://your-assistant.github.io
 
-Your Assistant is a cross-platform web application that listens to live audio, transcribes speech in real-time, and generates intelligent AI responses to help you during any session — meetings,s, research, or any scenario where you need an AI copilot.
+Your Assistant is a cross-platform web application that listens to live audio, transcribes speech in real-time, and generates intelligent AI responses to help you during any session — meetings, research, or any scenario where you need an AI copilot.
 
 ## Application Screenshots
 
@@ -43,14 +43,71 @@ The application provides comprehensive settings for configuring AI providers, sp
 
 ## Quick Start
 
-**Get started in 5 minutes:**
+**Choose your experience:**
 
-1. **Free Option:** Select Web Speech API + Ollama (no API keys needed)
-2. **Recommended:** Get OpenAI API key + Web Speech API (~$0.10/hour)
-3. **Premium:** Get OpenAI + Whisper API keys (~$1.00/hour)
-4. **Desktop App:** Run as an Electron overlay — see [Quick Start Guide](./docs/QUICK_START.md#electron-desktop-app)
+### 🌐 Web Browser (Easiest)
+
+1. Visit: https://your-assistant.github.io
+2. Configure your AI provider
+3. Start using immediately!
+
+### 💻 Desktop App (Recommended)
+
+1. **Download pre-built app** from [GitHub Releases](https://github.com/gma/your-assistant/releases)
+2. Install and run
+3. Configure your AI provider
+4. Enjoy always-on-top overlay!
+
+**Or build from source:**
+
+1. Clone repository
+2. `npm install`
+3. `npm run electron:dev` (development) or `npm run electron:build` (build)
 
 👉 **[Full Quick Start Guide](./docs/QUICK_START.md)**
+
+## Downloads
+
+### 🎁 Pre-Built Desktop Apps
+
+**Latest Release:** [github.com/gma/your-assistant/releases](https://github.com/gma/your-assistant/releases)
+
+#### Available Platforms:
+
+| Platform | Download | Size | Requirements |
+|----------|----------|------|--------------|
+| **macOS** | `Your Assistant-0.1.0-arm64.dmg` | ~140 MB | macOS 11+ (Apple Silicon M1/M2/M3/M4) |
+| **Windows** | `Your Assistant-0.1.0-setup.exe` | ~145 MB | Windows 10/11 (x64) |
+| **Linux** | `Your-Assistant-0.1.0.AppImage` | ~150 MB | Ubuntu/Debian/Fedora (x64) |
+
+#### Installation:
+
+**macOS:**
+1. Download `.dmg` file
+2. Open and drag "Your Assistant" to Applications
+3. Launch from Applications folder
+4. **Note:** You may need to right-click → Open on first launch (unsigned app)
+
+**Windows:**
+1. Download `.exe` installer
+2. Run installer
+3. Launch from Start Menu or desktop shortcut
+
+**Linux:**
+1. Download `.AppImage` file
+2. Make executable: `chmod +x Your-Assistant-*.AppImage`
+3. Run: `./Your-Assistant-*.AppImage`
+
+#### Features in Desktop App:
+
+✅ **Transparent Overlay** - Always-on-top window that floats over other apps
+✅ **Global Shortcuts** - Show/hide with Cmd+Shift+Space
+✅ **Window Movement** - Move with arrow keys
+✅ **Configurable Opacity** - Adjust transparency level
+✅ **Screenshot Capture** - Silent screen capture included
+✅ **No Browser Required** - Standalone desktop application
+
+**Previous Releases:** All releases available at [github.com/gma/your-assistant/releases](https://github.com/gma/your-assistant/releases)
 
 ## Supported Providers
 
