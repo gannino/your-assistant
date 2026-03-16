@@ -326,11 +326,16 @@ describe('retryUtil', () => {
     it('should handle successful function after many retries', async () => {
       const fn = jest
         .fn()
-        .mockRejectedValueN Times(
-          9,
-          { status: 429, message: 'Rate limited' }
-        )
-        .mockResolvedValue('success');
+        .mockRejectedValueOnce({ status: 429, message: 'Rate limited' })
+        .mockRejectedValueOnce({ status: 429, message: 'Rate limited' })
+        .mockRejectedValueOnce({ status: 429, message: 'Rate limited' })
+        .mockRejectedValueOnce({ status: 429, message: 'Rate limited' })
+        .mockRejectedValueOnce({ status: 429, message: 'Rate limited' })
+        .mockRejectedValueOnce({ status: 429, message: 'Rate limited' })
+        .mockRejectedValueOnce({ status: 429, message: 'Rate limited' })
+        .mockRejectedValueOnce({ status: 429, message: 'Rate limited' })
+        .mockRejectedValueOnce({ status: 429, message: 'Rate limited' })
+        .mockResolvedValueOnce('success');
 
       const result = await withRetry(fn, { maxRetries: 10 });
 

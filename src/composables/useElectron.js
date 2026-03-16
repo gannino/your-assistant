@@ -6,8 +6,17 @@
 export function useElectron() {
   const isElectron = !!window.electronAPI?.isElectron;
 
-  const hideWindow = () => window.electronAPI?.hideWindow();
-  const moveWindow = (dx, dy) => window.electronAPI?.moveWindow(dx, dy);
+  const hideWindow = () => {
+    if (typeof window.electronAPI?.hideWindow === 'function') {
+      window.electronAPI.hideWindow();
+    }
+  };
+
+  const moveWindow = (dx, dy) => {
+    if (typeof window.electronAPI?.moveWindow === 'function') {
+      window.electronAPI.moveWindow(dx, dy);
+    }
+  };
 
   return { isElectron, hideWindow, moveWindow };
 }
