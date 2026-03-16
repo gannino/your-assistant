@@ -71,7 +71,7 @@ export class OllamaProvider extends BaseAIProvider {
       });
 
       if (!response.ok) {
-        const fallbackModels = await handleHttpError(response, 'Ollama', {
+        await handleHttpError(response, 'Ollama', {
           fallbackModels: this.getDefaultModels(),
         });
         throw new Error(`Ollama API error: ${response.status} ${response.statusText}`);

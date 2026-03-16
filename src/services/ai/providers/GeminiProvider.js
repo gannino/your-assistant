@@ -218,7 +218,7 @@ export class GeminiProvider extends BaseAIProvider {
             );
             return this.modelsCache || this.getHardcodedModels();
 
-          case 429:
+          case 429: {
             const waitTime = Math.ceil(this.CACHE_DURATION / 1000);
             console.warn(`[Gemini] ⚠️ Rate limited by API (429)`);
             console.warn(
@@ -226,6 +226,7 @@ export class GeminiProvider extends BaseAIProvider {
             );
             console.warn('[Gemini] 💡 The hardcoded model list includes all latest Gemini models');
             return this.modelsCache || this.getHardcodedModels();
+          }
 
           case 500:
           case 502:

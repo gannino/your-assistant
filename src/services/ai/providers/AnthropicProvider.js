@@ -354,7 +354,7 @@ export class AnthropicProvider extends BaseAIProvider {
             console.error('[Anthropic] 💡 Verify your API key has the correct permissions');
             return this.modelsCache || ALL_MODELS;
 
-          case 429:
+          case 429: {
             const waitTime = Math.ceil(this.CACHE_DURATION / 1000);
             console.warn(`[Anthropic] ⚠️ Rate limited by API (429)`);
             console.warn(
@@ -364,6 +364,7 @@ export class AnthropicProvider extends BaseAIProvider {
               '[Anthropic] 💡 The hardcoded model list includes all latest Claude models'
             );
             return this.modelsCache || ALL_MODELS;
+          }
 
           case 500:
           case 502:
