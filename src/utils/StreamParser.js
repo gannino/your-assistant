@@ -84,9 +84,13 @@ export function parseOpenAICompatibleStream(chunk, buffer, providerName = 'Provi
     lines.splice(completeLines[i], 1);
   }
 
-  // Remove empty lines and join remaining lines
-  const remainingLines = lines.filter(line => line.trim() !== '');
-  buffer.streamBuffer = remainingLines.join('\n');
+  // Join remaining lines (incomplete or buffered lines)
+  buffer.streamBuffer = lines.join('\n');
+
+  // Trim trailing newlines if no incomplete content remains
+  if (buffer.streamBuffer && !buffer.streamBuffer.trim()) {
+    buffer.streamBuffer = '';
+  }
 
   return content;
 }
