@@ -11,24 +11,11 @@ module.exports = defineConfig({
   css: {
     extract: true,
     sourceMap: false,
-    requireModuleExtension: true,
     loaderOptions: {
       sass: {
         additionalData: '@import "@/styles/variables.scss";'
       }
     }
-  },
-  pluginOptions: {
-    compression: {
-      enabled: true,
-      algorithm: 'gzip',
-      level: 9
-    }
-  },
-  performance: {
-    hints: process.env.NODE_ENV === 'production' ? 'warning' : false,
-    maxEntrypointSize: 512 * 1024, // 512 KiB for production builds
-    maxAssetSize: 512 * 1024 // 512 KiB for production builds
   },
   publicPath: process.env.ELECTRON_BUILD === 'true'
     ? './'
@@ -97,15 +84,5 @@ module.exports = defineConfig({
       .options({
         presets: ['@vue/cli-plugin-babel/preset']
       })
-
-    // Add compression plugin
-    config.plugin('compression')
-      .use(require('compression-webpack-plugin'), [{
-        filename: '[path].gz[query]',
-        algorithm: 'gzip',
-        test: /\.(js|css|html|svg)$/,
-        threshold: 10240,
-        minRatio: 0.8
-      }])
   }
 })
