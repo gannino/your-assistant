@@ -1,11 +1,11 @@
 {
   "name": "your-assistant",
-  "version": "0.1.0",
+  "version": "1.0.1",
   "private": true,
   "main": "electron/main.js",
   "author": {
     "name": "Your Assistant",
-    "email": "noreply@example.com"
+    "email": "feedback@annino.cloud"
   },
   "engines": {
     "node": ">=24.0.0"
