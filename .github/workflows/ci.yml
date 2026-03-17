@@ -408,7 +408,7 @@ jobs:
 
           # Commit the version bump
           git add package.json
-          git commit -m "chore: bump version to $NEW_VERSION [skip ci]"
+          git commit -m "chore: bump version to $NEW_VERSION"
 
           # Create and push tag
           git tag "v$NEW_VERSION"
