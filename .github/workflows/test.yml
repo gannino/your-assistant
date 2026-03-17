@@ -59,7 +59,10 @@ jobs:
         run: npm run build
 
       - name: Run tests with coverage
-        run: npm run test:ci
+        run: |
+          # Set NODE_OPTIONS to prevent memory issues in CI
+          export NODE_OPTIONS="--max-old-space-size=4096"
+          npm run test:ci
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4

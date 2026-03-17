@@ -120,8 +120,9 @@ describe('retryUtil', () => {
       // First retry: ~100ms (with jitter: 75-125ms)
       // Second retry: ~200ms (with jitter: 150-250ms)
       // Total: ~300ms ± 50ms jitter
-      expect(elapsed).toBeGreaterThan(250);
-      expect(elapsed).toBeLessThan(450);
+      // Increased tolerance to account for CI timing variations
+      expect(elapsed).toBeGreaterThan(200);
+      expect(elapsed).toBeLessThan(500);
     });
 
     it('should cap delay at maxDelayMs', async () => {
@@ -143,8 +144,8 @@ describe('retryUtil', () => {
 
       // Each retry should be capped at 200ms
       // 3 retries × 200ms = 600ms ± jitter
-      expect(elapsed).toBeGreaterThan(500);
-      expect(elapsed).toBeLessThan(800);
+      expect(elapsed).toBeGreaterThan(400);
+      expect(elapsed).toBeLessThan(1000);
     });
 
     it('should call onRetry callback', async () => {

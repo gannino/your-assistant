@@ -179,7 +179,7 @@ jobs:
       - name: Install Electron build dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y fakeroot xorriso rpm
+          sudo apt-get install -y fakeroot xorriso rpm libxkbfile-dev libsecret-1-dev
 
       - name: Build Vue app for Electron
         run: ELECTRON_BUILD=true npx vue-cli-service build
@@ -187,7 +187,7 @@ jobs:
           ELECTRON_BUILD: 'true'
 
       - name: Build Electron app for Linux
-        run: npm run electron:build:linux
+        run: npm run electron:build:linux:ci
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

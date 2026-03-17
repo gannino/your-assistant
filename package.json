@@ -30,6 +30,7 @@
     "electron:build:mac": "ELECTRON_BUILD=true vue-cli-service build && electron-builder --mac",
     "electron:build:win": "ELECTRON_BUILD=true vue-cli-service build && electron-builder --win",
     "electron:build:linux": "ELECTRON_BUILD=true vue-cli-service build && electron-builder --linux",
+    "electron:build:linux:ci": "ELECTRON_BUILD=true vue-cli-service build && ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES=true electron-builder --linux",
     "release": "semantic-release"
   },
   "dependencies": {
