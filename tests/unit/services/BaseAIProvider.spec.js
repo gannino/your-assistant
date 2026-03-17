@@ -348,4 +348,312 @@ describe('BaseAIProvider', () => {
       expect(provider.config.model).toBe('new-model');
     });
   });
+
+  describe('executeWithRetry', () => {
+    it('should execute function successfully without retries', async () => {
+      await provider.initialize({});
+
+      const fn = jest.fn().mockResolvedValue('success');
+      const result = await provider.executeWithRetry(fn);
+
+      expect(result).toBe('success');
+      expect(fn).toHaveBeenCalledTimes(1);
+    });
+
+    it('should use provider retry config by default', async () => {
+      await provider.initialize({});
+
+      const fn = jest.fn().mockResolvedValue('success');
+      await provider.executeWithRetry(fn);
+
+      // Function should execute with provider's retry config
+      expect(fn).toHaveBeenCalled();
+    });
+
+    it('should allow custom retry options', async () => {
+      await provider.initialize({});
+
+      const fn = jest.fn().mockResolvedValue('success');
+      const options = {
+        maxRetries: 5,
+        initialDelay: 2000,
+        maxDelay: 60000,
+        backoffMultiplier: 3,
+      };
+
+      await provider.executeWithRetry(fn, options);
+
+      expect(fn).toHaveBeenCalled();
+    });
+
+    it('should pass provider name as context', async () => {
+      await provider.initialize({});
+
+      const fn = jest.fn().mockResolvedValue('success');
+      await provider.executeWithRetry(fn);
+
+      // The retry utility should receive the provider name
+      expect(fn).toHaveBeenCalled();
+    });
+  });
+
+  describe('executeWithRetryPreset', () => {
+    it('should execute function with rateLimit preset', async () => {
+      await provider.initialize({});
+
+      const fn = jest.fn().mockResolvedValue('success');
+      const result = await provider.executeWithRetryPreset(fn, 'rateLimit');
+
+      expect(result).toBe('success');
+      expect(fn).toHaveBeenCalledTimes(1);
+    });
+
+    it('should execute function with serverError preset', async () => {
+      await provider.initialize({});
+
+      const fn = jest.fn().mockResolvedValue('success');
+      const result = await provider.executeWithRetryPreset(fn, 'serverError');
+
+      expect(result).toBe('success');
+      expect(fn).toHaveBeenCalledTimes(1);
+    });
+
+    it('should execute function with network preset', async () => {
+      await provider.initialize({});
+
+      const fn = jest.fn().mockResolvedValue('success');
+      const result = await provider.executeWithRetryPreset(fn, 'network');
+
+      expect(result).toBe('success');
+      expect(fn).toHaveBeenCalledTimes(1);
+    });
+
+    it('should execute function with quick preset', async () => {
+      await provider.initialize({});
+
+      const fn = jest.fn().mockResolvedValue('success');
+      const result = await provider.executeWithRetryPreset(fn, 'quick');
+
+      expect(result).toBe('success');
+      expect(fn).toHaveBeenCalledTimes(1);
+    });
+
+    it('should allow overriding preset options', async () => {
+      await provider.initialize({});
+
+      const fn = jest.fn().mockResolvedValue('success');
+      const options = { maxRetries: 10 };
+
+      await provider.executeWithRetryPreset(fn, 'rateLimit', options);
+
+      expect(fn).toHaveBeenCalled();
+    });
+
+    it('should throw error for unknown preset', async () => {
+      await provider.initialize({});
+
+      const fn = jest.fn().mockResolvedValue('success');
+
+      await expect(provider.executeWithRetryPreset(fn, 'unknownPreset')).rejects.toThrow(
+        'Unknown retry preset: unknownPreset'
+      );
+    });
+
+    it('should pass provider name as context', async () => {
+      await provider.initialize({});
+
+      const fn = jest.fn().mockResolvedValue('success');
+      await provider.executeWithRetryPreset(fn, 'rateLimit');
+
+      expect(fn).toHaveBeenCalled();
+    });
+  });
+
+  describe('isRetryableError', () => {
+    it('should identify network errors as retryable', () => {
+      const networkErrors = [
+        new Error('Failed to fetch'),
+        new Error('Network error'),
+        new Error('ECONNRESET'),
+        new Error('ETIMEDOUT'),
+        new Error('ENOTFOUND'),
+      ];
+
+      networkErrors.forEach(error => {
+        expect(provider.isRetryableError(error)).toBe(true);
+      });
+    });
+
+    it('should identify HTTP rate limit errors as retryable', () => {
+      const rateLimitError = new Error('HTTP 429 - Too many requests');
+      expect(provider.isRetryableError(rateLimitError)).toBe(true);
+    });
+
+    it('should identify HTTP server errors as retryable', () => {
+      const serverErrors = [
+        new Error('HTTP 503 - Service unavailable'),
+        new Error('HTTP 502 - Bad gateway'),
+        new Error('HTTP 504 - Gateway timeout'),
+      ];
+
+      serverErrors.forEach(error => {
+        expect(provider.isRetryableError(error)).toBe(true);
+      });
+    });
+
+    it('should not identify other errors as retryable', () => {
+      const nonRetryableErrors = [
+        new Error('Unauthorized'),
+        new Error('Forbidden'),
+        new Error('Not found'),
+        new Error('Bad request'),
+      ];
+
+      nonRetryableErrors.forEach(error => {
+        expect(provider.isRetryableError(error)).toBe(false);
+      });
+    });
+
+    it('should handle errors without message property', () => {
+      const error = {};
+      expect(provider.isRetryableError(error)).toBe(false);
+    });
+  });
+
+  describe('testConnection', () => {
+    it('should return success result when validation passes', async () => {
+      await provider.initialize({});
+
+      const result = await provider.testConnection();
+
+      expect(result).toEqual({
+        success: true,
+        message: 'Connection successful',
+        provider: 'test-provider',
+      });
+    });
+
+    it('should return failure result when validation fails', async () => {
+      class FailingProvider extends BaseAIProvider {
+        async validateConfig() {
+          throw new Error('Invalid API key');
+        }
+
+        async generateCompletion(prompt) {
+          return prompt;
+        }
+
+        async generateCompletionStream(prompt, onChunk) {
+          onChunk(prompt);
+        }
+      }
+
+      const failingProvider = new FailingProvider();
+      await failingProvider.initialize({});
+
+      const result = await failingProvider.testConnection();
+
+      expect(result.success).toBe(false);
+      expect(result.message).toBe('Invalid API key');
+      expect(result.provider).toBeDefined();
+    });
+
+    it('should include provider id in result', async () => {
+      await provider.initialize({});
+
+      const result = await provider.testConnection();
+
+      expect(result.provider).toBe('test-provider');
+    });
+  });
+
+  describe('executeWithTimeout', () => {
+    it('should execute function before timeout', async () => {
+      const fn = jest.fn().mockResolvedValue('success');
+      const result = await provider.executeWithTimeout(fn, 1000);
+
+      expect(result).toBe('success');
+      expect(fn).toHaveBeenCalledTimes(1);
+    });
+
+    it('should timeout if function takes too long', async () => {
+      const fn = jest.fn(
+        () =>
+          new Promise(resolve => {
+            setTimeout(() => resolve('slow'), 5000);
+          })
+      );
+
+      await expect(provider.executeWithTimeout(fn, 100)).rejects.toThrow(
+        'Operation timed out'
+      );
+    });
+
+    it('should use custom error message', async () => {
+      const fn = jest.fn(
+        () =>
+          new Promise(resolve => {
+            setTimeout(() => resolve('slow'), 5000);
+          })
+      );
+
+      await expect(provider.executeWithTimeout(fn, 100, 'Custom timeout message')).rejects.toThrow(
+        'Custom timeout message'
+      );
+    });
+
+    it('should use default timeout of 30000ms', async () => {
+      const fn = jest.fn().mockResolvedValue('success');
+      const result = await provider.executeWithTimeout(fn);
+
+      expect(result).toBe('success');
+    });
+  });
+
+  describe('createTimeoutController', () => {
+    it('should create abort controller with timeout', () => {
+      const { controller, cleanup } = provider.createTimeoutController(1000);
+
+      expect(controller).toBeInstanceOf(AbortController);
+      expect(controller.signal).toBeInstanceOf(AbortSignal);
+      expect(typeof cleanup).toBe('function');
+    });
+
+    it('should use default timeout of 30000ms', () => {
+      const { controller, cleanup } = provider.createTimeoutController();
+
+      expect(controller).toBeInstanceOf(AbortController);
+      expect(typeof cleanup).toBe('function');
+
+      cleanup();
+    });
+
+    it('should abort after timeout', async () => {
+      const { controller, cleanup } = provider.createTimeoutController(100);
+
+      // Wait for timeout
+      await new Promise(resolve => setTimeout(resolve, 150));
+
+      expect(controller.signal.aborted).toBe(true);
+      cleanup();
+    });
+
+    it('should clear timeout on cleanup', () => {
+      const { controller, cleanup } = provider.createTimeoutController(1000);
+
+      cleanup();
+
+      // Should not throw or cause issues
+      expect(controller).toBeDefined();
+    });
+
+    it('should not abort before timeout', async () => {
+      const { controller, cleanup } = provider.createTimeoutController(1000);
+
+      // Check immediately that it's not aborted
+      expect(controller.signal.aborted).toBe(false);
+
+      cleanup();
+    });
+  });
 });

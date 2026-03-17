@@ -76,5 +76,6 @@ class TranscriptionProviderRegistry {
   }
 }
 
-// Export singleton instance
+// Export class and singleton instance
+export { TranscriptionProviderRegistry };
 export const transcriptionRegistry = new TranscriptionProviderRegistry();

@@ -29,74 +29,47 @@ export function parseOpenAICompatibleStream(chunk, buffer, providerName = 'Provi
   // Add new chunk to buffer
   buffer.streamBuffer += chunk;
 
-  // First, try to split by double newline to find complete SSE events
-  let tempBuffer = buffer.streamBuffer;
   let content = '';
 
-  // Keep processing until we don't have any more \n\n separators
-  while (tempBuffer.includes('\n\n')) {
-    const splitIndex = tempBuffer.indexOf('\n\n');
-    const event = tempBuffer.substring(0, splitIndex);
-    const remaining = tempBuffer.substring(splitIndex + 2);
+  // Process all complete SSE events (events are separated by \n\n)
+  while (buffer.streamBuffer.includes('\n\n')) {
+    const splitIndex = buffer.streamBuffer.indexOf('\n\n');
+    const event = buffer.streamBuffer.substring(0, splitIndex);
+    buffer.streamBuffer = buffer.streamBuffer.substring(splitIndex + 2);
 
     // Process the complete event
     const eventContent = parseEvent(event, providerName);
     content += eventContent;
-
-    // Move to next part
-    tempBuffer = remaining;
   }
 
-  // Now check if the remaining buffer has a [DONE] marker
-  // which should also act as a terminator
-  const lines = tempBuffer.split('\n');
-  let processedUntil = 0;
-  let foundDone = false;
+  // Handle remaining buffer (check for [DONE] marker or keep for next time)
+  const lines = buffer.streamBuffer.split('\n');
 
+  // Check if we have a [DONE] marker in the remaining lines
   for (let i = 0; i < lines.length; i++) {
     const trimmedLine = lines[i].trim();
 
-    if (!trimmedLine.startsWith('data: ')) {
-      continue;
-    }
+    if (trimmedLine.startsWith('data:')) {
+      // Handle both 'data:' and 'data: ' formats
+      const data = trimmedLine.startsWith('data: ') ? trimmedLine.slice(6) : trimmedLine.slice(5);
 
-    const data = trimmedLine.slice(6);
+      if (data === '[DONE]') {
+        console.log(`[${providerName} Parser] Found [DONE] marker`);
+        // Process all lines before [DONE] as an event
+        const eventBeforeDone = lines.slice(0, i).join('\n');
+        const contentBeforeDone = parseEvent(eventBeforeDone, providerName);
+        content += contentBeforeDone;
 
-    if (data === '[DONE]') {
-      console.log(`[${providerName} Parser] Found [DONE] marker`);
-      foundDone = true;
-      processedUntil = i + 1;
-      break;
-    }
-
-    // Try to parse as JSON
-    try {
-      const parsed = JSON.parse(data);
-      const delta = parsed.choices?.[0]?.delta;
-      if (delta?.content) {
-        content += delta.content;
-        console.log(`[${providerName} Parser] Extracted:`, delta.content.length, 'chars');
+        // Clear everything including [DONE] line
+        buffer.streamBuffer = '';
+        return content;
       }
-      // Successfully parsed, so this line is complete
-      processedUntil = i + 1;
-    } catch (e) {
-      // JSON parse error - incomplete chunk, stop here
-      console.log(`[${providerName} Parser] Incomplete JSON at line ${i}`);
-      break;
     }
   }
 
-  // Reconstruct buffer with remaining lines
-  if (foundDone) {
-    // Keep everything after the [DONE] marker
-    buffer.streamBuffer = lines.slice(processedUntil).join('\n');
-  } else if (processedUntil > 0) {
-    // Keep unprocessed lines
-    buffer.streamBuffer = lines.slice(processedUntil).join('\n');
-  } else {
-    // Keep everything in tempBuffer (which has no \n\n)
-    buffer.streamBuffer = tempBuffer;
-  }
+  // Keep remaining buffer for next time (it doesn't have \n\n, so it's incomplete)
+  // But we need to rejoin with \n to preserve structure
+  buffer.streamBuffer = lines.join('\n');
 
   return content;
 }
@@ -114,11 +87,12 @@ function parseEvent(event, providerName) {
   for (const line of lines) {
     const trimmedLine = line.trim();
 
-    if (!trimmedLine.startsWith('data: ')) {
+    if (!trimmedLine.startsWith('data:')) {
       continue;
     }
 
-    const data = trimmedLine.slice(6);
+    // Handle both 'data:' and 'data: ' formats
+    const data = trimmedLine.startsWith('data: ') ? trimmedLine.slice(6) : trimmedLine.slice(5);
 
     if (data === '[DONE]') {
       console.log(`[${providerName} Parser] Found [DONE] marker in event`);

@@ -1,22 +1,35 @@
 import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
-import { ref } from 'vue';
 
-// Import the composable logic directly
-const breakpoint = 768;
-const tabletBreakpoint = 1024;
+// Mock Vue composition API before import
+jest.mock('vue', () => ({
+  ref: jest.fn(value => ({ value })),
+  onMounted: jest.fn(callback => callback()),
+  onUnmounted: jest.fn(callback => callback()),
+}));
 
-const checkDevice = (width, isMobile, isTablet, isDesktop) => {
-  isMobile.value = width < breakpoint;
-  isTablet.value = width >= breakpoint && width < tabletBreakpoint;
-  isDesktop.value = width >= tabletBreakpoint;
-};
+import { useMobile } from '@/composables/useMobile';
 
 describe('useMobile', () => {
   let originalInnerWidth;
+  let mockResizeCallback;
 
   beforeEach(() => {
     // Store original window.innerWidth
     originalInnerWidth = window.innerWidth;
+    mockResizeCallback = null;
+
+    // Mock window.addEventListener to capture resize callback
+    window.addEventListener = jest.fn((event, callback) => {
+      if (event === 'resize') {
+        mockResizeCallback = callback;
+      }
+    });
+
+    // Mock window.removeEventListener
+    window.removeEventListener = jest.fn();
+
+    // Clear all mocks
+    jest.clearAllMocks();
   });
 
   afterEach(() => {
@@ -36,246 +49,147 @@ describe('useMobile', () => {
     });
   };
 
-  describe('mobile detection', () => {
-    it('should detect mobile screen (< 768px)', () => {
-      setScreenWidth(375);
+  describe('initialization and return values', () => {
+    it('should return reactive refs and breakpoints', () => {
+      setScreenWidth(1920);
+      const result = useMobile();
 
-      const isMobile = ref(false);
-      const isTablet = ref(false);
-      const isDesktop = ref(false);
-
-      checkDevice(375, isMobile, isTablet, isDesktop);
-
-      expect(isMobile.value).toBe(true);
-      expect(isTablet.value).toBe(false);
-      expect(isDesktop.value).toBe(false);
+      expect(result).toHaveProperty('isMobile');
+      expect(result).toHaveProperty('isTablet');
+      expect(result).toHaveProperty('isDesktop');
+      expect(result).toHaveProperty('breakpoint');
+      expect(result).toHaveProperty('tabletBreakpoint');
+      expect(result.breakpoint).toBe(768);
+      expect(result.tabletBreakpoint).toBe(1024);
     });
 
-    it('should detect mobile screen at exactly breakpoint', () => {
-      setScreenWidth(767);
+    it('should call checkDevice on mount', () => {
+      setScreenWidth(375);
+      const result = useMobile();
 
-      const isMobile = ref(false);
-      const isTablet = ref(false);
-      const isDesktop = ref(false);
+      // checkDevice should have been called during onMounted
+      expect(result.isMobile.value).toBe(true);
+    });
+  });
 
-      checkDevice(767, isMobile, isTablet, isDesktop);
+  describe('screen size detection', () => {
+    it('should detect mobile screen (< 768px)', () => {
+      setScreenWidth(375);
+      const result = useMobile();
 
-      expect(isMobile.value).toBe(true);
+      expect(result.isMobile.value).toBe(true);
+      expect(result.isTablet.value).toBe(false);
+      expect(result.isDesktop.value).toBe(false);
     });
 
     it('should detect tablet screen (768px - 1023px)', () => {
       setScreenWidth(800);
+      const result = useMobile();
 
-      const isMobile = ref(false);
-      const isTablet = ref(false);
-      const isDesktop = ref(false);
-
-      checkDevice(800, isMobile, isTablet, isDesktop);
-
-      expect(isMobile.value).toBe(false);
-      expect(isTablet.value).toBe(true);
-      expect(isDesktop.value).toBe(false);
+      expect(result.isMobile.value).toBe(false);
+      expect(result.isTablet.value).toBe(true);
+      expect(result.isDesktop.value).toBe(false);
     });
 
     it('should detect desktop screen (>= 1024px)', () => {
       setScreenWidth(1920);
+      const result = useMobile();
 
-      const isMobile = ref(false);
-      const isTablet = ref(false);
-      const isDesktop = ref(false);
-
-      checkDevice(1920, isMobile, isTablet, isDesktop);
-
-      expect(isMobile.value).toBe(false);
-      expect(isTablet.value).toBe(false);
-      expect(isDesktop.value).toBe(true);
+      expect(result.isMobile.value).toBe(false);
+      expect(result.isTablet.value).toBe(false);
+      expect(result.isDesktop.value).toBe(true);
     });
 
-    it('should detect desktop at exactly tablet breakpoint', () => {
+    it('should detect mobile at boundary (767px)', () => {
+      setScreenWidth(767);
+      const result = useMobile();
+
+      expect(result.isMobile.value).toBe(true);
+      expect(result.isTablet.value).toBe(false);
+    });
+
+    it('should detect tablet at lower boundary (768px)', () => {
+      setScreenWidth(768);
+      const result = useMobile();
+
+      expect(result.isMobile.value).toBe(false);
+      expect(result.isTablet.value).toBe(true);
+      expect(result.isDesktop.value).toBe(false);
+    });
+
+    it('should detect tablet at upper boundary (1023px)', () => {
+      setScreenWidth(1023);
+      const result = useMobile();
+
+      expect(result.isTablet.value).toBe(true);
+      expect(result.isDesktop.value).toBe(false);
+    });
+
+    it('should detect desktop at boundary (1024px)', () => {
       setScreenWidth(1024);
+      const result = useMobile();
 
-      const isMobile = ref(false);
-      const isTablet = ref(false);
-      const isDesktop = ref(false);
+      expect(result.isMobile.value).toBe(false);
+      expect(result.isTablet.value).toBe(false);
+      expect(result.isDesktop.value).toBe(true);
+    });
 
-      checkDevice(1024, isMobile, isTablet, isDesktop);
+    it('should handle very small screen (320px)', () => {
+      setScreenWidth(320);
+      const result = useMobile();
 
-      expect(isDesktop.value).toBe(true);
-      expect(isMobile.value).toBe(false);
-      expect(isTablet.value).toBe(false);
+      expect(result.isMobile.value).toBe(true);
+    });
+
+    it('should handle very large screen (7680px)', () => {
+      setScreenWidth(7680);
+      const result = useMobile();
+
+      expect(result.isDesktop.value).toBe(true);
     });
   });
 
-  describe('breakpoint values', () => {
-    it('should have correct breakpoint values', () => {
-      expect(breakpoint).toBe(768);
-      expect(tabletBreakpoint).toBe(1024);
-    });
-  });
-
-  describe('screen transitions', () => {
-    it('should update from mobile to desktop', () => {
-      const isMobile = ref(false);
-      const isTablet = ref(false);
-      const isDesktop = ref(false);
-
-      checkDevice(375, isMobile, isTablet, isDesktop);
-      expect(isMobile.value).toBe(true);
-      expect(isDesktop.value).toBe(false);
-
-      checkDevice(1920, isMobile, isTablet, isDesktop);
-      expect(isMobile.value).toBe(false);
-      expect(isDesktop.value).toBe(true);
-    });
-
-    it('should update from desktop to mobile', () => {
-      const isMobile = ref(false);
-      const isTablet = ref(false);
-      const isDesktop = ref(false);
-
-      checkDevice(1920, isMobile, isTablet, isDesktop);
-      expect(isMobile.value).toBe(false);
-      expect(isDesktop.value).toBe(true);
-
-      checkDevice(375, isMobile, isTablet, isDesktop);
-      expect(isMobile.value).toBe(true);
-      expect(isDesktop.value).toBe(false);
-    });
-
-    it('should update from mobile to tablet', () => {
-      const isMobile = ref(false);
-      const isTablet = ref(false);
-      const isDesktop = ref(false);
-
-      checkDevice(375, isMobile, isTablet, isDesktop);
-      expect(isMobile.value).toBe(true);
-      expect(isTablet.value).toBe(false);
-
-      checkDevice(800, isMobile, isTablet, isDesktop);
-      expect(isMobile.value).toBe(false);
-      expect(isTablet.value).toBe(true);
-    });
-
-    it('should update from tablet to desktop', () => {
-      const isMobile = ref(false);
-      const isTablet = ref(false);
-      const isDesktop = ref(false);
-
-      checkDevice(800, isMobile, isTablet, isDesktop);
-      expect(isTablet.value).toBe(true);
-      expect(isDesktop.value).toBe(false);
-
-      checkDevice(1920, isMobile, isTablet, isDesktop);
-      expect(isTablet.value).toBe(false);
-      expect(isDesktop.value).toBe(true);
-    });
-
-    it('should handle multiple screen changes', () => {
-      const isMobile = ref(false);
-      const isTablet = ref(false);
-      const isDesktop = ref(false);
-
-      checkDevice(1920, isMobile, isTablet, isDesktop);
-      expect(isDesktop.value).toBe(true);
-
-      checkDevice(375, isMobile, isTablet, isDesktop);
-      expect(isMobile.value).toBe(true);
-
-      checkDevice(800, isMobile, isTablet, isDesktop);
-      expect(isMobile.value).toBe(false);
-      expect(isTablet.value).toBe(true);
-
-      checkDevice(1920, isMobile, isTablet, isDesktop);
-      expect(isTablet.value).toBe(false);
-      expect(isDesktop.value).toBe(true);
-    });
-  });
-
-  describe('common screen sizes', () => {
+  describe('common device screen sizes', () => {
     it('should detect iPhone SE (375x667)', () => {
-      const isMobile = ref(false);
-      checkDevice(375, isMobile, ref(false), ref(false));
-      expect(isMobile.value).toBe(true);
+      setScreenWidth(375);
+      const result = useMobile();
+      expect(result.isMobile.value).toBe(true);
     });
 
     it('should detect iPhone 12 Pro (390x844)', () => {
-      const isMobile = ref(false);
-      checkDevice(390, isMobile, ref(false), ref(false));
-      expect(isMobile.value).toBe(true);
+      setScreenWidth(390);
+      const result = useMobile();
+      expect(result.isMobile.value).toBe(true);
     });
 
     it('should detect iPad Mini (768x1024)', () => {
-      const isTablet = ref(false);
-      checkDevice(768, ref(false), isTablet, ref(false));
-      expect(isTablet.value).toBe(true);
+      setScreenWidth(768);
+      const result = useMobile();
+      expect(result.isTablet.value).toBe(true);
     });
 
     it('should detect iPad Pro 11 (834x1194)', () => {
-      const isTablet = ref(false);
-      checkDevice(834, ref(false), isTablet, ref(false));
-      expect(isTablet.value).toBe(true);
+      setScreenWidth(834);
+      const result = useMobile();
+      expect(result.isTablet.value).toBe(true);
     });
 
     it('should detect MacBook Pro 13 (1280x800)', () => {
-      const isDesktop = ref(false);
-      checkDevice(1280, ref(false), ref(false), isDesktop);
-      expect(isDesktop.value).toBe(true);
+      setScreenWidth(1280);
+      const result = useMobile();
+      expect(result.isDesktop.value).toBe(true);
     });
 
     it('should detect Full HD (1920x1080)', () => {
-      const isDesktop = ref(false);
-      checkDevice(1920, ref(false), ref(false), isDesktop);
-      expect(isDesktop.value).toBe(true);
+      setScreenWidth(1920);
+      const result = useMobile();
+      expect(result.isDesktop.value).toBe(true);
     });
 
     it('should detect 4K (3840x2160)', () => {
-      const isDesktop = ref(false);
-      checkDevice(3840, ref(false), ref(false), isDesktop);
-      expect(isDesktop.value).toBe(true);
-    });
-  });
-
-  describe('boundary conditions', () => {
-    it('should handle width of 0', () => {
-      const isMobile = ref(false);
-      checkDevice(0, isMobile, ref(false), ref(false));
-      expect(isMobile.value).toBe(true);
-    });
-
-    it('should handle very small width', () => {
-      const isMobile = ref(false);
-      checkDevice(320, isMobile, ref(false), ref(false));
-      expect(isMobile.value).toBe(true);
-    });
-
-    it('should handle very large width', () => {
-      const isDesktop = ref(false);
-      checkDevice(7680, ref(false), ref(false), isDesktop);
-      expect(isDesktop.value).toBe(true);
-    });
-
-    it('should handle boundary at 767px', () => {
-      const isMobile = ref(false);
-      checkDevice(767, isMobile, ref(false), ref(false));
-      expect(isMobile.value).toBe(true);
-    });
-
-    it('should handle boundary at 768px', () => {
-      const isTablet = ref(false);
-      checkDevice(768, ref(false), isTablet, ref(false));
-      expect(isTablet.value).toBe(true);
-    });
-
-    it('should handle boundary at 1023px', () => {
-      const isTablet = ref(false);
-      checkDevice(1023, ref(false), isTablet, ref(false));
-      expect(isTablet.value).toBe(true);
-    });
-
-    it('should handle boundary at 1024px', () => {
-      const isDesktop = ref(false);
-      checkDevice(1024, ref(false), ref(false), isDesktop);
-      expect(isDesktop.value).toBe(true);
+      setScreenWidth(3840);
+      const result = useMobile();
+      expect(result.isDesktop.value).toBe(true);
     });
   });
 });

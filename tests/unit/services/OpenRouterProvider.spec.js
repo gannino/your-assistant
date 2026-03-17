@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
 import { OpenRouterProvider } from '@/services/ai/providers/OpenRouterProvider';
+import { clearProviderCache } from '@/utils/modelCacheUtil';
 
 // Helper function to create mock stream response
 const createMockStreamResponse = chunks => {
@@ -267,10 +268,10 @@ describe('OpenRouterProvider', () => {
       await expect(provider.generateCompletionStream('Hi', onChunk)).rejects.toThrow();
     });
 
-    it.skip('should retry on network errors', async () => {
+    it('should retry on network errors', async () => {
       // First call fails, second succeeds
       mockFetch
-        .mockRejectedValueOnce(new Error('Network error'))
+        .mockRejectedValueOnce(new TypeError('Network error'))
         .mockResolvedValueOnce(
           createMockStreamResponse(['data: {"choices":[{"delta":{"content":"Hello"}}]}\n\n'])
         );
@@ -372,6 +373,7 @@ describe('OpenRouterProvider', () => {
 
   describe('getAvailableModels', () => {
     beforeEach(async () => {
+      clearProviderCache('openrouter');
       await provider.initialize({ apiKey: 'sk-or-v1-test-key' });
     });
 
@@ -399,7 +401,7 @@ describe('OpenRouterProvider', () => {
       ]);
     });
 
-    it.skip('should use cached models', async () => {
+    it('should use cached models', async () => {
       // The provider uses modelCacheUtil, not modelsCache property
       // We need to test through the actual caching mechanism
       const mockModels = {
@@ -429,6 +431,7 @@ describe('OpenRouterProvider', () => {
       mockFetch.mockResolvedValue({
         ok: false,
         status: 401,
+        text: async () => 'Unauthorized',
       });
 
       // Should return fallback models or empty array
