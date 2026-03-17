@@ -33,9 +33,7 @@ describe('apiErrorHandler', () => {
       });
 
       expect(result).toEqual(fallbackModels);
-      expect(console.error).toHaveBeenCalledWith(
-        '[TestProvider] ❌ Authentication failed (401)'
-      );
+      expect(console.error).toHaveBeenCalledWith('[TestProvider] ❌ Authentication failed (401)');
       expect(console.error).toHaveBeenCalledWith(
         '[TestProvider] 💡 Your API key may be invalid or expired'
       );
@@ -57,9 +55,7 @@ describe('apiErrorHandler', () => {
       });
 
       expect(result).toEqual(fallbackModels);
-      expect(console.error).toHaveBeenCalledWith(
-        '[TestProvider] ❌ Access forbidden (403)'
-      );
+      expect(console.error).toHaveBeenCalledWith('[TestProvider] ❌ Access forbidden (403)');
       expect(console.error).toHaveBeenCalledWith(
         '[TestProvider] 💡 Your API key may not have access to this endpoint'
       );
@@ -77,15 +73,9 @@ describe('apiErrorHandler', () => {
       });
 
       expect(result).toEqual(fallbackModels);
-      expect(console.warn).toHaveBeenCalledWith(
-        '[TestProvider] ⚠️ Rate limited by API (429)'
-      );
-      expect(console.warn).toHaveBeenCalledWith(
-        expect.stringContaining('Please wait')
-      );
-      expect(console.warn).toHaveBeenCalledWith(
-        expect.stringContaining('Using cached model list')
-      );
+      expect(console.warn).toHaveBeenCalledWith('[TestProvider] ⚠️ Rate limited by API (429)');
+      expect(console.warn).toHaveBeenCalledWith(expect.stringContaining('Please wait'));
+      expect(console.warn).toHaveBeenCalledWith(expect.stringContaining('Using cached model list'));
     });
 
     it('should handle 500 server error', async () => {
@@ -104,9 +94,7 @@ describe('apiErrorHandler', () => {
       expect(console.error).toHaveBeenCalledWith(
         '[TestProvider] ❌ Server error (500) - TestProvider API is experiencing issues'
       );
-      expect(console.error).toHaveBeenCalledWith(
-        '[TestProvider] 💡 Try again in a few moments'
-      );
+      expect(console.error).toHaveBeenCalledWith('[TestProvider] 💡 Try again in a few moments');
     });
 
     it('should handle 502 bad gateway', async () => {
@@ -155,9 +143,7 @@ describe('apiErrorHandler', () => {
       });
 
       expect(result).toEqual(fallbackModels);
-      expect(console.error).toHaveBeenCalledWith(
-        "[TestProvider] ❌ API error (418): I'm a teapot"
-      );
+      expect(console.error).toHaveBeenCalledWith("[TestProvider] ❌ API error (418): I'm a teapot");
       expect(console.error).toHaveBeenCalledWith(
         '[TestProvider] 💡 Falling back to hardcoded model list'
       );
@@ -244,9 +230,7 @@ describe('apiErrorHandler', () => {
       expect(console.error).toHaveBeenCalledWith(
         '[TestProvider] ❌ connect to API failed: ECONNREFUSED'
       );
-      expect(console.error).toHaveBeenCalledWith(
-        '[TestProvider] 💡 ECONNREFUSED'
-      );
+      expect(console.error).toHaveBeenCalledWith('[TestProvider] 💡 ECONNREFUSED');
     });
 
     it('should use default operation description', () => {
@@ -264,25 +248,19 @@ describe('apiErrorHandler', () => {
     it('should log success with item count', () => {
       logSuccess('TestProvider', 'fetched models', 42);
 
-      expect(console.log).toHaveBeenCalledWith(
-        '[TestProvider] ✅ fetched models (42 items)'
-      );
+      expect(console.log).toHaveBeenCalledWith('[TestProvider] ✅ fetched models (42 items)');
     });
 
     it('should log success without item count', () => {
       logSuccess('TestProvider', 'initialized');
 
-      expect(console.log).toHaveBeenCalledWith(
-        '[TestProvider] ✅ initialized'
-      );
+      expect(console.log).toHaveBeenCalledWith('[TestProvider] ✅ initialized');
     });
 
     it('should handle zero count', () => {
       logSuccess('TestProvider', 'processed', 0);
 
-      expect(console.log).toHaveBeenCalledWith(
-        '[TestProvider] ✅ processed'
-      );
+      expect(console.log).toHaveBeenCalledWith('[TestProvider] ✅ processed');
     });
   });
 
@@ -296,11 +274,7 @@ describe('apiErrorHandler', () => {
     });
 
     it('should create error with custom code', () => {
-      const error = createProviderError(
-        'Invalid API key',
-        'INVALID_API_KEY',
-        { key: 'sk-***' }
-      );
+      const error = createProviderError('Invalid API key', 'INVALID_API_KEY', { key: 'sk-***' });
 
       expect(error.message).toBe('Invalid API key');
       expect(error.code).toBe('INVALID_API_KEY');

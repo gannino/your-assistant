@@ -284,7 +284,15 @@ describe('providerRegistry', () => {
       // verify that the registry has the expected providers
 
       // Verify all default providers are present despite any potential issues
-      const defaultProviderIds = ['openai', 'zai', 'ollama', 'mlx', 'anthropic', 'gemini', 'openrouter'];
+      const defaultProviderIds = [
+        'openai',
+        'zai',
+        'ollama',
+        'mlx',
+        'anthropic',
+        'gemini',
+        'openrouter',
+      ];
 
       defaultProviderIds.forEach(id => {
         expect(providerRegistry.has(id)).toBe(true);

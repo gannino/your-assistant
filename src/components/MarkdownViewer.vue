@@ -223,7 +223,7 @@ const copyToClipboard = async () => {
   try {
     await navigator.clipboard.writeText(props.markdownContent);
     showToastMessage('Content copied to clipboard', 'success');
-  } catch (error) {
+  } catch {
     showToastMessage('Failed to copy to clipboard', 'error');
   }
 };

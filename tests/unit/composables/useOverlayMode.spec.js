@@ -47,10 +47,7 @@ describe('useOverlayMode', () => {
 
     // Mock stylesheet
     mockStyleSheet = {
-      cssRules: [
-        { cssText: '.test { color: red; }' },
-        { cssText: 'body { margin: 0; }' },
-      ],
+      cssRules: [{ cssText: '.test { color: red; }' }, { cssText: 'body { margin: 0; }' }],
     };
 
     // Clear document.body

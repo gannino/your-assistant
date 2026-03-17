@@ -267,10 +267,7 @@ describe('retryUtil', () => {
     });
 
     it('should add random jitter to delays', async () => {
-      const fn = jest
-        .fn()
-        .mockRejectedValueOnce({ status: 429 })
-        .mockResolvedValue('success');
+      const fn = jest.fn().mockRejectedValueOnce({ status: 429 }).mockResolvedValue('success');
 
       const delays = [];
       const onRetry = jest.fn((attempt, error, delay) => {
@@ -291,10 +288,7 @@ describe('retryUtil', () => {
     });
 
     it('should keep jitter within ±25% range', async () => {
-      const fn = jest
-        .fn()
-        .mockRejectedValue({ status: 429 })
-        .mockResolvedValue('success');
+      const fn = jest.fn().mockRejectedValue({ status: 429 }).mockResolvedValue('success');
 
       const onRetry = jest.fn((attempt, error, delay) => {
         const expectedBase = 1000 * Math.pow(2, attempt);

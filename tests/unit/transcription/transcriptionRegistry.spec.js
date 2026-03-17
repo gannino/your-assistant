@@ -94,10 +94,18 @@ describe('TranscriptionProviderRegistry', () => {
     });
 
     it('should log registration for each provider', () => {
-      expect(console.log).toHaveBeenCalledWith('[TranscriptionRegistry] Registered provider: Microsoft Azure Speech');
-      expect(console.log).toHaveBeenCalledWith('[TranscriptionRegistry] Registered provider: OpenAI Whisper');
-      expect(console.log).toHaveBeenCalledWith('[TranscriptionRegistry] Registered provider: Web Speech API');
-      expect(console.log).toHaveBeenCalledWith('[TranscriptionRegistry] Registered provider: Deepgram');
+      expect(console.log).toHaveBeenCalledWith(
+        '[TranscriptionRegistry] Registered provider: Microsoft Azure Speech'
+      );
+      expect(console.log).toHaveBeenCalledWith(
+        '[TranscriptionRegistry] Registered provider: OpenAI Whisper'
+      );
+      expect(console.log).toHaveBeenCalledWith(
+        '[TranscriptionRegistry] Registered provider: Web Speech API'
+      );
+      expect(console.log).toHaveBeenCalledWith(
+        '[TranscriptionRegistry] Registered provider: Deepgram'
+      );
     });
   });
 
@@ -138,7 +146,9 @@ describe('TranscriptionProviderRegistry', () => {
 
       registry.register(mockProvider);
 
-      expect(console.log).toHaveBeenCalledWith('[TranscriptionRegistry] Registered provider: Custom Provider');
+      expect(console.log).toHaveBeenCalledWith(
+        '[TranscriptionRegistry] Registered provider: Custom Provider'
+      );
     });
   });
 

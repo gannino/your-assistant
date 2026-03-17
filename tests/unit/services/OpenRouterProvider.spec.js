@@ -201,10 +201,7 @@ describe('OpenRouterProvider', () => {
       mockFetch.mockResolvedValue(createMockStreamResponse(chunks));
 
       const onChunk = jest.fn();
-      const imageDataUrls = [
-        'data:image/png;base64,abc123',
-        'data:image/jpeg;base64,def456',
-      ];
+      const imageDataUrls = ['data:image/png;base64,abc123', 'data:image/jpeg;base64,def456'];
 
       await provider.generateCompletionStream('What do you see?', onChunk, {
         imageDataUrls,
@@ -252,9 +249,9 @@ describe('OpenRouterProvider', () => {
       const uninitializedProvider = new OpenRouterProvider();
 
       const onChunk = jest.fn();
-      await expect(
-        uninitializedProvider.generateCompletionStream('Hi', onChunk)
-      ).rejects.toThrow('OpenRouter provider not initialized');
+      await expect(uninitializedProvider.generateCompletionStream('Hi', onChunk)).rejects.toThrow(
+        'OpenRouter provider not initialized'
+      );
     });
 
     it('should handle API errors', async () => {
@@ -405,10 +402,7 @@ describe('OpenRouterProvider', () => {
       // The provider uses modelCacheUtil, not modelsCache property
       // We need to test through the actual caching mechanism
       const mockModels = {
-        data: [
-          { id: 'cached-model-1' },
-          { id: 'cached-model-2' },
-        ],
+        data: [{ id: 'cached-model-1' }, { id: 'cached-model-2' }],
       };
 
       mockFetch.mockResolvedValue({
@@ -467,9 +461,7 @@ describe('OpenRouterProvider', () => {
         'data: {"choices":[{"delta":{"content":" a"}}]}\n\n',
         'data: {"choices":[{"delta":{"content":" test"}}]}\n\n',
       ];
-      mockFetch.mockResolvedValue(
-        createMockStreamResponse(chunks)
-      );
+      mockFetch.mockResolvedValue(createMockStreamResponse(chunks));
 
       const onChunk = jest.fn();
       await provider.generateCompletionStream('Say "this is a test"', onChunk);

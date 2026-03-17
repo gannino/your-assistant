@@ -169,9 +169,7 @@ describe('StreamParser', () => {
 
     it('should handle incomplete chunks across network packets', async () => {
       const parser = new StreamParser();
-      const chunks = [
-        'data: {"choices":[{"delta":{"content":"Hello World"}}]}\n\n',
-      ];
+      const chunks = ['data: {"choices":[{"delta":{"content":"Hello World"}}]}\n\n'];
       const stream = createMockStream(chunks);
 
       const receivedChunks = [];

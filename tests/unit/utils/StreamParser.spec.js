@@ -172,7 +172,8 @@ describe('StreamParser', () => {
     });
 
     it('should handle malformed JSON gracefully', () => {
-      const chunk = 'data: {invalid json}\n' + 'data: {"choices":[{"delta":{"content":"Valid"}}]}\n\n';
+      const chunk =
+        'data: {invalid json}\n' + 'data: {"choices":[{"delta":{"content":"Valid"}}]}\n\n';
 
       const content = parseOpenAICompatibleStream(chunk, buffer, 'TestProvider');
 

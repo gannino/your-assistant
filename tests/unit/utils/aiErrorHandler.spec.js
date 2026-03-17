@@ -58,12 +58,9 @@ describe('aiErrorHandler', () => {
 
   describe('AIProviderError', () => {
     it('should create error instance with all properties', () => {
-      const error = new AIProviderError(
-        'Test error',
-        'TestProvider',
-        ErrorCodes.API_KEY_INVALID,
-        { detail: 'test' }
-      );
+      const error = new AIProviderError('Test error', 'TestProvider', ErrorCodes.API_KEY_INVALID, {
+        detail: 'test',
+      });
 
       expect(error.message).toBe('Test error');
       expect(error.provider).toBe('TestProvider');
@@ -135,18 +132,19 @@ describe('aiErrorHandler', () => {
       });
 
       it('should include userMessage in JSON', () => {
-        const error = new AIProviderError(
-          'Technical',
-          'TestProvider',
-          ErrorCodes.NETWORK_ERROR
-        );
+        const error = new AIProviderError('Technical', 'TestProvider', ErrorCodes.NETWORK_ERROR);
 
         expect(error.toJSON().userMessage).toBe(ErrorMessages[ErrorCodes.NETWORK_ERROR]);
       });
 
       it('should include all details', () => {
         const details = { status: 401, type: 'invalid_request_error' };
-        const error = new AIProviderError('Test', 'TestProvider', ErrorCodes.API_KEY_INVALID, details);
+        const error = new AIProviderError(
+          'Test',
+          'TestProvider',
+          ErrorCodes.API_KEY_INVALID,
+          details
+        );
 
         expect(error.toJSON().details).toEqual(details);
       });

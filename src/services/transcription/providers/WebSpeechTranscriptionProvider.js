@@ -215,7 +215,7 @@ export class WebSpeechTranscriptionProvider extends BaseTranscriptionProvider {
           if (this.isRecording) {
             try {
               this.recognition.start();
-            } catch (e) {
+            } catch {
               // Already started or stopped
             }
           }
@@ -243,7 +243,7 @@ export class WebSpeechTranscriptionProvider extends BaseTranscriptionProvider {
         console.log('[Web Speech Transcription] Auto-restarting...');
         try {
           this.recognition.start();
-        } catch (e) {
+        } catch {
           // Already started or stopped
         }
       } else if (this.isRecording) {
@@ -279,11 +279,11 @@ export class WebSpeechTranscriptionProvider extends BaseTranscriptionProvider {
       try {
         this.recognition.stop();
       } catch (e) {
-        // Already stopped
+        console.error('Error stopping speech recognition:', e);
+        this.isRecording = false;
+        this.recognition = null;
       }
     }
-
-    console.log('[Web Speech Transcription] Stopped recognition');
   }
 
   /**

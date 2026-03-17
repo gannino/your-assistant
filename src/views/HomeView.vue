@@ -645,8 +645,8 @@ const loadMobileSession = () => {
     console.log('[Mobile] Session restored from', new Date(session.timestamp).toLocaleTimeString());
     console.log('[Mobile] State reset to "end" to prevent auto-activation');
     return true;
-  } catch (e) {
-    console.warn('[Mobile] Failed to load session:', e.message);
+  } catch (error) {
+    console.error('[Mobile] Failed to load session:', error.message);
     return false;
   }
 };

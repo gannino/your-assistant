@@ -38,87 +38,87 @@ const ACTIONS = [
     name: 'main-interface',
     screenshot: 'main-interface.png',
     fullPage: true,
-    waitFor: 3000
+    waitFor: 3000,
   },
 
   // Action 2: Navigate to Settings and screenshot
   {
     name: 'navigate-settings',
     click: {
-      type: 'text',      // 'text', 'css', or 'xpath'
+      type: 'text', // 'text', 'css', or 'xpath'
       value: 'Settings',
-      timeout: 10000
+      timeout: 10000,
     },
-    waitFor: 2000
+    waitFor: 2000,
   },
   {
     name: 'settings-page',
     screenshot: 'settings-page.png',
-    fullPage: true
+    fullPage: true,
   },
 
   // Action 3: Navigate to Speech Settings
   {
     name: 'navigate-speech',
     click: { type: 'text', value: 'Speech' },
-    waitFor: 2000
+    waitFor: 2000,
   },
   {
     name: 'speech-settings',
     screenshot: 'speech-settings.png',
-    fullPage: true
+    fullPage: true,
   },
 
   // Action 4: Navigate to Content Settings
   {
     name: 'navigate-back-from-speech',
     click: { type: 'text', value: 'Settings' },
-    waitFor: 1000
+    waitFor: 1000,
   },
   {
     name: 'navigate-content',
     click: { type: 'text', value: 'Content' },
-    waitFor: 2000
+    waitFor: 2000,
   },
   {
     name: 'content-settings',
     screenshot: 'content-settings.png',
-    fullPage: true
+    fullPage: true,
   },
 
   // Action 5: Navigate to AI Settings
   {
     name: 'navigate-back-from-content',
     click: { type: 'text', value: 'Settings' },
-    waitFor: 1000
+    waitFor: 1000,
   },
   {
     name: 'navigate-ai',
     click: { type: 'text', value: 'AI' },
-    waitFor: 2000
+    waitFor: 2000,
   },
   {
     name: 'ai-settings',
     screenshot: 'ai-settings.png',
-    fullPage: true
+    fullPage: true,
   },
 
   // Action 6: Navigate to Overlay Settings
   {
     name: 'navigate-back-from-ai',
     click: { type: 'text', value: 'Settings' },
-    waitFor: 1000
+    waitFor: 1000,
   },
   {
     name: 'navigate-overlay',
     click: { type: 'text', value: 'Overlay' },
-    waitFor: 2000
+    waitFor: 2000,
   },
   {
     name: 'electron-settings',
     screenshot: 'electron-settings.png',
-    fullPage: true
-  }
+    fullPage: true,
+  },
 ];
 
 // ============================================================
@@ -130,7 +130,7 @@ const VIEWPORT_PRESETS = {
   laptop: { width: 1366, height: 768 },
   tablet: { width: 768, height: 1024 },
   mobile: { width: 375, height: 667 },
-  'mobile-xl': { width: 414, height: 896 }
+  'mobile-xl': { width: 414, height: 896 },
 };
 
 // ============================================================
@@ -265,7 +265,7 @@ async function executeAction(page, action, config, outputDir) {
 
       await page.screenshot({
         path: screenshotPath,
-        fullPage: action.fullPage || false
+        fullPage: action.fullPage || false,
       });
 
       console.log(`   ✅ Screenshot saved`);
@@ -306,7 +306,7 @@ async function takeScreenshots() {
     viewport: resolveViewport(cliConfig.viewport || VIEWPORT),
     headless: cliConfig.headless !== undefined ? cliConfig.headless : HEADLESS,
     initialWait: cliConfig.initialWait || INITIAL_WAIT,
-    timeout: cliConfig.timeout || DEFAULT_TIMEOUT
+    timeout: cliConfig.timeout || DEFAULT_TIMEOUT,
   };
 
   // Display configuration
@@ -332,12 +332,12 @@ async function takeScreenshots() {
     // Launch browser
     console.log('\n✅ Launching browser');
     browser = await chromium.launch({
-      headless: finalConfig.headless
+      headless: finalConfig.headless,
     });
 
     const context = await browser.newContext({
       ignoreHTTPSErrors: true,
-      viewport: finalConfig.viewport
+      viewport: finalConfig.viewport,
     });
 
     const page = await context.newPage();
@@ -355,11 +355,16 @@ async function takeScreenshots() {
 
     for (let i = 0; i < ACTIONS.length; i++) {
       const action = ACTIONS[i];
-      const result = await executeAction(page, action, {
-        ...finalConfig,
-        currentIndex: i + 1,
-        totalActions: ACTIONS.length
-      }, absoluteOutputDir);
+      const result = await executeAction(
+        page,
+        action,
+        {
+          ...finalConfig,
+          currentIndex: i + 1,
+          totalActions: ACTIONS.length,
+        },
+        absoluteOutputDir
+      );
 
       if (result.success) {
         if (action.screenshot) {
@@ -379,7 +384,6 @@ async function takeScreenshots() {
       console.log(`⚠️  Failed actions: ${failureCount}`);
     }
     console.log('='.repeat(50));
-
   } catch (error) {
     console.error('\n❌ Fatal error:', error.message);
     process.exit(1);

@@ -3,7 +3,8 @@
     "allow": [
       "Bash(npx vue-cli-service:*)",
       "Bash(npm test:*)",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Bash(git src/components/MarkdownViewer.vue src/services/ai/streaming.js src/services/transcription/providers/WebSpeechTranscriptionProvider.js src/views/HomeView.vue)"
     ]
   }
 }

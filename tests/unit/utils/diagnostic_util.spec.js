@@ -152,8 +152,8 @@ describe('diagnostic_util', () => {
       expect(console.log).toHaveBeenCalledWith('✓ Content length:', 16, 'characters');
 
       // Check that Time was logged (with actual milliseconds value)
-      const timeCalls = console.log.mock.calls.filter(call =>
-        call[0] === '✓ Time:' && typeof call[1] === 'string' && call[1].endsWith('ms')
+      const timeCalls = console.log.mock.calls.filter(
+        call => call[0] === '✓ Time:' && typeof call[1] === 'string' && call[1].endsWith('ms')
       );
       expect(timeCalls.length).toBeGreaterThan(0);
 

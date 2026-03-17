@@ -1,12 +1,20 @@
-const { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain, screen, desktopCapturer } = require('electron');
+const {
+  app,
+  BrowserWindow,
+  Tray,
+  Menu,
+  nativeImage,
+  ipcMain,
+  screen,
+  desktopCapturer,
+} = require('electron');
 const path = require('path');
 const screenshot = require('screenshot-desktop');
 const { registerShortcuts, unregisterShortcuts } = require('./shortcuts');
 
 const isDev = process.env.NODE_ENV === 'development';
-const DEV_URL = process.env.VUE_APP_HTTPS === 'true'
-  ? 'https://localhost:8080'
-  : 'http://localhost:8080';
+const DEV_URL =
+  process.env.VUE_APP_HTTPS === 'true' ? 'https://localhost:8080' : 'http://localhost:8080';
 
 // In production, load from the dist directory
 // In Electron apps, __dirname is inside the app.asar archive
@@ -120,11 +128,13 @@ function createTray() {
   if (process.platform === 'darwin') tray.setTitle('YA');
   tray.setToolTip('Your Assistant — Cmd+Shift+Space to show');
 
-  tray.setContextMenu(Menu.buildFromTemplate([
-    { label: 'Show / Hide', click: toggleVisibility },
-    { type: 'separator' },
-    { label: 'Quit', accelerator: 'CmdOrCtrl+Q', click: () => app.quit() },
-  ]));
+  tray.setContextMenu(
+    Menu.buildFromTemplate([
+      { label: 'Show / Hide', click: toggleVisibility },
+      { type: 'separator' },
+      { label: 'Quit', accelerator: 'CmdOrCtrl+Q', click: () => app.quit() },
+    ])
+  );
 
   tray.on('double-click', toggleVisibility);
 }

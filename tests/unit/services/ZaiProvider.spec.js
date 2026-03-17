@@ -16,7 +16,7 @@ jest.mock('@/utils/aiErrorHandler', () => ({
       throw new Error('API key is required');
     }
   }),
-  createNotInitializedError: jest.fn((name) => new Error(`${name} not initialized`)),
+  createNotInitializedError: jest.fn(name => new Error(`${name} not initialized`)),
   handleProviderError: jest.fn((error, name) => error),
   createInitializationError: jest.fn((name, error) => error),
 }));
@@ -257,10 +257,7 @@ describe('ZaiProvider', () => {
       const mockResponse = { ok: true, body: {} };
       mockFetch.mockResolvedValue(mockResponse);
 
-      const imageDataUrls = [
-        'data:image/png;base64,abc123',
-        'data:image/png;base64,def456',
-      ];
+      const imageDataUrls = ['data:image/png;base64,abc123', 'data:image/png;base64,def456'];
 
       await provider.generateCompletionStream('Compare these', onChunk, {
         imageDataUrls,
@@ -542,12 +539,10 @@ describe('ZaiProvider', () => {
       });
 
       // First endpoint fails, second succeeds
-      mockFetch
-        .mockRejectedValueOnce(new Error('Connection refused'))
-        .mockResolvedValueOnce({
-          ok: true,
-          status: 200,
-        });
+      mockFetch.mockRejectedValueOnce(new Error('Connection refused')).mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+      });
 
       const result = await provider.testConnection();
 
@@ -589,9 +584,7 @@ describe('ZaiProvider', () => {
     it('should include common endpoints', () => {
       const suggestions = provider.getTroubleshootingSuggestions();
 
-      expect(suggestions.some(s => s.includes('https://api.z.ai/api/coding/paas/v4'))).toBe(
-        true
-      );
+      expect(suggestions.some(s => s.includes('https://api.z.ai/api/coding/paas/v4'))).toBe(true);
       expect(suggestions.some(s => s.includes('https://open.bigmodel.cn'))).toBe(true);
     });
 
@@ -685,7 +678,10 @@ describe('ZaiProvider', () => {
 
       await provider.validateConfig();
 
-      expect(console.warn).toHaveBeenCalledWith('[Z.ai] Connection test failed:', expect.any(String));
+      expect(console.warn).toHaveBeenCalledWith(
+        '[Z.ai] Connection test failed:',
+        expect.any(String)
+      );
     });
   });
 

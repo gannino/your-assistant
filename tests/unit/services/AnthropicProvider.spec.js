@@ -317,9 +317,9 @@ describe('AnthropicProvider', () => {
     it('should throw error if not initialized', async () => {
       const uninitializedProvider = new AnthropicProvider();
 
-      await expect(
-        uninitializedProvider.generateCompletionStream('Hi', () => {})
-      ).rejects.toThrow('Anthropic provider not initialized');
+      await expect(uninitializedProvider.generateCompletionStream('Hi', () => {})).rejects.toThrow(
+        'Anthropic provider not initialized'
+      );
     });
 
     it('should skip non-text_delta events', async () => {

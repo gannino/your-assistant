@@ -25,12 +25,12 @@ async function researchNpmPackage(packageName) {
 
     // Extract package information
     const packageInfo = await page.evaluate(() => {
-      const getTextContent = (selector) => {
+      const getTextContent = selector => {
         const el = document.querySelector(selector);
         return el ? el.textContent.trim() : 'N/A';
       };
 
-      const getMultipleTextContent = (selector) => {
+      const getMultipleTextContent = selector => {
         return Array.from(document.querySelectorAll(selector))
           .map(el => el.textContent.trim())
           .filter(text => text);
@@ -39,41 +39,48 @@ async function researchNpmPackage(packageName) {
       return {
         // Package name and version
         name: getTextContent('h1'),
-        version: getTextContent('[data-testid="package-version"]') ||
-                getTextContent('.f28iej0'),
+        version: getTextContent('[data-testid="package-version"]') || getTextContent('.f28iej0'),
 
         // Description
-        description: getTextContent('[data-testid="package-description"]') ||
-                    getTextContent('.c60b6f8'),
+        description:
+          getTextContent('[data-testid="package-description"]') || getTextContent('.c60b6f8'),
 
         // Author
-        author: getTextContent('[data-testid="package-author"]') ||
-                getTextContent('.c1qb0r6'),
+        author: getTextContent('[data-testid="package-author"]') || getTextContent('.c1qb0r6'),
 
         // Keywords
-        keywords: getMultipleTextContent('[data-testid="package-keyword"]') ||
-                  getMultipleTextContent('a[href*="/search?q=keywords:"]'),
+        keywords:
+          getMultipleTextContent('[data-testid="package-keyword"]') ||
+          getMultipleTextContent('a[href*="/search?q=keywords:"]'),
 
         // Weekly downloads
-        weeklyDownloads: getTextContent('[data-testid="package-weekly-downloads"]') ||
-                        getTextContent('.sc-5llu3a-0'),
+        weeklyDownloads:
+          getTextContent('[data-testid="package-weekly-downloads"]') ||
+          getTextContent('.sc-5llu3a-0'),
 
         // Dependencies count
-        dependencies: getTextContent('[data-testid="package-dependencies"]') ||
-                     getTextContent('a[href*="/dependencies"]'),
+        dependencies:
+          getTextContent('[data-testid="package-dependencies"]') ||
+          getTextContent('a[href*="/dependencies"]'),
 
         // License
-        license: getTextContent('[data-testid="package-license"]') ||
-                getTextContent('a[href*="/browse/licenses"]'),
+        license:
+          getTextContent('[data-testid="package-license"]') ||
+          getTextContent('a[href*="/browse/licenses"]'),
 
         // Homepage
-        homepage: document.querySelector('a[href*="github"]')?.href ||
-                 document.querySelector('a[href*="homepage"]')?.href || 'N/A',
+        homepage:
+          document.querySelector('a[href*="github"]')?.href ||
+          document.querySelector('a[href*="homepage"]')?.href ||
+          'N/A',
 
         // README excerpt (first 500 chars)
-        readmeExcerpt: document.querySelector('[data-testid="package-readme"]')?.textContent?.substring(0, 500) ||
-                      document.querySelector('.markdown')?.textContent?.substring(0, 500) ||
-                      'N/A',
+        readmeExcerpt:
+          document
+            .querySelector('[data-testid="package-readme"]')
+            ?.textContent?.substring(0, 500) ||
+          document.querySelector('.markdown')?.textContent?.substring(0, 500) ||
+          'N/A',
       };
     });
 
@@ -107,7 +114,6 @@ async function researchNpmPackage(packageName) {
 
     console.log('\n' + '='.repeat(60));
     console.log('✅ Research complete!\n');
-
   } catch (error) {
     console.error(`\n❌ Error researching package: ${error.message}`);
     throw error;

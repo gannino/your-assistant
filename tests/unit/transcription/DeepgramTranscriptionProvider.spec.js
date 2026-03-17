@@ -55,9 +55,7 @@ describe('DeepgramTranscriptionProvider', () => {
     // Mock navigator.mediaDevices.getUserMedia
     mockMediaStream = {
       id: 'mock-stream-123',
-      getTracks: jest.fn(() => [
-        { stop: jest.fn() },
-      ]),
+      getTracks: jest.fn(() => [{ stop: jest.fn() }]),
     };
 
     mockGetUserMedia = jest.fn().mockResolvedValue(mockMediaStream);
@@ -146,9 +144,7 @@ describe('DeepgramTranscriptionProvider', () => {
     it('should throw error when apiKey is missing', async () => {
       const config = {};
 
-      await expect(provider.initialize(config)).rejects.toThrow(
-        'Deepgram API key is required'
-      );
+      await expect(provider.initialize(config)).rejects.toThrow('Deepgram API key is required');
     });
 
     it('should trim apiKey', async () => {
@@ -177,8 +173,14 @@ describe('DeepgramTranscriptionProvider', () => {
         apiKey: 'test-api-key-12345678',
       });
 
-      expect(console.log).toHaveBeenCalledWith('[Deepgram Transcription] ✅ Initialized with model:', 'nova-2');
-      expect(console.log).toHaveBeenCalledWith('[Deepgram Transcription] API Key:', 'test-api...5678');
+      expect(console.log).toHaveBeenCalledWith(
+        '[Deepgram Transcription] ✅ Initialized with model:',
+        'nova-2'
+      );
+      expect(console.log).toHaveBeenCalledWith(
+        '[Deepgram Transcription] API Key:',
+        'test-api...5678'
+      );
       expect(console.log).toHaveBeenCalledWith('[Deepgram Transcription] SDK version: 3.x');
     });
   });
@@ -193,9 +195,9 @@ describe('DeepgramTranscriptionProvider', () => {
     it('should throw error when not initialized', async () => {
       const uninitializedProvider = new DeepgramTranscriptionProvider();
 
-      await expect(
-        uninitializedProvider.startRecognition(jest.fn(), jest.fn())
-      ).rejects.toThrow('Deepgram provider not initialized. Call initialize() first.');
+      await expect(uninitializedProvider.startRecognition(jest.fn(), jest.fn())).rejects.toThrow(
+        'Deepgram provider not initialized. Call initialize() first.'
+      );
     });
 
     it('should get microphone access with specific constraints', async () => {
@@ -231,13 +233,34 @@ describe('DeepgramTranscriptionProvider', () => {
     it('should set up event handlers', async () => {
       await provider.startRecognition(jest.fn(), jest.fn());
 
-      expect(provider.connection.on).toHaveBeenCalledWith(LiveTranscriptionEvents.Open, expect.any(Function));
-      expect(provider.connection.on).toHaveBeenCalledWith(LiveTranscriptionEvents.Transcript, expect.any(Function));
-      expect(provider.connection.on).toHaveBeenCalledWith(LiveTranscriptionEvents.Metadata, expect.any(Function));
-      expect(provider.connection.on).toHaveBeenCalledWith(LiveTranscriptionEvents.SpeechStarted, expect.any(Function));
-      expect(provider.connection.on).toHaveBeenCalledWith(LiveTranscriptionEvents.UtteranceEnd, expect.any(Function));
-      expect(provider.connection.on).toHaveBeenCalledWith(LiveTranscriptionEvents.Close, expect.any(Function));
-      expect(provider.connection.on).toHaveBeenCalledWith(LiveTranscriptionEvents.Error, expect.any(Function));
+      expect(provider.connection.on).toHaveBeenCalledWith(
+        LiveTranscriptionEvents.Open,
+        expect.any(Function)
+      );
+      expect(provider.connection.on).toHaveBeenCalledWith(
+        LiveTranscriptionEvents.Transcript,
+        expect.any(Function)
+      );
+      expect(provider.connection.on).toHaveBeenCalledWith(
+        LiveTranscriptionEvents.Metadata,
+        expect.any(Function)
+      );
+      expect(provider.connection.on).toHaveBeenCalledWith(
+        LiveTranscriptionEvents.SpeechStarted,
+        expect.any(Function)
+      );
+      expect(provider.connection.on).toHaveBeenCalledWith(
+        LiveTranscriptionEvents.UtteranceEnd,
+        expect.any(Function)
+      );
+      expect(provider.connection.on).toHaveBeenCalledWith(
+        LiveTranscriptionEvents.Close,
+        expect.any(Function)
+      );
+      expect(provider.connection.on).toHaveBeenCalledWith(
+        LiveTranscriptionEvents.Error,
+        expect.any(Function)
+      );
     });
 
     it('should warn if already recording', async () => {
@@ -253,7 +276,9 @@ describe('DeepgramTranscriptionProvider', () => {
       const error = new Error('Microphone access denied');
       mockGetUserMedia.mockRejectedValue(error);
 
-      await expect(provider.startRecognition(jest.fn(), jest.fn())).rejects.toThrow('Microphone access denied');
+      await expect(provider.startRecognition(jest.fn(), jest.fn())).rejects.toThrow(
+        'Microphone access denied'
+      );
       expect(provider.isRecording).toBe(false);
     });
   });

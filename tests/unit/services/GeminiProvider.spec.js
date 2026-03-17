@@ -22,7 +22,7 @@ jest.mock('@/utils/aiErrorHandler', () => ({
       throw new Error('API key is required');
     }
   }),
-  createNotInitializedError: jest.fn((name) => new Error(`${name} not initialized`)),
+  createNotInitializedError: jest.fn(name => new Error(`${name} not initialized`)),
   handleProviderError: jest.fn((error, name) => error),
   createInitializationError: jest.fn((name, error) => error),
 }));
@@ -162,10 +162,7 @@ describe('GeminiProvider', () => {
     });
 
     it('should handle multiple images', () => {
-      const imageDataUrls = [
-        'data:image/png;base64,abc123',
-        'data:image/jpeg;base64,def456',
-      ];
+      const imageDataUrls = ['data:image/png;base64,abc123', 'data:image/jpeg;base64,def456'];
 
       const parts = provider._buildParts('Compare these', imageDataUrls);
 
@@ -512,10 +509,7 @@ describe('GeminiProvider', () => {
       global.fetch = jest.fn().mockResolvedValue({
         ok: true,
         json: async () => ({
-          models: [
-            { name: 'models/gemini-2.0-flash' },
-            { name: 'models/gemini-1.5-pro' },
-          ],
+          models: [{ name: 'models/gemini-2.0-flash' }, { name: 'models/gemini-1.5-pro' }],
         }),
       });
 
@@ -588,9 +582,7 @@ describe('GeminiProvider', () => {
 
       const models = await provider.getAvailableModels();
 
-      expect(console.error).toHaveBeenCalledWith(
-        expect.stringContaining('Server error (503)')
-      );
+      expect(console.error).toHaveBeenCalledWith(expect.stringContaining('Server error (503)'));
     });
 
     it('should fall back to CORS proxy on fetch failure', async () => {
@@ -686,10 +678,7 @@ describe('GeminiProvider', () => {
 
     it('should extract model names from API response', () => {
       const data = {
-        models: [
-          { name: 'models/gemini-2.0-flash' },
-          { name: 'models/gemini-1.5-pro' },
-        ],
+        models: [{ name: 'models/gemini-2.0-flash' }, { name: 'models/gemini-1.5-pro' }],
       };
 
       const models = provider.extractGeminiModels(data);
@@ -759,10 +748,7 @@ describe('GeminiProvider', () => {
 
     it('should handle models without name', () => {
       const data = {
-        models: [
-          { name: 'models/gemini-1.5-flash' },
-          { id: 'some-id' },
-        ],
+        models: [{ name: 'models/gemini-1.5-flash' }, { id: 'some-id' }],
       };
 
       const models = provider.extractGeminiModels(data);

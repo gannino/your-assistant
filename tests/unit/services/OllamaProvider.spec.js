@@ -33,7 +33,12 @@ jest.mock('@/utils/apiErrorHandler', () => ({
 import { OllamaProvider } from '@/services/ai/providers/OllamaProvider';
 import { StreamParser } from '@/services/ai/streaming';
 import { getCachedModels, setCachedModels } from '@/utils/modelCacheUtil';
-import { handleHttpError, handleNetworkError, logSuccess, requireInitialized } from '@/utils/apiErrorHandler';
+import {
+  handleHttpError,
+  handleNetworkError,
+  logSuccess,
+  requireInitialized,
+} from '@/utils/apiErrorHandler';
 
 describe('OllamaProvider', () => {
   let provider;
@@ -172,10 +177,7 @@ describe('OllamaProvider', () => {
 
       await provider.generateCompletionStream('Hello', onChunk);
 
-      expect(mockFetch).toHaveBeenCalledWith(
-        'http://localhost:11434/api/chat',
-        expect.any(Object)
-      );
+      expect(mockFetch).toHaveBeenCalledWith('http://localhost:11434/api/chat', expect.any(Object));
     });
 
     it('should include system prompt in messages', async () => {
@@ -247,7 +249,9 @@ describe('OllamaProvider', () => {
         throw networkError;
       });
 
-      await expect(provider.generateCompletionStream('Hello', onChunk)).rejects.toThrow('Network error');
+      await expect(provider.generateCompletionStream('Hello', onChunk)).rejects.toThrow(
+        'Network error'
+      );
 
       expect(handleNetworkError).toHaveBeenCalledWith(networkError, 'Ollama', 'Streaming request');
     });
@@ -397,7 +401,9 @@ describe('OllamaProvider', () => {
       const models = await provider.getAvailableModels();
 
       expect(models).toEqual(expect.arrayContaining(['llama2']));
-      expect(console.warn).toHaveBeenCalledWith('[Ollama] ⚠️ No models found on server, using default list');
+      expect(console.warn).toHaveBeenCalledWith(
+        '[Ollama] ⚠️ No models found on server, using default list'
+      );
     });
 
     it('should fall back to default models on HTTP error', async () => {
@@ -526,7 +532,9 @@ describe('OllamaProvider', () => {
       const result = await provider.validateConfig();
 
       expect(result.valid).toBe(false);
-      expect(result.errors).toContain('Ollama server is not responding. Make sure Ollama is running.');
+      expect(result.errors).toContain(
+        'Ollama server is not responding. Make sure Ollama is running.'
+      );
     });
 
     it('should add error when cannot connect to Ollama server', async () => {

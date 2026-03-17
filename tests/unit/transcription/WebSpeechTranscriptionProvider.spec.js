@@ -387,9 +387,11 @@ describe('WebSpeechTranscriptionProvider', () => {
 
       expect(provider.isRecording).toBe(false);
       expect(onError).toHaveBeenCalledWith(expect.any(Error));
-      expect(onError).toHaveBeenCalledWith(expect.objectContaining({
-        message: expect.stringContaining('Speech recognition service unavailable')
-      }));
+      expect(onError).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: expect.stringContaining('Speech recognition service unavailable'),
+        })
+      );
     });
 
     it('should handle not-allowed error', () => {
@@ -402,9 +404,11 @@ describe('WebSpeechTranscriptionProvider', () => {
 
       expect(provider.isRecording).toBe(false);
       expect(onError).toHaveBeenCalledWith(expect.any(Error));
-      expect(onError).toHaveBeenCalledWith(expect.objectContaining({
-        message: expect.stringContaining('Microphone permission denied')
-      }));
+      expect(onError).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: expect.stringContaining('Microphone permission denied'),
+        })
+      );
     });
 
     it('should log no-speech error without stopping', () => {
@@ -461,7 +465,9 @@ describe('WebSpeechTranscriptionProvider', () => {
 
       provider.recognition.onend();
 
-      expect(console.warn).toHaveBeenCalledWith('[Web Speech Transcription] Max retries reached, stopping');
+      expect(console.warn).toHaveBeenCalledWith(
+        '[Web Speech Transcription] Max retries reached, stopping'
+      );
       expect(provider.isRecording).toBe(false);
     });
   });

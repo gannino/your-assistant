@@ -7,5 +7,5 @@ module.exports = {
   endOfLine: 'lf',
   bracketSpacing: true,
   arrowParens: 'avoid',
-  vueIndentScriptAndStyle: false
-}
+  vueIndentScriptAndStyle: false,
+};

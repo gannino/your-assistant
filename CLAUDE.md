@@ -33,6 +33,442 @@ npm run lint:check      # ESLint check only
 
 **Note**: Azure and Deepgram transcription providers require HTTPS even in development. Run `npm run generate:certs` first, then `npm run serve:https`.
 
+## Code Quality Standards
+
+This project follows strict code quality standards to maintain maintainability and reliability.
+
+### Module System
+
+**Critical**: This project uses **CommonJS** (not ES modules).
+
+- `package.json` does **NOT** include `"type": "module"`
+- Configuration files (babel.config.js, jest.config.js, vue.config.js, eslint.config.js) use `module.exports`
+- Source files in `src/` use ES modules (`import`/`export`) which are handled by Babel/Webpack
+- Scripts and Electron files use CommonJS (`require`/`module.exports`)
+
+**Why this matters**: Mixing module systems causes build failures. Always use CommonJS for Node.js configs, ES modules for Vue source files.
+
+### Linting and Formatting
+
+**ESLint Configuration**:
+- Uses ESLint 9.0.0 with flat config format ([eslint.config.js](eslint.config.js))
+- Integrates Prettier for consistent formatting
+- Key rules:
+  - `no-console` and `no-debugger` allowed in development, warned in production
+  - `vue/multi-word-component-names`: Off (single-word components allowed)
+  - `vue/no-v-html`: Off (DOMPurify sanitizes all HTML before rendering)
+  - `prettier/prettier`: Enforced as errors
+
+**Prettier Configuration** ([.prettierrc.cjs](.prettierrc.cjs)):
+- Single quotes, 2-space indentation, 100-character line width
+- ES5 trailing commas, Unix line endings
+- Vue script/style indentation disabled
+
+**Running Quality Checks**:
+```bash
+npm run lint:check    # Verify no lint errors
+npm run format:check  # Verify formatting is correct
+npm run lint          # Auto-fix lint issues
+npm run format        # Auto-fix formatting issues
+```
+
+### Testing Standards
+
+- **Framework**: Jest 29.7.0 with Vue Test Utils
+- **Environment**: jsdom for browser simulation
+- **Coverage**: Collected for all JS files except entry points
+- **Test Location**: `tests/unit/` directory
+- **Naming**: Tests use `.spec.js` extension
+
+**Current Status**:
+- 31 test suites
+- 1088 tests
+- All tests passing
+
+**Test Patterns**:
+- Provider tests: Concrete implementations extending base classes
+- Composable tests: Mock localStorage and timers
+- Component tests: Mount with Vue Test Utils
+- Utility tests: Pure function testing
+
+### Code Quality Rules
+
+When making changes:
+
+1. **Never silence lint rules** without justification
+2. **Remove unused catch parameters** instead of prefixing with underscore (unless intentionally documenting)
+3. **Use descriptive error messages** with context
+4. **Validate inputs at entry points**
+5. **Throw descriptive errors** from providers—never swallow silently
+6. **Prefer fixing code over changing tests**
+7. **Only change tests if they're clearly wrong** (obsolete, flaky, asserting wrong behavior)
+
+### Common Patterns
+
+**Catch Blocks** (remove unused parameters):
+```javascript
+// ✅ Correct - parameter removed
+try {
+  doSomething();
+} catch {
+  // Handle error without using error object
+}
+
+// ❌ Avoid - unused parameter
+try {
+  doSomething();
+} catch (error) {
+  // error not used
+}
+```
+
+**Error Handling** (descriptive messages):
+```javascript
+// ✅ Correct - descriptive with context
+throw new Error(
+  `[${providerName}] Failed to initialize: ${originalError.message}`
+);
+
+// ❌ Avoid - vague error
+throw new Error('Failed');
+```
+
+## Learnings from Code Quality Remediation
+
+This section captures critical learnings from the March 2026 code quality remediation to prevent future issues.
+
+### Critical Module System Issue
+
+**The Problem**: Adding `"type": "module"` to package.json breaks everything
+
+**What Happened**:
+- Someone added `"type": "module"` to package.json, thinking it would enable ES modules
+- This caused Node.js to treat ALL `.js` files as ES modules
+- Build tools (Vue CLI, Jest) require CommonJS config files
+- Result: Complete build and test failure with errors like:
+  ```
+  ReferenceError: require is not defined in ES module scope
+  ReferenceError: module is not defined in ES module scope
+  ```
+
+**Why It Failed**:
+- Configuration files (babel.config.js, jest.config.js, vue.config.js, eslint.config.js) use `module.exports` (CommonJS)
+- When `"type": "module"` is set, Node.js treats `.js` files as ES modules
+- `require` and `module.exports` don't exist in ES module scope
+- Vue CLI and Jest can't load their configurations
+
+**The Fix**:
+1. Remove `"type": "module"` from package.json
+2. Keep config files using CommonJS (`module.exports`)
+3. Source files in `src/` can still use ES modules (`import`/`export`) because Babel/Webpack handles them
+
+**Key Insight**: Vue.js projects use a **hybrid module system**:
+- Node.js configs: CommonJS (`.js` files with `module.exports`)
+- Vue source files: ES modules (`import`/`export` handled by Babel)
+- Never use `"type": "module"` in package.json for Vue CLI projects
+
+### ESLint Configuration Pitfalls
+
+**Flat Config Migration** (ESLint 9.0+):
+
+ESLint 9.0 uses a new "flat config" format that's different from the legacy `.eslintrc.js` format.
+
+**Common Mistake**: Using ES module syntax in eslint.config.js while the project uses CommonJS
+
+**Wrong** (causes performance warnings):
+```javascript
+// eslint.config.js
+import js from '@eslint/js';
+import vue from 'eslint-plugin-vue';
+
+export default [
+  js.configs.recommended,
+  ...vue.configs['flat/recommended'],
+];
+```
+
+**Correct** (matches project's CommonJS setup):
+```javascript
+// eslint.config.js
+const js = require('@eslint/js');
+const vue = require('eslint-plugin-vue');
+
+module.exports = [
+  js.configs.recommended,
+  ...vue.configs['flat/recommended'],
+];
+```
+
+**Rule Disabling Best Practices**:
+
+When you must disable an ESLint rule:
+
+1. **Add a comment explaining WHY**:
+   ```javascript
+   // eslint-disable-next-line vue/no-v-html -- Content sanitized by DOMPurify
+   <div v-html="sanitizedContent" />
+   ```
+
+2. **Prefer disabling locally over globally**:
+   ```javascript
+   // ✅ Better - disable only where needed
+   /* eslint-disable vue/no-v-html */
+   <div v-html="content" />
+   /* eslint-enable vue/no-v-html */
+
+   // ⚠️ Acceptable - disable globally with strong justification
+   // In eslint.config.js:
+   'vue/no-v-html': 'off', // Disabled - DOMPurify sanitizes all HTML
+   ```
+
+3. **Never disable without justification** - Every disabled rule should have a comment explaining why it's safe to ignore
+
+### Unused Variables in Catch Blocks
+
+**The Issue**: ESLint's `no-unused-vars` rule flags unused error parameters in catch blocks
+
+**Wrong Approaches**:
+```javascript
+// ❌ Don't prefix with underscore (looks accidental)
+try {
+  doSomething();
+} catch (_error) {
+  // error not used
+}
+
+// ❌ Don't disable the rule inline (creates noise)
+try {
+  doSomething();
+} catch (error) {
+  // eslint-disable-next-line no-unused-vars
+  // error not used
+}
+```
+
+**Correct Approach**:
+```javascript
+// ✅ Remove the parameter entirely
+try {
+  doSomething();
+} catch {
+  // Handle error without using error object
+}
+```
+
+**Why This Is Better**:
+- Cleaner code
+- Clear intent (we're intentionally ignoring the error)
+- No lint noise
+- Valid JavaScript syntax (optional catch binding)
+
+**When to Keep the Parameter**:
+Only when you actually use it:
+```javascript
+try {
+  doSomething();
+} catch (error) {
+  console.error('Operation failed:', error.message);
+  // Log to error tracking service
+  trackError(error);
+}
+```
+
+### Quality Check Workflow
+
+**Before Committing Code**:
+
+Always run these commands in order:
+
+```bash
+# 1. Check formatting first (quickest)
+npm run format:check
+
+# 2. Check linting
+npm run lint:check
+
+# 3. Run tests
+npm test
+
+# 4. Try building (if you changed build-related files)
+npm run build
+```
+
+**If Any Check Fails**:
+
+1. **Format issues**: Run `npm run format` to auto-fix
+2. **Lint issues**:
+   - Try `npm run lint` to auto-fix
+   - For manual fixes, read the error message carefully
+   - If you must disable a rule, add a comment explaining why
+3. **Test failures**:
+   - Read the test output carefully
+   - Check if it's a real bug or a test issue
+   - Fix the code, not the test (unless test is clearly wrong)
+4. **Build failures**:
+   - Check module system first (look for "require is not defined" errors)
+   - Verify config files use correct syntax
+   - Check for missing dependencies
+
+### Common Build Failures and Solutions
+
+**Error: "require is not defined in ES module scope"**
+
+**Cause**: Module system mismatch - usually `"type": "module"` in package.json
+
+**Solution**:
+1. Remove `"type": "module"` from package.json
+2. Ensure config files use `module.exports` (CommonJS)
+3. Source files can still use `import`/`export` (handled by Babel)
+
+**Error: "module is not defined in ES module scope"**
+
+**Cause**: Same as above - config file using CommonJS but treated as ES module
+
+**Solution**: Same as above
+
+**Error: Jest can't find tests**
+
+**Cause**: testMatch patterns don't match your test files
+
+**Check**:
+```javascript
+// In jest.config.js
+testMatch: [
+  '<rootDir>/tests/**/*.(spec|test).js',  // Make sure extension matches
+  '<rootDir>/src/**/__tests__/**/*.js',
+  '<rootDir>/src/**/*.spec.js',
+],
+```
+
+**Error: "Cannot find module '@/xxx'"**
+
+**Cause**: Jest moduleNameMapper not configured
+
+**Check**:
+```javascript
+// In jest.config.js
+moduleNameMapper: {
+  '^@/(.*)$': '<rootDir>/src/$1',
+},
+```
+
+### Testing Best Practices
+
+**When Tests Fail**:
+
+1. **Read the error message** - It usually tells you what's wrong
+2. **Check the test code** - Is the test correct?
+3. **Check the production code** - Is there a bug?
+4. **Fix the code, not the test** - Unless the test is clearly wrong
+
+**When to Change Tests**:
+
+Only change tests when:
+- Test is checking for obsolete behavior
+- Test has a bug (wrong assertion, wrong setup)
+- Test is flaky (fails intermittently)
+- Requirements changed and test is outdated
+
+**When NOT to Change Tests**:
+
+- Test exposes a real bug in production code
+- Test fails because you changed an API contract
+- Test fails because you removed a feature
+- Test is "too strict" (it's doing its job)
+
+### Code Review Checklist
+
+When reviewing changes (your own or others'), check:
+
+**Module System**:
+- [ ] No `"type": "module"` in package.json
+- [ ] Config files use `module.exports` (CommonJS)
+- [ ] Source files use `import`/`export` (ES modules)
+
+**Code Quality**:
+- [ ] No `console.log` left in production code
+- [ ] No unused variables
+- [ ] No commented-out code
+- [ ] Error messages are descriptive
+- [ ] Catch blocks either use error or omit parameter
+
+**Testing**:
+- [ ] All tests pass
+- [ ] New features have tests
+- [ ] Bug fixes have tests (if applicable)
+- [ ] No tests commented out
+
+**Documentation**:
+- [ ] CLAUDE.md updated if patterns changed
+- [ ] Complex logic has comments
+- [ ] ESLint rule disables have explanations
+
+### Performance Considerations
+
+**Build Size Warnings**:
+
+You may see warnings like:
+```
+asset size limit: The following asset(s) exceed the recommended size limit
+```
+
+**This is normal for this project** because:
+- Element Plus UI library is large
+- PDF.js for PDF processing
+- Multiple AI provider SDKs
+- Electron bundling
+
+**Don't worry about these unless**:
+- Bundle size suddenly increases significantly
+- Users complain about slow loading
+- You're adding new heavy dependencies
+
+**To Reduce Bundle Size** (if needed):
+1. Use dynamic imports for routes
+2. Lazy-load heavy components
+3. Consider tree-shaking for large libraries
+4. Use CDN links for vendor libraries
+
+### Troubleshooting Guide
+
+**Problem: npm install fails**
+
+Try:
+```bash
+rm -rf node_modules package-lock.json
+npm install
+```
+
+**Problem: npm run serve fails**
+
+Check:
+1. Port 8080 is not in use (`lsof -i :8080`)
+2. node_modules are installed (`npm install`)
+3. Clear Vue CLI cache: `rm -rf .vue-cli-service`
+
+**Problem: npm test fails with "Cannot find module"**
+
+Check:
+1. jest.config.js has correct moduleNameMapper
+2. Test file imports use correct paths (`@/` alias)
+3. Module being tested exists
+4. Run `npm install` to ensure dependencies installed
+
+**Problem: ESLint says "module is not defined"**
+
+Check:
+1. package.json doesn't have `"type": "module"`
+2. eslint.config.js uses `require()` not `import`
+3. You're not mixing module systems in same file
+
+**Problem: Vue component not found**
+
+Check:
+1. File path in import is correct
+2. File exists and has correct extension
+3. Component has `export default`
+4. Router configuration includes the route
+
 ## High-Level Architecture
 
 This is a **serverless Vue 3 SPA** that provides real-time speech transcription and AI-generated responses as a general-purpose assistant. All configuration is stored in localStorage—no backend server required.

@@ -20,10 +20,10 @@ function registerShortcuts({ toggleVisibility, moveWindow, takeScreenshot }) {
   });
 
   // Move window with arrow keys
-  globalShortcut.register('CommandOrControl+Left',  () => moveWindow(-40, 0));
+  globalShortcut.register('CommandOrControl+Left', () => moveWindow(-40, 0));
   globalShortcut.register('CommandOrControl+Right', () => moveWindow(40, 0));
-  globalShortcut.register('CommandOrControl+Up',    () => moveWindow(0, -40));
-  globalShortcut.register('CommandOrControl+Down',  () => moveWindow(0, 40));
+  globalShortcut.register('CommandOrControl+Up', () => moveWindow(0, -40));
+  globalShortcut.register('CommandOrControl+Down', () => moveWindow(0, 40));
 
   registered = true;
   console.log('[Shortcuts] Global shortcuts registered');

@@ -51,7 +51,8 @@ describe('corsProxyUtil', () => {
     });
 
     it('should try next proxy on failure', async () => {
-      global.fetch = jest.fn()
+      global.fetch = jest
+        .fn()
         .mockRejectedValueOnce(new Error('Network error'))
         .mockResolvedValueOnce({
           ok: true,
@@ -76,7 +77,8 @@ describe('corsProxyUtil', () => {
     });
 
     it('should try all proxies on multiple failures', async () => {
-      global.fetch = jest.fn()
+      global.fetch = jest
+        .fn()
         .mockRejectedValueOnce(new Error('Proxy 1 failed'))
         .mockRejectedValueOnce(new Error('Proxy 2 failed'))
         .mockResolvedValueOnce({
@@ -120,7 +122,8 @@ describe('corsProxyUtil', () => {
     });
 
     it('should continue to next proxy on non-ok response', async () => {
-      global.fetch = jest.fn()
+      global.fetch = jest
+        .fn()
         .mockResolvedValueOnce({
           ok: false,
           status: 404,
@@ -256,15 +259,9 @@ describe('corsProxyUtil', () => {
 
       await fetchWithCorsProxy('https://api.example.com/data');
 
-      expect(console.log).toHaveBeenCalledWith(
-        expect.stringContaining('Trying proxy:')
-      );
-      expect(console.log).toHaveBeenCalledWith(
-        expect.stringContaining('Target URL:')
-      );
-      expect(console.log).toHaveBeenCalledWith(
-        expect.stringContaining('Response:')
-      );
+      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Trying proxy:'));
+      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Target URL:'));
+      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Response:'));
     });
 
     it('should log success message', async () => {
@@ -276,9 +273,7 @@ describe('corsProxyUtil', () => {
 
       await fetchWithCorsProxy('https://api.example.com/data');
 
-      expect(console.log).toHaveBeenCalledWith(
-        expect.stringContaining('✅ Success with proxy:')
-      );
+      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('✅ Success with proxy:'));
     });
 
     it('should log failure message', async () => {
@@ -286,12 +281,8 @@ describe('corsProxyUtil', () => {
 
       await expect(fetchWithCorsProxy('https://api.example.com/data')).rejects.toThrow();
 
-      expect(console.error).toHaveBeenCalledWith(
-        expect.stringContaining('❌ Proxy')
-      );
-      expect(console.error).toHaveBeenCalledWith(
-        expect.stringContaining('Network error')
-      );
+      expect(console.error).toHaveBeenCalledWith(expect.stringContaining('❌ Proxy'));
+      expect(console.error).toHaveBeenCalledWith(expect.stringContaining('Network error'));
     });
 
     it('should log final error when all proxies fail', async () => {
@@ -299,9 +290,7 @@ describe('corsProxyUtil', () => {
 
       await expect(fetchWithCorsProxy('https://api.example.com/data')).rejects.toThrow();
 
-      expect(console.error).toHaveBeenCalledWith(
-        expect.stringContaining('All proxies failed')
-      );
+      expect(console.error).toHaveBeenCalledWith(expect.stringContaining('All proxies failed'));
     });
 
     it('should handle AbortError as timeout', async () => {
@@ -311,9 +300,7 @@ describe('corsProxyUtil', () => {
 
       await expect(fetchWithCorsProxy('https://api.example.com/data')).rejects.toThrow();
 
-      expect(console.error).toHaveBeenCalledWith(
-        expect.stringContaining('Request timeout')
-      );
+      expect(console.error).toHaveBeenCalledWith(expect.stringContaining('Request timeout'));
     });
   });
 

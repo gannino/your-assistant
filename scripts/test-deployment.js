@@ -7,12 +7,7 @@ console.log('🔍 Testing deployment build...\n');
 const distDir = path.join(__dirname, '..', 'dist');
 
 // Check critical files exist
-const criticalFiles = [
-  'index.html',
-  'manifest.json',
-  'favicon-32x32.png',
-  'favicon-16x16.png'
-];
+const criticalFiles = ['index.html', 'manifest.json', 'favicon-32x32.png', 'favicon-16x16.png'];
 
 let allGood = true;
 

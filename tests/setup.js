@@ -4,7 +4,7 @@ global.console = {
   // Uncomment to ignore specific console methods
   // warn: jest.fn(),
   // error: jest.fn(),
-}
+};
 
 // Configure Vue Test Utils
 // Note: @vue/test-utils will be configured in individual test files
@@ -15,8 +15,8 @@ const localStorageMock = {
   setItem: jest.fn(),
   removeItem: jest.fn(),
   clear: jest.fn(),
-}
-global.localStorage = localStorageMock
+};
+global.localStorage = localStorageMock;
 
 // Mock sessionStorage
 const sessionStorageMock = {
@@ -24,11 +24,11 @@ const sessionStorageMock = {
   setItem: jest.fn(),
   removeItem: jest.fn(),
   clear: jest.fn(),
-}
-global.sessionStorage = sessionStorageMock
+};
+global.sessionStorage = sessionStorageMock;
 
 // Mock fetch
-global.fetch = jest.fn()
+global.fetch = jest.fn();
 
 // Mock window.matchMedia
 Object.defineProperty(window, 'matchMedia', {
@@ -43,7 +43,7 @@ Object.defineProperty(window, 'matchMedia', {
     removeEventListener: jest.fn(),
     dispatchEvent: jest.fn(),
   })),
-})
+});
 
 // Polyfill ReadableStream for tests (needed for OpenRouterProvider tests)
 if (typeof ReadableStream === 'undefined') {

@@ -12,24 +12,26 @@ async function fetchPackageInfo(packageName) {
     const url = `https://registry.npmjs.org/${packageName}`;
     console.log(`\n🔍 Fetching: ${url}`);
 
-    https.get(url, (res) => {
-      let data = '';
+    https
+      .get(url, res => {
+        let data = '';
 
-      res.on('data', (chunk) => {
-        data += chunk;
-      });
+        res.on('data', chunk => {
+          data += chunk;
+        });
 
-      res.on('end', () => {
-        try {
-          const json = JSON.parse(data);
-          resolve(json);
-        } catch (error) {
-          reject(new Error(`Failed to parse JSON: ${error.message}`));
-        }
+        res.on('end', () => {
+          try {
+            const json = JSON.parse(data);
+            resolve(json);
+          } catch (error) {
+            reject(new Error(`Failed to parse JSON: ${error.message}`));
+          }
+        });
+      })
+      .on('error', error => {
+        reject(error);
       });
-    }).on('error', (error) => {
-      reject(error);
-    });
   });
 }
 
@@ -97,10 +99,7 @@ async function researchNpmPackage(packageName) {
     // Check for AI SDK integration
     console.log('\n🤖 AI SDK Integration:');
     console.log('─'.repeat(70));
-    const allDeps = [
-      ...packageInfo.dependencies,
-      ...packageInfo.peerDependencies
-    ];
+    const allDeps = [...packageInfo.dependencies, ...packageInfo.peerDependencies];
 
     if (allDeps.some(dep => dep.includes('ai') || dep.includes('vercel'))) {
       console.log('✅ Detected Vercel AI SDK integration');
@@ -116,7 +115,6 @@ async function researchNpmPackage(packageName) {
     console.log('✅ Research complete!\n');
 
     return packageInfo;
-
   } catch (error) {
     console.error(`\n❌ Error researching package: ${error.message}`);
     throw error;

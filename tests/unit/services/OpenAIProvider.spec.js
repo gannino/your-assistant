@@ -179,10 +179,7 @@ describe('OpenAIProvider', () => {
 
       provider.client.chat.completions.create.mockResolvedValue(mockResponse);
 
-      const imageDataUrls = [
-        'data:image/png;base64,abc123',
-        'data:image/jpeg;base64,def456',
-      ];
+      const imageDataUrls = ['data:image/png;base64,abc123', 'data:image/jpeg;base64,def456'];
 
       await provider.generateCompletion('What do you see?', { imageDataUrls });
 
@@ -352,9 +349,9 @@ describe('OpenAIProvider', () => {
     it('should throw error if not initialized', async () => {
       const uninitializedProvider = new OpenAIProvider();
 
-      await expect(
-        uninitializedProvider.generateCompletionStream('Hi', () => {})
-      ).rejects.toThrow('OpenAI provider not initialized');
+      await expect(uninitializedProvider.generateCompletionStream('Hi', () => {})).rejects.toThrow(
+        'OpenAI provider not initialized'
+      );
     });
 
     it('should skip empty chunks', async () => {
@@ -413,11 +410,7 @@ describe('OpenAIProvider', () => {
       await provider.initialize({ apiKey: 'sk-test-key' });
 
       const mockModels = {
-        data: [
-          { id: 'gpt-4' },
-          { id: 'gpt-3.5-turbo' },
-          { id: 'gpt-4o' },
-        ],
+        data: [{ id: 'gpt-4' }, { id: 'gpt-3.5-turbo' }, { id: 'gpt-4o' }],
       };
 
       provider.client.models.list.mockResolvedValue(mockModels);

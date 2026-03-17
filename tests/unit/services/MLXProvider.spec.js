@@ -30,7 +30,12 @@ jest.mock('@/utils/apiErrorHandler', () => ({
 import { MLXProvider } from '@/services/ai/providers/MLXProvider';
 import { StreamParser } from '@/services/ai/streaming';
 import { getCachedModels, setCachedModels } from '@/utils/modelCacheUtil';
-import { handleHttpError, handleNetworkError, logSuccess, requireInitialized } from '@/utils/apiErrorHandler';
+import {
+  handleHttpError,
+  handleNetworkError,
+  logSuccess,
+  requireInitialized,
+} from '@/utils/apiErrorHandler';
 
 describe('MLXProvider', () => {
   let provider;
@@ -251,7 +256,9 @@ describe('MLXProvider', () => {
         throw networkError;
       });
 
-      await expect(provider.generateCompletionStream('Hello', onChunk)).rejects.toThrow('Network error');
+      await expect(provider.generateCompletionStream('Hello', onChunk)).rejects.toThrow(
+        'Network error'
+      );
 
       expect(handleNetworkError).toHaveBeenCalledWith(networkError, 'MLX', 'Streaming request');
     });
@@ -569,7 +576,9 @@ describe('MLXProvider', () => {
       const result = await provider.validateConfig();
 
       expect(result.valid).toBe(false);
-      expect(result.errors).toContain('MLX server is not responding. Make sure MLX server is running.');
+      expect(result.errors).toContain(
+        'MLX server is not responding. Make sure MLX server is running.'
+      );
     });
 
     it('should add error when cannot connect to MLX server', async () => {

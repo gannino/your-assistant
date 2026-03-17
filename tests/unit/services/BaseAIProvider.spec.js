@@ -148,9 +148,9 @@ describe('BaseAIProvider', () => {
       const incompleteProvider = new IncompleteProvider();
       await incompleteProvider.initialize({});
 
-      await expect(
-        incompleteProvider.generateCompletionStream('test', () => {})
-      ).rejects.toThrow('generateCompletionStream must be implemented by subclass');
+      await expect(incompleteProvider.generateCompletionStream('test', () => {})).rejects.toThrow(
+        'generateCompletionStream must be implemented by subclass'
+      );
     });
 
     it('should call onChunk callback for each chunk', async () => {
@@ -584,9 +584,7 @@ describe('BaseAIProvider', () => {
           })
       );
 
-      await expect(provider.executeWithTimeout(fn, 100)).rejects.toThrow(
-        'Operation timed out'
-      );
+      await expect(provider.executeWithTimeout(fn, 100)).rejects.toThrow('Operation timed out');
     });
 
     it('should use custom error message', async () => {

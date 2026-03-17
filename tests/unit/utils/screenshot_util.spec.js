@@ -144,7 +144,11 @@ describe('screenshot_util', () => {
     });
 
     it('should have browser fallback functions', () => {
-      const { captureScreenshot, stopScreenCapture, isScreenCaptureSupported } = require('@/utils/screenshot_util');
+      const {
+        captureScreenshot,
+        stopScreenCapture,
+        isScreenCaptureSupported,
+      } = require('@/utils/screenshot_util');
 
       expect(typeof captureScreenshot).toBe('function');
       expect(typeof stopScreenCapture).toBe('function');

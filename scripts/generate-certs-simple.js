@@ -28,18 +28,17 @@ try {
   // Generate private key
   console.log('1. Generating private key...');
   execSync(`openssl genrsa -out "${keyPath}" 2048`, { stdio: 'inherit' });
-  
+
   // Generate certificate
   console.log('\n2. Generating self-signed certificate...');
   const certCommand = `openssl req -new -x509 -key "${keyPath}" -out "${certPath}" -days 365 -subj "/C=US/ST=State/L=City/O=Organization/CN=localhost"`;
   execSync(certCommand, { stdio: 'inherit' });
-  
+
   console.log('\n✅ Certificates generated successfully!');
   console.log(`   Private Key: ${keyPath}`);
   console.log(`   Certificate: ${certPath}`);
-  
+
   console.log('\n🚀 You can now run: npm run serve:https');
-  
 } catch (error) {
   console.error('❌ Error generating certificates:', error.message);
   process.exit(1);

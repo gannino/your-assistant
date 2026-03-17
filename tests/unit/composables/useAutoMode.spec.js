@@ -11,7 +11,14 @@ jest.mock('@/utils/screenshot_util', () => ({
   imageChangeFraction: jest.fn(),
 }));
 
-import { useAutoMode, startAutoMode, stopAutoMode, toggleAutoMode, loadSettings, AUTO_DEFAULTS } from '@/composables/useAutoMode';
+import {
+  useAutoMode,
+  startAutoMode,
+  stopAutoMode,
+  toggleAutoMode,
+  loadSettings,
+  AUTO_DEFAULTS,
+} from '@/composables/useAutoMode';
 import { captureScreenshot, imageChangeFraction } from '@/utils/screenshot_util';
 
 describe('useAutoMode', () => {

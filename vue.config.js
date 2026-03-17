@@ -1,27 +1,24 @@
-const { defineConfig } = require('@vue/cli-service')
-const path = require('path')
-const fs = require('fs')
+const { defineConfig } = require('@vue/cli-service');
+const path = require('path');
+const fs = require('fs');
 
 module.exports = defineConfig({
-  transpileDependencies: [
-    'openai',
-    'element-plus',
-    '@element-plus/icons-vue'
-  ],
+  transpileDependencies: ['openai', 'element-plus', '@element-plus/icons-vue'],
   css: {
     extract: true,
     sourceMap: false,
     loaderOptions: {
       sass: {
-        additionalData: '@import "@/styles/variables.scss";'
-      }
-    }
+        additionalData: '@import "@/styles/variables.scss";',
+      },
+    },
   },
-  publicPath: process.env.ELECTRON_BUILD === 'true'
-    ? './'
-    : process.env.NODE_ENV === 'production'
-      ? '/your-assistant/' // GitHub Pages subdirectory
-      : '/',
+  publicPath:
+    process.env.ELECTRON_BUILD === 'true'
+      ? './'
+      : process.env.NODE_ENV === 'production'
+        ? '/your-assistant/' // GitHub Pages subdirectory
+        : '/',
 
   devServer: {
     // HTTPS Configuration - Use server option instead of deprecated https
@@ -37,8 +34,8 @@ module.exports = defineConfig({
     headers: {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS',
-      'Access-Control-Allow-Headers': 'X-Requested-With, content-type, Authorization'
-    }
+      'Access-Control-Allow-Headers': 'X-Requested-With, content-type, Authorization',
+    },
   },
 
   configureWebpack: {
@@ -53,24 +50,27 @@ module.exports = defineConfig({
           test: /\.m?js$/,
           exclude: /node_modules/,
           resolve: {
-            fullySpecified: false
-          }
-        }
-      ]
+            fullySpecified: false,
+          },
+        },
+      ],
     },
     resolve: {
       alias: {
         '@': path.resolve(__dirname, 'src'),
-        'pdfjs-dist/build/pdf.worker.min.js': path.resolve(__dirname, 'node_modules/pdfjs-dist/build/pdf.worker.min.js'),
+        'pdfjs-dist/build/pdf.worker.min.js': path.resolve(
+          __dirname,
+          'node_modules/pdfjs-dist/build/pdf.worker.min.js'
+        ),
       },
       extensionAlias: {
-        '.js': ['.js', '.mjs']
+        '.js': ['.js', '.mjs'],
       },
       fallback: {
-        'module': false,
-        'path': false
-      }
-    }
+        module: false,
+        path: false,
+      },
+    },
   },
   chainWebpack: config => {
     // Handle OpenAI ES modules
@@ -82,7 +82,7 @@ module.exports = defineConfig({
       .use('babel-loader')
       .loader('babel-loader')
       .options({
-        presets: ['@vue/cli-plugin-babel/preset']
-      })
-  }
-})
+        presets: ['@vue/cli-plugin-babel/preset'],
+      });
+  },
+});

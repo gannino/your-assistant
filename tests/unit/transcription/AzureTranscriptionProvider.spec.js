@@ -55,9 +55,7 @@ describe('AzureTranscriptionProvider', () => {
     // Mock navigator.mediaDevices.getUserMedia for iOS tests
     mockMediaStream = {
       id: 'mock-stream-123',
-      getTracks: jest.fn(() => [
-        { stop: jest.fn() },
-      ]),
+      getTracks: jest.fn(() => [{ stop: jest.fn() }]),
     };
 
     mockGetUserMedia = jest.fn().mockResolvedValue(mockMediaStream);
@@ -152,9 +150,7 @@ describe('AzureTranscriptionProvider', () => {
         azureToken: 'test-token',
       };
 
-      await expect(provider.initialize(config)).rejects.toThrow(
-        'Azure region is required'
-      );
+      await expect(provider.initialize(config)).rejects.toThrow('Azure region is required');
     });
 
     it('should log initialization with region', async () => {
@@ -195,9 +191,9 @@ describe('AzureTranscriptionProvider', () => {
     it('should throw error when not initialized', async () => {
       const uninitializedProvider = new AzureTranscriptionProvider();
 
-      await expect(
-        uninitializedProvider.startRecognition(jest.fn(), jest.fn())
-      ).rejects.toThrow('Azure provider not initialized. Call initialize() first.');
+      await expect(uninitializedProvider.startRecognition(jest.fn(), jest.fn())).rejects.toThrow(
+        'Azure provider not initialized. Call initialize() first.'
+      );
     });
 
     it('should create SpeechConfig from subscription', async () => {
@@ -258,7 +254,7 @@ describe('AzureTranscriptionProvider', () => {
       expect(provider.recognizer.startContinuousRecognitionAsync).toHaveBeenCalled();
     });
 
-    it('should set isRecording to true on success', (done) => {
+    it('should set isRecording to true on success', done => {
       provider.startRecognition(jest.fn(), jest.fn());
 
       // Wait for async callback
@@ -322,7 +318,9 @@ describe('AzureTranscriptionProvider', () => {
 
       provider.recognizer.recognized(null, mockEvent);
 
-      expect(console.log).toHaveBeenCalledWith('[Azure Transcription] Speech could not be recognized');
+      expect(console.log).toHaveBeenCalledWith(
+        '[Azure Transcription] Speech could not be recognized'
+      );
     });
 
     it('should call onError on cancellation', async () => {
@@ -344,7 +342,7 @@ describe('AzureTranscriptionProvider', () => {
       );
     });
 
-    it('should handle start failure and call onError', (done) => {
+    it('should handle start failure and call onError', done => {
       const onError = jest.fn();
 
       // Create a mock recognizer that fails
@@ -784,7 +782,9 @@ describe('AzureTranscriptionProvider', () => {
     it('should include documentation URL', () => {
       const info = provider.getProviderInfo();
 
-      expect(info.documentationUrl).toBe('https://docs.microsoft.com/azure/cognitive-services/speech-service/');
+      expect(info.documentationUrl).toBe(
+        'https://docs.microsoft.com/azure/cognitive-services/speech-service/'
+      );
     });
 
     it('should have azureToken config field', () => {
@@ -851,7 +851,9 @@ describe('AzureTranscriptionProvider', () => {
     it('should have standard description on non-iOS', () => {
       const info = provider.getProviderInfo();
 
-      expect(info.description).toBe('Azure Cognitive Services Speech Recognition (original provider)');
+      expect(info.description).toBe(
+        'Azure Cognitive Services Speech Recognition (original provider)'
+      );
     });
 
     it('should have iOS-specific troubleshooting on iOS', () => {

@@ -26,9 +26,7 @@ describe('WhisperTranscriptionProvider', () => {
     // Mock navigator.mediaDevices.getUserMedia
     mockMediaStream = {
       id: 'mock-stream-123',
-      getTracks: jest.fn(() => [
-        { stop: jest.fn() },
-      ]),
+      getTracks: jest.fn(() => [{ stop: jest.fn() }]),
     };
 
     mockGetUserMedia = jest.fn().mockResolvedValue(mockMediaStream);
@@ -130,7 +128,10 @@ describe('WhisperTranscriptionProvider', () => {
         apiKey: 'sk-test-key',
       });
 
-      expect(console.log).toHaveBeenCalledWith('[Whisper Transcription] Initialized with model:', 'whisper-1');
+      expect(console.log).toHaveBeenCalledWith(
+        '[Whisper Transcription] Initialized with model:',
+        'whisper-1'
+      );
     });
   });
 
@@ -144,9 +145,9 @@ describe('WhisperTranscriptionProvider', () => {
     it('should throw error when not initialized', async () => {
       const uninitializedProvider = new WhisperTranscriptionProvider();
 
-      await expect(
-        uninitializedProvider.startRecognition(jest.fn(), jest.fn())
-      ).rejects.toThrow('Whisper provider not initialized. Call initialize() first.');
+      await expect(uninitializedProvider.startRecognition(jest.fn(), jest.fn())).rejects.toThrow(
+        'Whisper provider not initialized. Call initialize() first.'
+      );
     });
 
     it('should get microphone access', async () => {
@@ -207,7 +208,9 @@ describe('WhisperTranscriptionProvider', () => {
       const error = new Error('Microphone access denied');
       mockGetUserMedia.mockRejectedValue(error);
 
-      await expect(provider.startRecognition(jest.fn(), jest.fn())).rejects.toThrow('Microphone access denied');
+      await expect(provider.startRecognition(jest.fn(), jest.fn())).rejects.toThrow(
+        'Microphone access denied'
+      );
       expect(provider.isRecording).toBe(false);
     });
   });
