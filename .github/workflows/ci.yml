@@ -54,13 +54,6 @@ jobs:
       - name: Build Vue app for web
         run: npm run build
 
-      - name: Upload node_modules artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: node-modules-cache
-          path: node_modules/
-          retention-days: 1
-
       - name: Upload Vue build artifact
         uses: actions/upload-artifact@v4
         with:
@@ -90,11 +83,8 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
 
-      - name: Download node_modules artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: node-modules-cache
-          path: node_modules/
+      - name: Install dependencies
+        run: npm ci
 
       - name: Download Vue build artifact
         uses: actions/download-artifact@v4
@@ -135,14 +125,11 @@ jobs:
           node-version: '24'
           cache: 'npm'
 
-      - name: Download node_modules artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: node-modules-cache
-          path: node_modules/
+      - name: Install dependencies
+        run: npm ci
 
       - name: Build Vue app for Electron
-        run: cross-env ELECTRON_BUILD=true vue-cli-service build
+        run: npm run build
         env:
           ELECTRON_BUILD: 'true'
 
@@ -172,11 +159,8 @@ jobs:
           node-version: '24'
           cache: 'npm'
 
-      - name: Download node_modules artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: node-modules-cache
-          path: node_modules/
+      - name: Install dependencies
+        run: npm ci
 
       - name: Download Electron Vue build artifact
         uses: actions/download-artifact@v4
@@ -224,11 +208,8 @@ jobs:
           node-version: '24'
           cache: 'npm'
 
-      - name: Download node_modules artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: node-modules-cache
-          path: node_modules/
+      - name: Install dependencies
+        run: npm ci
 
       - name: Download Electron Vue build artifact
         uses: actions/download-artifact@v4
@@ -269,11 +250,8 @@ jobs:
           node-version: '24'
           cache: 'npm'
 
-      - name: Download node_modules artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: node-modules-cache
-          path: node_modules/
+      - name: Install dependencies
+        run: npm ci
 
       - name: Download Electron Vue build artifact
         uses: actions/download-artifact@v4
@@ -287,9 +265,10 @@ jobs:
           sudo apt-get install -y fakeroot xorriso rpm libxkbfile-dev libsecret-1-dev
 
       - name: Build Electron app for Linux
-        run: cross-env ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES=true npx electron-builder --linux
+        run: npx electron-builder --linux
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: 'true'
 
       - name: Upload Linux artifacts
         uses: actions/upload-artifact@v4
