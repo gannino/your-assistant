@@ -3,6 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "main": "electron/main.js",
+  "author": {
+    "name": "Your Assistant",
+    "email": "noreply@example.com"
+  },
   "engines": {
     "node": ">=24.0.0"
   },
@@ -26,11 +30,11 @@
     "test:ci": "jest --ci --coverage --watchAll=false",
     "electron:dev": "concurrently -k \"npm run serve\" \"wait-on http://localhost:8080 && NODE_ENV=development electron .\"",
     "electron:dev:https": "concurrently -k \"npm run serve:https\" \"wait-on https-get://localhost:8080 --timeout 30000 && VUE_APP_HTTPS=true NODE_ENV=development electron .\"",
-    "electron:build": "ELECTRON_BUILD=true vue-cli-service build && electron-builder",
-    "electron:build:mac": "ELECTRON_BUILD=true vue-cli-service build && electron-builder --mac",
-    "electron:build:win": "ELECTRON_BUILD=true vue-cli-service build && electron-builder --win",
-    "electron:build:linux": "ELECTRON_BUILD=true vue-cli-service build && electron-builder --linux",
-    "electron:build:linux:ci": "ELECTRON_BUILD=true vue-cli-service build && ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES=true electron-builder --linux",
+    "electron:build": "cross-env ELECTRON_BUILD=true vue-cli-service build && electron-builder",
+    "electron:build:mac": "cross-env ELECTRON_BUILD=true vue-cli-service build && electron-builder --mac",
+    "electron:build:win": "cross-env ELECTRON_BUILD=true vue-cli-service build && electron-builder --win",
+    "electron:build:linux": "cross-env ELECTRON_BUILD=true vue-cli-service build && electron-builder --linux",
+    "electron:build:linux:ci": "cross-env ELECTRON_BUILD=true vue-cli-service build && cross-env ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES=true electron-builder --linux",
     "release": "semantic-release"
   },
   "dependencies": {
@@ -64,6 +68,7 @@
     "@vue/cli-plugin-babel": "~5.0.8",
     "@vue/cli-plugin-router": "~5.0.8",
     "@vue/cli-service": "~5.0.8",
+    "cross-env": "^7.0.3",
     "@vue/compiler-sfc": "^3.4.0",
     "@eslint/js": "^9.0.0",
     "@eslint/eslintrc": "^3.0.0",

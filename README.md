@@ -2,7 +2,7 @@
 
 > Real-time AI-powered assistant with multi-provider speech recognition and intelligent response generation
 
-**Online Demo:** https://your-assistant.github.io
+**Online Demo:** https://gannino.github.io/your-assistant/#/
 
 Your Assistant is a cross-platform web application that listens to live audio, transcribes speech in real-time, and generates intelligent AI responses to help you during any session — meetings, research, or any scenario where you need an AI copilot.
 
@@ -47,7 +47,7 @@ The application provides comprehensive settings for configuring AI providers, sp
 
 ### 🌐 Web Browser (Easiest)
 
-1. Visit: https://your-assistant.github.io
+1. Visit: https://gannino.github.io/your-assistant/#/
 2. Configure your AI provider
 3. Start using immediately!
 
