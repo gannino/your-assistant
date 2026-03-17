@@ -7,7 +7,7 @@ const fs = require('fs');
 // ============================================================
 
 // Base URL to navigate to (override with --url)
-const URL = 'https://localhost:8080';
+const URL = 'https://gannino.github.io/your-assistant';
 
 // Output directory for screenshots (override with --output-dir)
 const OUTPUT_DIR = 'docs/imgs';

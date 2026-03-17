@@ -535,6 +535,156 @@ npm run serve:https
 
 ---
 
+## Mobile Troubleshooting
+
+### Common Mobile Issues
+
+#### Website Fetching Fails or Times Out
+
+**Symptoms:**
+- "Failed to fetch website after trying multiple CORS proxies" error
+- Request hangs or times out
+- Works on desktop but not on mobile
+
+**Causes & Solutions:**
+
+1. **Network Connection Issues**
+   - Switch to a more stable network
+   - Try WiFi instead of mobile data
+   - Timeout is 30 seconds on mobile (vs 20s on desktop)
+
+2. **CORS Proxy Blocking**
+   - Wait a few minutes and try again
+   - App tries 3 different proxies automatically
+   - Check browser console for specific error messages
+
+3. **iOS Safari Limitations**
+   - Use Safari 14.1+ or Chrome on iOS
+   - Check Settings > Safari > Advanced > Experimental Features
+   - Try Chrome or Firefox instead
+
+4. **Android Browser Issues**
+   - Use Chrome, Firefox, or Samsung Internet Browser
+   - Update browser to latest version
+   - Avoid built-in WebView browsers
+
+5. **Website Blocking Mobile Access**
+   - Try a different website to test
+   - Some sites require JavaScript (won't work through proxies)
+   - Manually copy/paste content instead
+
+#### Speech Recognition Issues
+
+**Symptoms:**
+- Web Speech API not working
+- "Microphone access denied" error
+- Transcription stops unexpectedly
+
+**Solutions:**
+
+1. **iOS Safari (Web Speech API)**
+   - Works best in Safari 14.1+
+   - Requires HTTPS connection
+   - May require user interaction to start
+   - 60-second limit per transcription
+
+2. **Android (Web Speech API)**
+   - Works in Chrome and Samsung Internet
+   - More reliable than iOS Safari
+   - Requires HTTPS for first use
+   - May show microphone permission prompt
+
+3. **Alternative: Use Different Provider**
+   - Switch to Azure Speech (best mobile support)
+   - Use Deepgram (lowest latency)
+   - Use Whisper (highest accuracy)
+
+#### Microphone Permission Denied
+
+**iOS Safari:**
+1. Settings > Safari > Camera & Microphone
+2. Find your assistant in the list
+3. Change from "Deny" to "Allow"
+
+**Android Chrome:**
+1. Open Chrome Settings (three dots)
+2. Site Settings > Microphone
+3. Allow microphone access
+
+#### Overlay Mode Issues
+
+**Document Picture-in-Picture Not Available:**
+- Requires Chrome 116+ or Edge 116+
+- Check if browser supports Picture-in-Picture API
+- Try CSS mini-mode overlay instead
+
+**Overlay Can't Be Moved:**
+- Use drag handle at the top of overlay
+- Works best in Chrome/Edge browsers
+- Safari may have limited support
+
+#### Auto Mode Not Triggering
+
+**Common Issues:**
+
+1. **Silence Detection Too Short/Long**
+   - Adjust trigger delay in Settings > Speech
+   - Range: 500ms to 8000ms (default: 2500ms)
+
+2. **Screenshot Not Capturing**
+   - Electron app: No permission needed
+   - Browser: Permission required each time
+   - Check browser console for errors
+
+3. **Pixel Change Threshold**
+   - Adjust in Settings > Speech
+   - Range: 0.01 to 0.2 (default: 0.05)
+   - Lower = more sensitive, higher = less sensitive
+
+### Error Messages Explained
+
+| Error Message | Meaning | Solution |
+|--------------|---------|----------|
+| "Request timeout" | Proxy took too long | Try again or use different network |
+| "HTTP 403" | Website/proxy blocked request | Try different website |
+| "HTTP 429" | Rate limit exceeded | Wait a few minutes |
+| "Received empty or invalid response" | Proxy returned no content | Try different proxy (automatic) |
+| "Could not extract meaningful content" | Website structure not parseable | Website may require JavaScript |
+| "Microphone access denied" | Browser blocked microphone | Grant permission in browser settings |
+| "Web Speech API not supported" | Browser doesn't support speech | Use Chrome/Safari or switch provider |
+
+### Testing Steps
+
+1. **Test with a simple website:**
+   - `https://example.com`
+
+2. **Check browser console for errors:**
+   - iOS Safari: Settings > Safari > Advanced > Web Inspector
+   - Android Chrome: `chrome://inspect`
+
+3. **Verify network connectivity:**
+   - Open other websites in browser
+   - Switch between WiFi and mobile data
+   - Try a different network
+
+4. **Test transcription:**
+   - Allow microphone access when prompted
+   - Speak clearly and at normal volume
+   - Check if transcription appears in real-time
+
+### Still Having Issues?
+
+1. **Alternative Approaches:**
+   - Manually copy/paste content instead of website fetching
+   - Use desktop version if possible (fewer restrictions)
+   - Switch to different transcription provider
+
+2. **Report the Issue:**
+   - Note your device (iPhone 14, Samsung Galaxy S21, etc.)
+   - Note your browser (Safari 16, Chrome 120, etc.)
+   - Include specific error messages from console
+   - Describe what you were trying to do
+
 ## Mobile Feature Reference
 
 ### Mobile-Specific Features Summary
