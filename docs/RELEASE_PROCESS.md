@@ -2,6 +2,20 @@
 
 This project uses **Release Please**, Google's industry-standard automated release management solution.
 
+## Setup Requirements
+
+### Enable GitHub Actions Permissions
+
+Before Release Please can create release PRs, you need to enable workflow permissions:
+
+1. Go to **Settings** → **Actions** → **General**
+2. Under **Workflow permissions**, select:
+   - ✅ **Read and write permissions**
+   - ✅ **Allow GitHub Actions to create and approve pull requests**
+3. Click **Save**
+
+This is required for Release Please to automatically create release pull requests.
+
 ## How It Works
 
 Release Please automates version management and releases based on your **conventional commits**:
