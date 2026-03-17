@@ -972,6 +972,71 @@ npm run electron:dev         # Hot-reload with HTTP
 npm run electron:dev:https   # Hot-reload with HTTPS (required for microphone)
 ```
 
+## CI/CD Pipeline
+
+This project uses a fully automated CI/CD pipeline via GitHub Actions.
+
+### Workflow File
+
+**[.github/workflows/ci.yml](.github/workflows/ci.yml)** - Consolidated CI/CD pipeline
+
+### Pipeline Architecture
+
+**Automatic Releases on Merge to Main:**
+
+Every push to `main` triggers a fully automated release:
+
+1. **First Run (push to main):**
+   - Quality checks (lint, format)
+   - Tests across Node 24.x and 25.x
+   - Build Vue app for web
+   - Build Vue app for Electron
+   - Build Electron apps for macOS, Windows, Linux
+   - Deploy to GitHub Pages
+   - **Auto-Release Job**: Bumps version, creates tag
+
+2. **Second Run (tag push):**
+   - All quality and build jobs run again
+   - **Create GitHub Release** with all installer artifacts
+
+### Artifacts Generated
+
+Each release automatically includes:
+
+**macOS:**
+- `Your Assistant-<version>-arm64.dmg` - Disk image installer
+- `Your Assistant-<version>-arm64-mac.zip` - ZIP archive
+- `checksums.txt` - SHA256 checksums
+
+**Windows:**
+- `Your Assistant-Setup <version>.exe` - NSIS installer
+- `Your Assistant-<version>-win.zip` - Portable ZIP archive
+
+**Linux:**
+- `Your-Assistant-<version>.AppImage` - Universal AppImage
+- `your-assistant_<version>_amd64.deb` - Debian package
+
+### Version Management
+
+- **Automatic version bumping** on every merge to main (patch version)
+- **Semantic versioning**: major.minor.patch (e.g., 1.0.0 → 1.0.1)
+- **Tags** created automatically: v1.0.0, v1.0.1, v1.0.2, etc.
+- **package.json** updated automatically by CI
+
+### Manual Releases
+
+For major/minor version bumps (e.g., 1.0.0 → 2.0.0 or 1.0.0 → 1.1.0):
+
+1. Update version manually in [package.json](package.json)
+2. Commit and push to main
+3. CI will create the release with your specified version
+
+### Monitoring
+
+- **Workflow runs**: `https://github.com/gannino/your-assistant/actions`
+- **Releases**: `https://github.com/gannino/your-assistant/releases`
+- **GitHub Pages**: `https://gannino.github.io/your-assistant`
+
 ### Deployment
 
 **Web deployment:**

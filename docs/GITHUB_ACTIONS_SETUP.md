@@ -1,243 +1,311 @@
-# GitHub Actions Setup Guide
+# GitHub Actions CI/CD Setup Guide
 
-This guide explains how to set up and configure GitHub Actions for automated building and deployment of Your Assistant to GitHub Pages.
+This guide explains the automated CI/CD pipeline for Your Assistant.
 
 ## Overview
 
-The repository includes two GitHub Actions workflows:
+The repository uses a **single consolidated CI/CD pipeline** ([`.github/workflows/ci.yml`](../.github/workflows/ci.yml)) that handles:
 
-1. **Test and Lint** (`.github/workflows/test.yml`) - Runs on every push and pull request
-2. **Deploy to GitHub Pages** (`.github/workflows/deploy.yml`) - Automatically deploys to GitHub Pages
+- ✅ Code quality checks (linting, formatting)
+- ✅ Automated testing across Node.js versions
+- ✅ Electron app builds for macOS, Windows, and Linux
+- ✅ Automatic version bumping and releases
+- ✅ GitHub Pages deployment
 
-## Workflows
+## Workflow Architecture
 
-### 1. Test and Lint Workflow
+### Trigger Conditions
 
-**File**: `.github/workflows/test.yml`
+**On Pull Requests:**
+- Quality checks (lint, format)
+- Tests across Node 24.x and 25.x
+- Build verification
 
-**Triggers**:
-- Push to `main` or `master` branches
-- Pull requests to `main` or `master` branches
+**On Push to `main`:**
+- All quality checks and tests
+- Build Electron apps for all platforms
+- Deploy to GitHub Pages
+- **Auto-create release** (bumps version, creates tag)
 
-**Jobs**:
-- **Test**: Runs on Ubuntu with Node.js 18.x and 20.x
-  - Installs dependencies
-  - Runs linting (`npm run lint:check`)
-  - Runs formatting check (`npm run format:check`)
-  - Builds the project (`npm run build`)
-  - Runs tests (`npm test`)
+**On Tag Push (`v*`):**
+- All quality checks and tests
+- Build Electron apps for all platforms
+- **Create GitHub Release** with installer artifacts
 
-**Purpose**: Ensures code quality, formatting consistency, and that the build process works correctly before deployment.
+### Pipeline Stages
 
-### 2. Deploy to GitHub Pages Workflow
+#### Stage 1: Setup and Quality
+```yaml
+setup:
+  - Checkout code
+  - Install dependencies (with npm cache)
+  - Run lint checks
+  - Run format checks
+  - Build Vue app for web
+  - Upload artifacts (dist/)
+```
 
-**File**: `.github/workflows/deploy.yml`
+#### Stage 2: Testing (Matrix)
+```yaml
+test (Node 24.x, 25.x in parallel):
+  - Download artifacts
+  - Run tests with coverage
+  - Upload coverage reports
+```
 
-**Triggers**:
-- Push to `main` or `master` branches
-- Pull requests to `main` or `master` branches
+#### Stage 3: Electron Build Base
+```yaml
+build-electron-base:
+  - Download artifacts
+  - Build Vue app for Electron
+  - Upload artifacts (electron-dist/)
+```
 
-**Jobs**:
-- **Build**: Creates optimized production build
-  - Checks out code
-  - Sets up Node.js 20 with npm caching
-  - Installs dependencies (`npm ci`)
-  - Builds project (`npm run build`)
-  - Uploads build artifacts
+#### Stage 4: Platform Builds (Parallel)
+```yaml
+build-mac (macOS-latest):
+  - Build macOS Electron app (.dmg, .zip)
+  - Generate checksums
+  - Upload artifacts
 
-- **Deploy**: Deploys to GitHub Pages
-  - Uses the uploaded artifacts
-  - Deploys to GitHub Pages environment
+build-windows (windows-latest):
+  - Build Windows Electron app (.exe, .zip)
+  - Upload artifacts
 
-**Purpose**: Automatically builds and deploys the application to GitHub Pages on every push to the main branch.
+build-linux (ubuntu-latest):
+  - Install system dependencies
+  - Build Linux Electron app (.AppImage, .deb)
+  - Upload artifacts
+```
 
-## Setup Instructions
+#### Stage 5: Deployments
+```yaml
+deploy-pages (on push to main):
+  - Download web build artifacts
+  - Deploy to GitHub Pages
+  - Verify deployment
+
+auto-release (on push to main, after builds succeed):
+  - Bump version (patch)
+  - Update package.json
+  - Commit version bump
+  - Create and push tag
+
+release (on tag push):
+  - Download all platform artifacts
+  - Create GitHub Release
+  - Upload all installers
+  - Generate release notes
+```
+
+## Automatic Releases
+
+Every merge to `main` triggers an **automatic release**:
+
+### Version Bumping
+
+- **Automatic**: Patch version incremented (1.0.0 → 1.0.1 → 1.0.2...)
+- **Manual**: For major/minor versions, edit `package.json` before merging
+
+### Generated Artifacts
+
+Each release includes:
+
+**macOS:**
+- `Your Assistant-<version>-arm64.dmg` - Disk image installer
+- `Your Assistant-<version>-arm64-mac.zip` - ZIP archive
+- `checksums.txt` - SHA256 checksums
+
+**Windows:**
+- `Your Assistant-Setup <version>.exe` - NSIS installer
+- `Your Assistant-<version>-win.zip` - Portable ZIP
+
+**Linux:**
+- `Your-Assistant-<version>.AppImage` - Universal AppImage
+- `your-assistant_<version>_amd64.deb` - Debian package
+
+### Release Process
+
+**Two-Run Architecture:**
+
+1. **Run 1 (push to main)**: Validates everything, creates tag
+2. **Run 2 (tag push)**: Builds release, creates GitHub Release
+
+This ensures:
+- ✅ Only working code gets released
+- ✅ Release is properly tagged
+- ✅ Artifacts are built fresh for release
+
+## Setup Requirements
 
 ### 1. Enable GitHub Pages
 
-1. Go to your repository on GitHub
-2. Click on **Settings** tab
-3. In the left sidebar, click **Pages**
-4. Under "Source", select **GitHub Actions**
-5. Click **Save**
+1. Go to repository **Settings**
+2. Click **Pages** in left sidebar
+3. Under "Source", select **GitHub Actions**
+4. Click **Save**
 
-### 2. Configure Branch Protection (Optional but Recommended)
+### 2. Configure Permissions
 
-To ensure only tested code is deployed:
+The workflow requires these permissions (already configured):
 
-1. Go to **Settings** → **Branches**
-2. Add branch protection rule for `main`/`master`
-3. Enable:
-   - Require a pull request before merging
-   - Require approvals
-   - Require status checks to pass before merging
-   - Include administrators
+```yaml
+permissions:
+  contents: write      # For creating releases and tags
+  pages: write         # For GitHub Pages deployment
+  id-token: write      # For OIDC token requests
+```
 
-### 3. Environment Variables (Optional)
+### 3. GitHub Pages Settings (Optional)
 
-If your application requires environment variables for production:
+For custom domains or advanced configuration:
 
-1. Go to **Settings** → **Secrets and variables** → **Actions**
-2. Add any required secrets (e.g., API keys for production)
-3. Update the workflow files to use these secrets if needed
+1. Add `CNAME` file to repository root
+2. Configure DNS with your provider
+3. GitHub Pages will use the custom domain automatically
 
-## Deployment Process
+## Monitoring and Troubleshooting
 
-### Automatic Deployment
+### View Workflow Runs
 
-1. **Push to main/master**: When you push to the main or master branch, the workflow automatically:
-   - Runs tests and linting
-   - Builds the production version
-   - Deploys to GitHub Pages
+**All Workflows:**
+```
+https://github.com/gannino/your-assistant/actions
+```
 
-2. **Pull Request**: When you create a pull request:
-   - Tests and linting run
-   - Build is created (but not deployed)
-   - You can see the build artifacts in the Actions tab
+**Specific Run:**
+Click on any run to see detailed logs for each job
 
-### Manual Deployment
+### View Releases
 
-If you need to manually trigger a deployment:
+**All Releases:**
+```
+https://github.com/gannino/your-assistant/releases
+```
 
-1. Go to **Actions** tab in your repository
-2. Find the "Deploy to GitHub Pages" workflow
-3. Click **Run workflow**
-4. Select the branch you want to deploy
+**Latest Release:**
+```
+https://github.com/gannino/your-assistant/releases/latest
+```
 
-## Monitoring Deployments
+### Common Issues
 
-### View Deployment Status
+#### Build Failures
 
-1. Go to **Actions** tab
-2. Look for workflow runs
-3. Check the status of "Deploy to GitHub Pages"
-
-### View Deployment URL
-
-After successful deployment:
-
-1. Go to **Settings** → **Pages**
-2. The deployment URL will be shown
-3. Format: `https://<username>.github.io/<repository-name>`
-
-### View Build Logs
-
-1. Go to **Actions** tab
-2. Click on a workflow run
-3. Expand job steps to see detailed logs
-
-## Troubleshooting
-
-### Build Failures
-
-**Common Issues**:
-- Missing dependencies in `package.json`
-- TypeScript/ESLint errors
-- Build script errors
+**Symptoms**: Electron builds fail on specific platforms
 
 **Solutions**:
-- Check the Actions logs for specific error messages
-- Run `npm run build` locally to reproduce
-- Ensure all dependencies are properly listed
+- Check the platform-specific job logs
+- Verify `cross-env` is in devDependencies
+- Ensure environment variables are set correctly
+- Check Node.js version compatibility
 
-### Deployment Failures
+#### Release Not Created
 
-**Common Issues**:
-- Permission errors
-- GitHub Pages not enabled
-- Environment configuration issues
+**Symptoms**: Tag created but no GitHub Release
 
 **Solutions**:
-- Verify GitHub Pages is enabled in repository settings
-- Check that the workflow has proper permissions
-- Ensure the repository has the correct branch protection rules
+- Verify the tag starts with `v` (e.g., v1.0.1)
+- Check that all build jobs succeeded
+- Ensure workflow has `contents: write` permission
+- Look for errors in the `release` job logs
 
-### Test Failures
+#### Test Failures
 
-**Common Issues**:
-- ESLint errors in code
-- Prettier formatting issues
-- Jest test failures
-- Build script errors in `package.json`
-- Missing dependencies
-- Node.js version compatibility
+**Symptoms**: Tests pass locally but fail in CI
 
 **Solutions**:
-- Run `npm run lint:check` locally to identify ESLint issues
-- Run `npm run format:check` locally to identify formatting issues
-- Run `npm test` locally to identify test failures
-- Check that `npm run build` works locally
-- Verify all dependencies are properly listed in `package.json`
-- Ensure Node.js version matches the workflow matrix
+- Check Node.js version (CI uses 24.x, 25.x)
+- Verify `package-lock.json` is committed
+- Run `npm ci` locally to reproduce CI environment
+- Check for platform-specific differences
 
-## Customization
+## Workflow Customization
 
-### Adding More Node.js Versions
+### Change Node.js Versions
 
-Edit `.github/workflows/test.yml`:
+Edit `.github/workflows/ci.yml`:
 
 ```yaml
 strategy:
   matrix:
-    node-version: [16.x, 18.x, 20.x, 22.x]  # Add more versions
+    node-version: [24.x, 25.x]  # Add or remove versions
 ```
 
-### Adding More Build Steps
+### Disable Auto-Release
 
-Edit `.github/workflows/deploy.yml`:
+To disable automatic releases on merge:
+
+1. Comment out or remove the `auto-release` job
+2. Manually create tags for releases: `git tag v1.0.1 && git push origin v1.0.1`
+
+### Add Manual Release Trigger
+
+Add manual workflow_dispatch trigger:
 
 ```yaml
-- name: Additional build step
-  run: npm run custom-build-script
+on:
+  push:
+    branches: [main, master]
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:  # Enable manual triggering
 ```
 
-### Environment-Specific Builds
+Then manually trigger from Actions tab → CI/CD → Run workflow
 
-For different environments (staging, production):
+## Performance Optimization
 
-1. Create separate workflow files
-2. Use different branch triggers
-3. Configure different deployment targets
+### Current Performance
 
-### Custom Domain
+- **Dependencies**: Installed once per job with npm cache (~10 seconds)
+- **Vue Builds**: Built 2 times (web + Electron)
+- **Parallel Execution**: Tests and platform builds run in parallel
+- **Total Time**: ~6-8 minutes for full pipeline
 
-To use a custom domain:
+### Optimization Opportunities
 
-1. Add a `CNAME` file to your repository root
-2. Configure DNS settings with your domain provider
-3. GitHub Pages will automatically use the custom domain
-
-## Best Practices
-
-1. **Use Branch Protection**: Require PR reviews and status checks
-2. **Monitor Deployments**: Check Actions tab regularly
-3. **Keep Dependencies Updated**: Regularly update Node.js and npm versions
-4. **Test Locally**: Always test builds locally before pushing
-5. **Use Semantic Commits**: Follow conventional commit standards
-6. **Monitor Performance**: Check build times and optimize if needed
+1. **Cache Electron binaries** (saves 2-3 minutes)
+2. **Use Docker layer caching** (experimental)
+3. **Split workflow** for PR vs main (PRs don't need builds)
 
 ## Security Considerations
 
-1. **Secrets Management**: Use GitHub Secrets for sensitive data
-2. **Minimal Permissions**: Only grant necessary permissions to workflows
-3. **Dependency Security**: Regularly audit dependencies for vulnerabilities
-4. **Environment Isolation**: Use separate environments for staging/production
+### Secret Management
 
-## Next Steps
+The workflow uses:
+- `GITHUB_TOKEN` - Automatically provided by GitHub Actions
+- No API keys required (app uses localStorage)
+- All secrets stored in GitHub repository settings
 
-After setting up GitHub Actions:
+### Permissions
 
-1. **Test the Workflow**: Push a small change to trigger the workflow
-2. **Monitor the First Deployment**: Check that everything deploys correctly
-3. **Set Up Monitoring**: Consider adding uptime monitoring for your deployed site
-4. **Optimize Build Time**: Review and optimize build steps if needed
-5. **Add More Checks**: Consider adding security scans or performance tests
+Workflow follows principle of least privilege:
+- `contents: write` - Only for releases and tags
+- `pages: write` - Only for GitHub Pages deployment
+- `id-token: write` - Only for OIDC (if needed)
+
+## Best Practices
+
+1. **Test Locally First**: Run `npm run lint:check` and `npm test` before pushing
+2. **Review Workflow Logs**: Check Actions tab after each push
+3. **Monitor Releases**: Verify releases are created correctly
+4. **Keep Dependencies Updated**: Regularly update npm packages
+5. **Use Semantic Commits**: Follow conventional commit format for better changelogs
 
 ## Support
 
-If you encounter issues with GitHub Actions:
+For issues or questions:
 
-1. Check the [GitHub Actions documentation](https://docs.github.com/en/actions)
-2. Review the workflow logs for specific error messages
-3. Check the [GitHub Community Forum](https://github.community/c/code-to-cloud/github-actions/41)
-4. Create an issue in the repository with detailed error information
+1. **Check workflow logs**: Actions tab → Click on run → View job logs
+2. **Review this guide**: Ensure setup requirements are met
+3. **Check troubleshooting**: See Common Issues section above
+4. **Create issue**: Include logs and error messages
+
+## Related Documentation
+
+- **[Development Guide](DEVELOPMENT_GUIDE.md)** - Local development setup
+- **[Troubleshooting](TROUBLESHOOTING.md)** - Common issues and solutions
+- **[README](../README.md)** - Project overview and quick start
