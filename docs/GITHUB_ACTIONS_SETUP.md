@@ -4,33 +4,48 @@ This guide explains the automated CI/CD pipeline for Your Assistant.
 
 ## Overview
 
-The repository uses a **single consolidated CI/CD pipeline** ([`.github/workflows/ci.yml`](../.github/workflows/ci.yml)) that handles:
+The repository uses **Release Please** for automated version management and releases, combined with a **consolidated CI/CD pipeline** ([`.github/workflows/ci.yml`](../.github/workflows/ci.yml)) that handles:
 
 - ✅ Code quality checks (linting, formatting)
 - ✅ Automated testing across Node.js versions
 - ✅ Electron app builds for macOS, Windows, and Linux
-- ✅ Automatic version bumping and releases
+- ✅ Automated version management via Release Please
 - ✅ GitHub Pages deployment
+
+For detailed release process information, see [Release Process](./RELEASE_PROCESS.md).
 
 ## Workflow Architecture
 
+### Workflows
+
+The project uses two GitHub Actions workflows:
+
+1. **[Release Please](../.github/workflows/release-please.yml)** - Automated version management
+2. **[CI/CD](../.github/workflows/ci.yml)** - Quality checks, builds, and deployments
+
 ### Trigger Conditions
 
-**On Pull Requests:**
-- Quality checks (lint, format)
-- Tests across Node 24.x and 25.x
-- Build verification
+**Release Please Workflow:**
 
-**On Push to `main`:**
-- All quality checks and tests
-- Build Electron apps for all platforms
-- Deploy to GitHub Pages
-- **Auto-create release** (bumps version, creates tag)
+- **On push to `main`**: Analyzes commits, creates release PRs
+- **Manual trigger**: Can be triggered manually from GitHub UI
 
-**On Tag Push (`v*`):**
-- All quality checks and tests
-- Build Electron apps for all platforms
-- **Create GitHub Release** with installer artifacts
+**CI/CD Workflow:**
+
+- **On Pull Requests:**
+  - Quality checks (lint, format)
+  - Tests across Node 24.x and 25.x
+  - Build verification
+
+- **On Push to `main`:**
+  - All quality checks and tests
+  - Build Electron apps for all platforms
+  - Deploy to GitHub Pages
+
+- **On Tag Push (`v*`)**: (triggered by Release Please)
+  - All quality checks and tests
+  - Build Electron apps for all platforms
+  - **Create GitHub Release** with installer artifacts
 
 ### Pipeline Stages
 
@@ -85,27 +100,43 @@ deploy-pages (on push to main):
   - Deploy to GitHub Pages
   - Verify deployment
 
-auto-release (on push to main, after builds succeed):
-  - Bump version (patch)
-  - Update package.json
-  - Commit version bump
-  - Create and push tag
-
-release (on tag push):
+release (on tag push from Release Please):
   - Download all platform artifacts
   - Create GitHub Release
   - Upload all installers
   - Generate release notes
 ```
 
-## Automatic Releases
+## Automatic Releases with Release Please
 
-Every merge to `main` triggers an **automatic release**:
+This project uses **Release Please**, Google's industry-standard automated release management solution.
+
+### How Release Please Works
+
+1. **Development Phase**: Make commits with conventional commit format
+   ```bash
+   git commit -m "feat: add new feature"
+   git commit -m "fix: resolve bug"
+   ```
+
+2. **Release PR Creation**: Release Please automatically creates a release PR
+   - Bumps version based on commit types
+   - Generates changelog
+   - Updates package.json
+
+3. **Release Creation**: On merge of the Release PR
+   - Tag is created (e.g., v1.0.4)
+   - CI/CD builds all platforms
+   - GitHub Release created with artifacts
 
 ### Version Bumping
 
-- **Automatic**: Patch version incremented (1.0.0 → 1.0.1 → 1.0.2...)
-- **Manual**: For major/minor versions, edit `package.json` before merging
+Release Please automatically determines version bumps based on commit types:
+
+- `feat:` → Patch bump (1.0.3 → 1.0.4)
+- `fix:` → Patch bump (1.0.3 → 1.0.4)
+- `feat!:` → Major bump (1.0.3 → 2.0.0)
+- `fix!:` → Minor bump (1.0.3 → 1.1.0)
 
 ### Generated Artifacts
 
@@ -126,19 +157,35 @@ Each release includes:
 
 ### Release Process
 
-**Two-Run Architecture:**
+**Industry-Standard Release Please Workflow:**
 
-1. **Run 1 (push to main)**: Validates everything, creates tag
-2. **Run 2 (tag push)**: Builds release, creates GitHub Release
+1. **Development**: Push conventional commits to main
+2. **Release PR**: Release Please creates PR with version bump & changelog
+3. **Merge**: Merge release PR to create tag
+4. **Release**: CI/CD builds and creates GitHub Release with artifacts
 
 This ensures:
-- ✅ Only working code gets released
-- ✅ Release is properly tagged
-- ✅ Artifacts are built fresh for release
+- ✅ Semantic versioning based on commit types
+- ✅ Auto-generated changelogs
+- ✅ Only tested code gets released
+- ✅ Artifacts match release version
+- ✅ No manual version management
+
+For detailed information, see [Release Process](./RELEASE_PROCESS.md).
 
 ## Setup Requirements
 
-### 1. Enable GitHub Pages
+### 1. Enable GitHub Actions Permissions
+
+Before Release Please can create release PRs:
+
+1. Go to **Settings** → **Actions** → **General**
+2. Under **Workflow permissions**:
+   - Select **Read and write permissions**
+   - Enable **Allow GitHub Actions to create and approve pull requests**
+3. Click **Save**
+
+### 2. Enable GitHub Pages
 
 1. Go to repository **Settings**
 2. Click **Pages** in left sidebar

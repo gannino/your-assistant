@@ -974,30 +974,35 @@ npm run electron:dev:https   # Hot-reload with HTTPS (required for microphone)
 
 ## CI/CD Pipeline
 
-This project uses a fully automated CI/CD pipeline via GitHub Actions.
+This project uses **Release Please** for automated version management and releases, combined with a fully automated CI/CD pipeline via GitHub Actions.
 
-### Workflow File
+### Workflow Files
 
-**[.github/workflows/ci.yml](.github/workflows/ci.yml)** - Consolidated CI/CD pipeline
+**[.github/workflows/release-please.yml](.github/workflows/release-please.yml)** - Release Please automation
+**[.github/workflows/ci.yml](.github/workflows/ci.yml)** - CI/CD pipeline
 
 ### Pipeline Architecture
 
-**Automatic Releases on Merge to Main:**
+**Industry-Standard Release Process with Release Please:**
 
-Every push to `main` triggers a fully automated release:
-
-1. **First Run (push to main):**
-   - Quality checks (lint, format)
-   - Tests across Node 24.x and 25.x
-   - Build Vue app for web
-   - Build Vue app for Electron
-   - Build Electron apps for macOS, Windows, Linux
+1. **Development Phase:**
+   - Make commits with conventional commit format (`feat:`, `fix:`, etc.)
+   - Push to main branch
+   - CI/CD runs quality checks and tests
    - Deploy to GitHub Pages
-   - **Auto-Release Job**: Bumps version, creates tag
 
-2. **Second Run (tag push):**
-   - All quality and build jobs run again
-   - **Create GitHub Release** with all installer artifacts
+2. **Release Phase (Release Please):**
+   - Release Please analyzes commits
+   - Automatically creates Release PR with:
+     - Bumped version based on commit types
+     - Auto-generated changelog
+     - Updated package.json
+   - You merge the Release PR
+
+3. **Release Creation:**
+   - Tag is created (e.g., v1.0.4)
+   - CI/CD builds all platforms
+   - GitHub Release created with artifacts
 
 ### Artifacts Generated
 
@@ -1018,18 +1023,23 @@ Each release automatically includes:
 
 ### Version Management
 
-- **Automatic version bumping** on every merge to main (patch version)
-- **Semantic versioning**: major.minor.patch (e.g., 1.0.0 → 1.0.1)
-- **Tags** created automatically: v1.0.0, v1.0.1, v1.0.2, etc.
-- **package.json** updated automatically by CI
+Release Please automatically determines version bumps:
 
-### Manual Releases
+- `feat:` → Patch bump (1.0.3 → 1.0.4)
+- `fix:` → Patch bump (1.0.3 → 1.0.4)
+- `feat!:` → Major bump (1.0.3 → 2.0.0)
+- `fix!:` → Minor bump (1.0.3 → 1.1.0)
 
-For major/minor version bumps (e.g., 1.0.0 → 2.0.0 or 1.0.0 → 1.1.0):
+**Conventional Commit Types:**
+- `feat:` - New feature
+- `fix:` - Bug fix
+- `feat!:` - Breaking feature (major bump)
+- `fix!:` - Breaking fix (minor bump)
+- `docs:` - Documentation (no bump)
+- `chore:` - Maintenance (no bump)
+- Other types don't trigger releases
 
-1. Update version manually in [package.json](package.json)
-2. Commit and push to main
-3. CI will create the release with your specified version
+For detailed release process, see [Release Process](docs/RELEASE_PROCESS.md).
 
 ### Monitoring
 
