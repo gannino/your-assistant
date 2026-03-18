@@ -100,28 +100,81 @@ GitHub Release includes:
 
 ## Triggering a Release
 
-### Automatic
+### Method 1: Manual Tag Creation (Current Approach)
 
-Release Please automatically creates release PRs when it detects conventional commits. No manual action needed!
+**Note**: Release Please automation is currently not working properly. Use this manual approach:
 
-### Manual Trigger
+```bash
+# 1. Make your changes with conventional commits
+git add .
+git commit -m "feat: add new feature"
+git push origin main
 
-You can also trigger manually:
+# 2. Update version in package.json
+jq '.version = "0.4.0"' package.json > package.json.tmp && mv package.json.tmp package.json
+git add package.json
+git commit -m "chore: bump version to 0.4.0"
+git push origin main
 
-1. **Via GitHub Actions**:
-   - Go to Actions → Release Please
-   - Click "Run workflow"
-   - Click "Run workflow" button
+# 3. Create and push tag
+git tag v0.4.0
+git push origin v0.4.0
 
-2. **Via commit**:
-   ```bash
-   git commit -m "chore: trigger release"
-   git push
-   ```
+# 4. CI/CD automatically builds and creates release with artifacts
+```
+
+**Result**:
+
+- Tag `v0.4.0` triggers CI/CD pipeline
+- All platforms built (macOS, Windows, Linux)
+- GitHub Release created with artifacts attached
+
+### Method 2: Automatic (Release Please - Currently Disabled)
+
+**Note**: This is the intended workflow but currently not functional. We're working to fix it.
+
+When Release Please is working, it will:
+
+1. Automatically create Release PRs when it detects conventional commits
+2. Include bumped version and changelog in the PR
+3. On merge, create tag and trigger CI/CD
+
+### Manual Trigger via GitHub Actions
+
+You can also manually trigger the Release Please workflow:
+
+1. Go to **Actions** → **Release Please**
+2. Click **"Run workflow"**
+3. Click **"Run workflow"** button
 
 Then look for the Release PR created by Release Please.
 
 ## Example Workflow
+
+### Manual Release (Current Method)
+
+```bash
+# Make some changes
+git add .
+git commit -m "feat: add new feature"
+git push origin main
+
+# Bump version
+jq '.version = "0.4.0"' package.json > package.json.tmp && mv package.json.tmp package.json
+git add package.json
+git commit -m "chore: bump version to 0.4.0"
+git push origin main
+
+# Create tag to trigger release
+git tag v0.4.0
+git push origin v0.4.0
+
+# CI/CD automatically:
+# - Builds for all platforms
+# - Creates GitHub Release with artifacts
+```
+
+### Automatic Release (Intended Method - Not Working)
 
 ```bash
 # Make some changes
