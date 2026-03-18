@@ -203,3 +203,4 @@ This project uses Release Please for automated version management with manual re
 ## Testing Release Please
 
 This section is for testing Release Please automation.
+- Release Please automation configured and working
