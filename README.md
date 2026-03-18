@@ -196,3 +196,7 @@ Apache License 2.0 — See LICENSE file
 Contributions welcome! See [Development Guide](./docs/DEVELOPMENT_GUIDE.md) for details.
 
 **Inspired by:** [Interview-Copilot](https://github.com/interview-copilot/Interview-Copilot) - This project is an extended and enhanced version of the original Interview-Copilot, with additional features, improved architecture, and broader use cases beyond just interviews.
+
+## Release Automation
+
+This project uses Release Please for automated version management with manual releases as fallback.
