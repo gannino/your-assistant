@@ -2,18 +2,28 @@
   "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
   "release-type": "node",
   "changelog-sections": [
-    { "type": "feat", "section": "Features" },
-    { "type": "fix", "section": "Bug Fixes" },
-    { "type": "chore", "section": "Maintenance", "hidden": false },
-    { "type": "docs", "section": "Documentation", "hidden": false },
-    { "type": "style", "section": "Styling", "hidden": false },
-    { "type": "refactor", "section": "Refactoring", "hidden": false },
-    { "type": "perf", "section": "Performance", "hidden": false },
-    { "type": "test", "section": "Testing", "hidden": false },
-    { "type": "build", "section": "Build", "hidden": false },
-    { "type": "ci", "section": "CI", "hidden": false }
+    { "type": "feat", "section": "✨ Features" },
+    { "type": "fix", "section": "🐛 Bug Fixes" },
+    { "type": "perf", "section": "⚡ Performance" },
+    { "type": "refactor", "section": "♻️ Refactoring" },
+    { "type": "docs", "section": "📝 Documentation", "hidden": false },
+    { "type": "style", "section": "💄 Styling", "hidden": false },
+    { "type": "chore", "section": "🔧 Maintenance", "hidden": false },
+    { "type": "test", "section": "✅ Testing", "hidden": false },
+    { "type": "build", "section": "📦 Build", "hidden": false },
+    { "type": "ci", "section": "🤖 CI", "hidden": false }
   ],
   "bump-minor-pre-major": true,
   "bump-patch-for-minor-pre-major": true,
-  "include-v-in-tag": true
+  "include-v-in-tag": true,
+  "separate-pull-requests": false,
+  "packages": {
+    ".": {
+      "changelog-path": "CHANGELOG.md",
+      "release-as": "0.3.0",
+      "extra-files": [
+        "package.json"
+      ]
+    }
+  }
 }

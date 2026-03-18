@@ -35,7 +35,7 @@
     "electron:build:win": "cross-env ELECTRON_BUILD=true vue-cli-service build && electron-builder --win",
     "electron:build:linux": "cross-env ELECTRON_BUILD=true vue-cli-service build && electron-builder --linux",
     "electron:build:linux:ci": "cross-env ELECTRON_BUILD=true vue-cli-service build && cross-env ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES=true electron-builder --linux",
-    "release": "semantic-release"
+    "release": "npm version && git push --follow-tags"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",
@@ -63,8 +63,6 @@
   "devDependencies": {
     "@element-plus/icons-vue": "^2.3.0",
     "@google/genai": "^0.3.0",
-    "@semantic-release/changelog": "^6.0.3",
-    "@semantic-release/git": "^10.0.1",
     "@vue/cli-plugin-babel": "~5.0.8",
     "@vue/cli-plugin-router": "~5.0.8",
     "@vue/cli-service": "~5.0.8",
@@ -84,7 +82,6 @@
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",
     "prettier": "^3.1.0",
-    "semantic-release": "^24.2.0",
     "wait-on": "^8.0.0"
   },
   "build": {
