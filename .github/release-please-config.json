@@ -2,7 +2,6 @@
   "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
   "packages": {
     ".": {
-      "package-name": "your-assistant",
       "release-type": "node",
       "changelog-sections": [
         { "type": "feat", "section": "Features" },
@@ -19,7 +18,6 @@
       "bump-minor-pre-major": true,
       "bump-patch-for-minor-pre-major": true,
       "include-v-in-tag": true,
-      "tag-name": "v${version}",
       "extra-files": [
         {
           "type": "json",
