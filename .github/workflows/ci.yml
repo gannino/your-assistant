@@ -168,10 +168,12 @@ jobs:
           name: electron-vue-dist
           path: dist/
 
-      - name: Build Electron app for macOS
-        run: npx electron-builder --mac
+      - name: Build Electron app for macOS (Universal)
+        run: npx electron-builder --mac --universal
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Allow more time for universal build
+          ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
 
       - name: Find and generate build checksums
         run: |
