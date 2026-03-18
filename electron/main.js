@@ -271,7 +271,31 @@ app.on('certificate-error', (event, _webContents, url, _error, _cert, callback) 
 
 app.whenReady().then(() => {
   if (process.platform === 'darwin') app.dock?.hide();
+
+  // Enable media devices for macOS
   app.commandLine.appendSwitch('disable-background-timer-throttling');
+  app.commandLine.appendSwitch('enable-media-stream');
+  app.commandLine.appendSwitch('enable-usermedia-screen-capture');
+  app.commandLine.appendSwitch('disable-features', 'HardwareMediaKeyHandling,MediaSessionService');
+
+  // Set up permission handlers for media devices
+  session.defaultSession.setPermissionRequestHandler((_webContents, permission, callback) => {
+    const allowedPermissions = ['media', 'mediaKeySystem', 'fullscreen', 'notifications'];
+    if (allowedPermissions.includes(permission)) {
+      callback(true); // Allow all media and notification permissions
+    } else {
+      callback(false); // Deny other permissions
+    }
+  });
+
+  // Set up permission check handler
+  session.defaultSession.setPermissionCheckHandler((_webContents, permission) => {
+    if (permission === 'media') {
+      return true; // Allow media access
+    }
+    return false;
+  });
+
   createWindow();
   createTray();
   registerShortcuts({ toggleVisibility, moveWindow, takeScreenshot });

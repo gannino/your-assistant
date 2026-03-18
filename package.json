@@ -113,7 +113,10 @@
           ]
         }
       ],
-      "icon": "build/icon.icns"
+      "icon": "build/icon.icns",
+      "entitlements": "electron/entitlements.mac.plist",
+      "entitlementsInherit": true,
+      "extendInfo": "electron/Info.plist"
     },
     "win": {
       "target": [
