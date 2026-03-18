@@ -200,3 +200,6 @@ Contributions welcome! See [Development Guide](./docs/DEVELOPMENT_GUIDE.md) for 
 ## Release Automation
 
 This project uses Release Please for automated version management with manual releases as fallback.
+## Testing Release Please
+
+This section is for testing Release Please automation.
