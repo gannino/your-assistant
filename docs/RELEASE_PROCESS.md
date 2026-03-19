@@ -1,87 +1,56 @@
-# Release Process with Release Please
+# Release Process
 
-This project uses **Release Please**, Google's industry-standard automated release management solution.
+This project uses **Release Please** for automated version management with **manual releases as a fallback**.
 
-## Setup Requirements
+## Quick Reference
 
-### Enable GitHub Actions Permissions
+| Method | When to Use | Command |
+|--------|-------------|---------|
+| **Automated** | Normal releases with conventional commits | Just push with `feat:`, `fix:` commits |
+| **Manual** | Emergency hotfixes or when automation fails | `npm run release:patch` |
 
-Before Release Please can create release PRs, you need to enable workflow permissions:
+## Method 1: Automated Release (Primary)
 
-1. Go to **Settings** → **Actions** → **General**
-2. Under **Workflow permissions**, select:
-   - ✅ **Read and write permissions**
-   - ✅ **Allow GitHub Actions to create and approve pull requests**
-3. Click **Save**
+### When to Use
+- Normal development with multiple commits
+- Feature releases or bug fixes
+- Regular version updates
 
-This is required for Release Please to automatically create release pull requests.
+### How It Works
 
-## How It Works
+1. **Make commits with conventional format:**
+   ```bash
+   # Feature
+   git commit -m "feat: add new AI provider support"
 
-Release Please automates version management and releases based on your **conventional commits**:
+   # Bug fix
+   git commit -m "fix: resolve memory leak in transcription"
 
-```
-feat:  → New feature      → Patch bump (1.0.3 → 1.0.4)
-fix:   → Bug fix          → Patch bump (1.0.3 → 1.0.4)
-feat!  → Breaking feature → Major bump (1.0.3 → 2.0.0)
-fix!   → Breaking fix     → Minor bump (1.0.3 → 1.1.0)
-```
+   # Documentation
+   git commit -m "docs: update installation guide"
+   ```
 
-## Release Workflow
+2. **Push to main:**
+   ```bash
+   git push origin main
+   ```
 
-### 1. Development Phase
+3. **Release Please creates a Release PR:**
+   - Automatically analyzes commits
+   - Creates PR titled: `chore(main): release your-assistant X.Y.Z`
+   - Includes bumped version and auto-generated changelog
+   - Updates package.json, CHANGELOG.md, and manifest
 
-Make commits with conventional commit format:
+4. **Review and merge the Release PR:**
+   - Check the changelog looks correct
+   - Merge when ready
 
-```bash
-# Feature
-git commit -m "feat: add new AI provider support"
+5. **CI/CD automatically:**
+   - Creates git tag (e.g., v0.2.0)
+   - Builds all platforms (macOS, Windows, Linux)
+   - Creates GitHub Release with artifacts
 
-# Bug fix
-git commit -m "fix: resolve memory leak in transcription"
-
-# Documentation
-git commit -m "docs: update installation guide"
-
-# Multiple changes
-git commit -m "feat: add dark mode
-fix: resolve UI glitches
-docs: update README"
-```
-
-Push to main:
-```bash
-git push origin main
-```
-
-**Result**: CI/CD runs quality checks, tests, and builds. **No release created yet.**
-
-### 2. Release Phase
-
-When Release Please detects enough conventional commits, it automatically:
-
-1. **Creates a Release PR** with:
-   - Bumped version (e.g., 1.0.3 → 1.0.4)
-   - Auto-generated changelog
-   - Updated package.json
-
-2. **Waits for you to merge** the Release PR
-
-3. **On merge**:
-   - Creates git tag (e.g., v1.0.4)
-   - Triggers CI/CD to build and create GitHub Release
-   - Uploads installer artifacts for all platforms
-
-### 3. Release Created
-
-GitHub Release includes:
-- ✅ Version tag (v1.0.4)
-- ✅ Auto-generated changelog
-- ✅ macOS DMG + ZIP
-- ✅ Windows EXE + ZIP
-- ✅ Linux AppImage + DEB
-
-## Conventional Commit Types
+### Conventional Commit Types
 
 | Type | Description | Bump | Example |
 |------|-------------|------|---------|
@@ -98,127 +67,121 @@ GitHub Release includes:
 | `build` | Build system | None | `build: update webpack config` |
 | `ci` | CI/CD | None | `ci: fix workflow` |
 
-## Triggering a Release
+## Method 2: Manual Release (Fallback)
 
-### Method 1: Manual Tag Creation (Current Approach)
+### When to Use
+- Emergency hotfixes that need immediate release
+- Single-commit releases that don't trigger automation
+- Release Please is not working
+- Testing specific versions
 
-**Note**: Release Please automation is currently not working properly. Use this manual approach:
+### How It Works
 
-```bash
-# 1. Make your changes with conventional commits
-git add .
-git commit -m "feat: add new feature"
-git push origin main
+1. **Make your changes:**
+   ```bash
+   git add .
+   git commit -m "feat: add new feature"
+   git push origin main
+   ```
 
-# 2. Update version in package.json
-jq '.version = "0.4.0"' package.json > package.json.tmp && mv package.json.tmp package.json
-git add package.json
-git commit -m "chore: bump version to 0.4.0"
-git push origin main
+2. **Create release using npm script:**
+   ```bash
+   # Patch release (0.1.0 → 0.1.1)
+   npm run release:patch
 
-# 3. Create and push tag
-git tag v0.4.0
-git push origin v0.4.0
+   # Minor release (0.1.0 → 0.2.0)
+   npm run release:minor
 
-# 4. CI/CD automatically builds and creates release with artifacts
-```
+   # Major release (0.1.0 → 1.0.0)
+   npm run release:major
+   ```
 
-**Result**:
+   This script:
+   - Runs `npm version` to bump package.json
+   - Updates Release Please manifest
+   - Creates git commit with changes
+   - Creates and pushes git tag
 
-- Tag `v0.4.0` triggers CI/CD pipeline
-- All platforms built (macOS, Windows, Linux)
-- GitHub Release created with artifacts attached
+3. **CI/CD automatically:**
+   - Detects new tag
+   - Builds all platforms
+   - Creates GitHub Release with artifacts
 
-### Method 2: Automatic (Release Please - Currently Disabled)
+### Manual Release (Alternative)
 
-**Note**: This is the intended workflow but currently not functional. We're working to fix it.
-
-When Release Please is working, it will:
-
-1. Automatically create Release PRs when it detects conventional commits
-2. Include bumped version and changelog in the PR
-3. On merge, create tag and trigger CI/CD
-
-### Manual Trigger via GitHub Actions
-
-You can also manually trigger the Release Please workflow:
-
-1. Go to **Actions** → **Release Please**
-2. Click **"Run workflow"**
-3. Click **"Run workflow"** button
-
-Then look for the Release PR created by Release Please.
-
-## Example Workflow
-
-### Manual Release (Current Method)
+If you prefer manual control:
 
 ```bash
-# Make some changes
-git add .
-git commit -m "feat: add new feature"
-git push origin main
+# Update version
+npm version patch  # or minor, or major
 
-# Bump version
-jq '.version = "0.4.0"' package.json > package.json.tmp && mv package.json.tmp package.json
-git add package.json
-git commit -m "chore: bump version to 0.4.0"
-git push origin main
-
-# Create tag to trigger release
-git tag v0.4.0
-git push origin v0.4.0
-
-# CI/CD automatically:
-# - Builds for all platforms
-# - Creates GitHub Release with artifacts
+# Push commit and tag
+git push origin main --tags
 ```
 
-### Automatic Release (Intended Method - Not Working)
+## Release Artifacts
 
-```bash
-# Make some changes
-git add .
-git commit -m "feat: add new feature"
-git push origin main
+All releases include:
 
-# Wait for Release Please to create Release PR
-# PR will be titled like: "chore(main): release v1.0.4"
+### macOS
+- `Your Assistant-X.Y.Z-arm64.dmg` - Disk image installer
+- `Your Assistant-X.Y.Z-arm64-mac.zip` - ZIP archive
+- SHA256 checksums
 
-# Review the changelog in the PR
-# Merge the Release PR when ready
+### Windows
+- `Your Assistant-Setup X.Y.Z.exe` - NSIS installer
+- `Your Assistant-X.Y.Z-win.zip` - Portable ZIP archive
 
-# CI/CD automatically:
-# - Creates tag v1.0.4
-# - Builds for all platforms
-# - Creates GitHub Release with artifacts
-```
+### Linux
+- `Your-Assistant-X.Y.Z.AppImage` - Universal AppImage
+- `your-assistant_X.Y.Z_amd64.deb` - Debian package
+
+## Setup Requirements
+
+### GitHub Actions Permissions
+
+Release Please needs write permissions:
+
+1. Go to **Settings** → **Actions** → **General**
+2. Under **Workflow permissions**, select:
+   - ✅ **Read and write permissions**
+   - ✅ **Allow GitHub Actions to create and approve pull requests**
+3. Click **Save**
+
+### Configuration Files
+
+- **`.github/release-please-config.json`** - Release Please configuration
+- **`.github/release-please-manifest.json`** - Tracks release state (auto-maintained)
+- **`.github/workflows/release-please.yml`** - Automation workflow
+- **`.github/workflows/ci.yml`** - CI/CD pipeline (builds releases)
 
 ## Checking Release Status
 
-1. **Release PRs**: Check [Pull Requests](https://github.com/gma/your-assistant/pulls)
-2. **Releases**: Check [Releases](https://github.com/gma/your-assistant/releases)
-3. **Workflow**: Check [Actions → Release Please](https://github.com/gma/your-assistant/actions/workflows/release-please.yml)
+1. **Release PRs**: https://github.com/gma/your-assistant/pulls
+2. **Releases**: https://github.com/gma/your-assistant/releases
+3. **Workflow Runs**: https://github.com/gma/your-assistant/actions
 
 ## Best Practices
 
-1. **Use Conventional Commits**:
+1. **Use Conventional Commits:**
    ```bash
    ✅ Good: "feat: add dark mode"
    ✅ Good: "fix: resolve memory leak"
    ❌ Bad: "update stuff"
    ```
 
-2. **Merge Release PRs Promptly**: Don't let release PRs pile up
+2. **Merge Release PRs Promptly:** Don't let release PRs pile up
 
-3. **Test Before Releasing**: Ensure CI/CD passes before merging Release PR
+3. **Test Before Releasing:** Ensure CI/CD passes before merging Release PR
 
-4. **Review Changelogs**: Release PR includes auto-generated changelog - review it!
+4. **Review Changelogs:** Release PR includes auto-generated changelog - review it!
 
-5. **Breaking Changes**: Use `!` suffix for breaking changes
+5. **Breaking Changes:** Use `!` suffix for breaking changes
    ```bash
    feat!: remove old API
    ```
+
+6. **Use Manual Releases for Emergencies:** Hotfixes can use `npm run release:patch`
 
 ## Troubleshooting
 
@@ -234,11 +197,17 @@ git push origin main
 
 **Solution**: Use `feat!` or `fix!` for major/minor bumps
 
+### Manual Release Failed
+
+**Cause**: Git working directory not clean
+
+**Solution**: Commit or stash changes first, then run release script
+
 ### Release Failed
 
 **Cause**: CI/CD tests or builds failed
 
-**Solution**: Check Actions tab for error logs, fix issues, then re-merge Release PR
+**Solution**: Check Actions tab for error logs, fix issues, then retry
 
 ## Links
 

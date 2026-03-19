@@ -35,7 +35,6 @@ The application provides comprehensive settings for configuring AI providers, sp
 - **Chat Input** — Add your own messages alongside transcribed speech before asking AI
 - **Screenshot Support** — Capture screen (Cmd+H) and include images in AI requests
 - **Auto Mode** — Automatically fires AI responses after configurable silence delay; optional screenshot polling
-- **Overlay Mode** — Document Picture-in-Picture (Chrome 116+) or CSS fixed overlay
 - **Serverless** — All API keys stored locally in your browser, no backend required
 - **Cross-platform** — Works on Windows, Mac, iOS, Android, tablets
 - **Free Options** — Web Speech API + Ollama/MLX requires no API keys
@@ -199,18 +198,14 @@ Contributions welcome! See [Development Guide](./docs/DEVELOPMENT_GUIDE.md) for 
 
 ## Release Automation
 
-This project uses a hybrid release system:
+This project uses **Release Please** for automated version management:
 
-- **Automated**: Release Please creates Release PRs automatically based on conventional commits
-- **Manual**: Use `npm run release:patch` for immediate releases when needed
+- **Conventional Commits**: Use `feat:`, `fix:`, `docs:`, etc. in commit messages
+- **Automatic Releases**: Release Please creates Release PRs based on commits
+- **Version Bumping**: Version numbers are bumped automatically (patch/minor/major)
+- **Changelog**: Automatically generated from commit messages
 
-Both methods create identical releases with all platform artifacts.
-## Features
+See [Release Process](./docs/RELEASE_PROCESS.md) for details.
 
-### Hybrid Release System
-- Release Please automation for version management
-- Manual release scripts for immediate releases
-- Both methods create identical releases
-# Release Testing
 
 
