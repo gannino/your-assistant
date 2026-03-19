@@ -21,7 +21,8 @@
       "changelog-path": "CHANGELOG.md",
       "extra-files": [
         "package.json"
-      ]
+      ],
+      "tag-name": "v${version}"
     }
   }
 }
