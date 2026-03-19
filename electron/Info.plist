@@ -12,5 +12,7 @@
     <string>Your Assistant needs documents folder access to read PDF files and documents.</string>
     <key>NSDownloadsFolderUsageDescription</key>
     <string>Your Assistant needs downloads folder access to manage files.</string>
+    <key>NSScreenCaptureDescription</key>
+    <string>Your Assistant needs screen recording permission to capture screenshots for visual context and analysis.</string>
 </dict>
 </plist>

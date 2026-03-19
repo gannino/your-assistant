@@ -21,6 +21,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
     return () => ipcRenderer.removeAllListeners('screenshot-taken');
   },
 
+  // Listen for screenshot errors
+  onScreenshotError: callback => {
+    ipcRenderer.on('screenshot-error', (_, error) => callback(error));
+    return () => ipcRenderer.removeAllListeners('screenshot-error');
+  },
+
   // Detect we're running inside Electron
   isElectron: true,
 });

@@ -11,19 +11,49 @@ function registerShortcuts({ toggleVisibility, moveWindow, takeScreenshot }) {
 
   // Show / hide overlay
   globalShortcut.register('CommandOrControl+Shift+Space', () => {
-    toggleVisibility();
+    try {
+      toggleVisibility();
+    } catch (err) {
+      console.error('[Shortcuts] toggleVisibility error:', err);
+    }
   });
 
   // Take a screenshot (hide overlay, capture, restore)
   globalShortcut.register('CommandOrControl+H', () => {
-    takeScreenshot();
+    takeScreenshot().catch(err => {
+      console.error('[Shortcuts] takeScreenshot error:', err);
+    });
   });
 
   // Move window with arrow keys
-  globalShortcut.register('CommandOrControl+Left', () => moveWindow(-40, 0));
-  globalShortcut.register('CommandOrControl+Right', () => moveWindow(40, 0));
-  globalShortcut.register('CommandOrControl+Up', () => moveWindow(0, -40));
-  globalShortcut.register('CommandOrControl+Down', () => moveWindow(0, 40));
+  globalShortcut.register('CommandOrControl+Left', () => {
+    try {
+      moveWindow(-40, 0);
+    } catch (err) {
+      console.error('[Shortcuts] moveWindow error:', err);
+    }
+  });
+  globalShortcut.register('CommandOrControl+Right', () => {
+    try {
+      moveWindow(40, 0);
+    } catch (err) {
+      console.error('[Shortcuts] moveWindow error:', err);
+    }
+  });
+  globalShortcut.register('CommandOrControl+Up', () => {
+    try {
+      moveWindow(0, -40);
+    } catch (err) {
+      console.error('[Shortcuts] moveWindow error:', err);
+    }
+  });
+  globalShortcut.register('CommandOrControl+Down', () => {
+    try {
+      moveWindow(0, 40);
+    } catch (err) {
+      console.error('[Shortcuts] moveWindow error:', err);
+    }
+  });
 
   registered = true;
   console.log('[Shortcuts] Global shortcuts registered');

@@ -20,3 +20,10 @@ const pinia = createPinia();
 app.use(pinia);
 
 app.mount('#app');
+
+// Log successful mount for debugging
+if (window.electronAPI?.isElectron) {
+  console.log('[Renderer] Vue app mounted successfully in Electron');
+} else {
+  console.log('[Renderer] Vue app mounted successfully in browser');
+}

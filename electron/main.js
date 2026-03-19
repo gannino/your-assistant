@@ -7,10 +7,31 @@ const {
   ipcMain,
   screen,
   desktopCapturer,
+  session,
 } = require('electron');
 const path = require('path');
 const screenshot = require('screenshot-desktop');
 const { registerShortcuts, unregisterShortcuts } = require('./shortcuts');
+
+// Global unhandled rejection handler
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('[Electron] Unhandled Rejection at:', promise, 'reason:', reason);
+  // In production, show error to user and continue
+  if (process.env.NODE_ENV !== 'development') {
+    console.error('[Electron] Unhandled promise rejection. This should be fixed!');
+    // Don't crash, just log and continue
+  }
+});
+
+// Global uncaught exception handler
+process.on('uncaughtException', (error) => {
+  console.error('[Electron] Uncaught Exception:', error);
+  // In production, show error dialog but try to continue
+  if (process.env.NODE_ENV !== 'development') {
+    console.error('[Electron] Uncaught exception. This should be fixed!');
+    // Don't crash, just log and continue
+  }
+});
 
 const isDev = process.env.NODE_ENV === 'development';
 const DEV_URL =
@@ -23,6 +44,7 @@ const PROD_FILE = path.join(__dirname, '../dist/index.html');
 
 const OVERLAY_WIDTH = 1920;
 const OVERLAY_HEIGHT = 1080;
+const MINI_HEIGHT = 200;
 
 let mainWindow = null;
 let tray = null;
@@ -30,7 +52,7 @@ let tray = null;
 // ── Window ────────────────────────────────────────────────────────────────────
 
 function createWindow() {
-  mainWindow = new BrowserWindow({
+  const windowOptions = {
     width: OVERLAY_WIDTH,
     height: OVERLAY_HEIGHT,
     center: true,
@@ -55,12 +77,23 @@ function createWindow() {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
-      webSecurity: false,
+      webSecurity: true,
     },
-  });
+  };
 
-  // Open DevTools in development for debugging
-  if (isDev) {
+  // Platform-specific adjustments
+  if (process.platform === 'darwin') {
+    // macOS-specific settings
+    windowOptions.titleBarStyle = 'hidden';
+  } else if (process.platform === 'win32') {
+    // Windows-specific settings
+    windowOptions.skipTaskbar = false;
+  }
+
+  mainWindow = new BrowserWindow(windowOptions);
+
+  // Open DevTools in development for debugging (controlled by environment variable)
+  if (isDev && process.env.OPEN_DEVTOOLS === 'true') {
     mainWindow.webContents.openDevTools();
   }
 
@@ -80,15 +113,31 @@ function createWindow() {
       const alternatives = [
         path.join(process.resourcesPath, 'app', 'dist', 'index.html'),
         path.join(process.resourcesPath, 'dist', 'index.html'),
+        path.join(__dirname, '..', 'dist', 'index.html'),
       ];
 
       for (const altPath of alternatives) {
         console.log('[Electron] Trying alternative path:', altPath);
         if (require('fs').existsSync(altPath)) {
-          mainWindow.loadFile(altPath).catch(e => console.error('[Electron] Failed:', e));
+          console.log('[Electron] Found file at:', altPath);
+          mainWindow.loadFile(altPath).catch(e => {
+            console.error('[Electron] Failed to load alternative:', e);
+          });
           return;
         }
       }
+
+      // If all paths fail, show error to user
+      console.error('[Electron] Could not find index.html in any location');
+      mainWindow.webContents.loadURL('about:blank').then(() => {
+        mainWindow.webContents.executeJavaScript(`
+          document.body.style.fontFamily = 'sans-serif';
+          document.body.style.padding = '20px';
+          document.body.style.backgroundColor = '#1a1a1a';
+          document.body.style.color = '#fff';
+          document.body.innerHTML = '<h2>Error Loading Application</h2><p>Could not find application files. Please reinstall the application.</p>';
+        `);
+      });
     });
   }
 
@@ -168,6 +217,8 @@ async function takeScreenshot() {
     mainWindow.webContents.send('screenshot-taken', dataUrl);
   } catch (err) {
     console.error('[Screenshot] Failed:', err.message);
+    // Send error to renderer process
+    mainWindow.webContents.send('screenshot-error', err.message);
   } finally {
     if (wasVisible) mainWindow.show();
   }
@@ -186,12 +237,20 @@ ipcMain.on('set-opacity', (_, opacity) => {
 
 // Take a screenshot via screenshot-desktop (hides overlay, captures, restores)
 ipcMain.handle('take-screenshot', async () => {
-  const wasVisible = mainWindow?.isVisible();
+  if (!mainWindow) {
+    throw new Error('Main window not available');
+  }
+
+  const wasVisible = mainWindow.isVisible();
   if (wasVisible) mainWindow.hide();
   await new Promise(resolve => setTimeout(resolve, 150));
+
   try {
     const imgBuffer = await screenshot({ format: 'png' });
     return `data:image/png;base64,${imgBuffer.toString('base64')}`;
+  } catch (err) {
+    console.error('[Screenshot] Failed to capture:', err);
+    throw new Error(`Screenshot failed: ${err.message}`);
   } finally {
     if (wasVisible) mainWindow.show();
   }
@@ -296,9 +355,18 @@ app.whenReady().then(() => {
     return false;
   });
 
+  // Platform-specific initialization
+  if (process.platform === 'win32') {
+    // Windows-specific: ensure shortcuts work properly
+    app.setAppUserModelId('com.yourassistant.app');
+  }
+
   createWindow();
   createTray();
   registerShortcuts({ toggleVisibility, moveWindow, takeScreenshot });
+}).catch(err => {
+  console.error('[Electron] app.whenReady() failed:', err);
+  process.exit(1);
 });
 
 app.on('window-all-closed', () => {

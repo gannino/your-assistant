@@ -128,7 +128,13 @@
       "target": [
         "AppImage",
         "deb"
-      ]
+      ],
+      "category": "Utility",
+      "desktop": {
+        "Name": "Your Assistant",
+        "Comment": "AI-powered real-time assistant",
+        "Icon": "your-assistant"
+      }
     }
   }
 }
