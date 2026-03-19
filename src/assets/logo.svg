@@ -1,0 +1,43 @@
+<svg width="360" height="80" viewBox="0 0 360 80" xmlns="http://www.w3.org/2000/svg">
+  <!-- Icon group -->
+  <g transform="translate(8,12)">
+    <!-- Bubble body -->
+    <rect x="0" y="0" width="52" height="32" rx="14"
+          fill="#020617"
+          stroke="#1E293B"
+          stroke-width="2.4"/>
+
+    <!-- Rounded side tail -->
+    <path d="M52 16
+             C56 18, 56 22, 52 24
+             L48 22"
+          fill="#020617"
+          stroke="#1E293B"
+          stroke-width="2.4"
+          stroke-linejoin="round"
+          stroke-linecap="round"/>
+
+    <!-- Circuit 'Y' -->
+    <line x1="24" y1="8" x2="24" y2="20"
+          stroke="#38BDF8" stroke-width="2.2" stroke-linecap="round"/>
+    <line x1="24" y1="12" x2="18" y2="6"
+          stroke="#38BDF8" stroke-width="2.2" stroke-linecap="round"/>
+    <line x1="24" y1="12" x2="30" y2="6"
+          stroke="#38BDF8" stroke-width="2.2" stroke-linecap="round"/>
+
+    <!-- Node dots -->
+    <circle cx="18" cy="6" r="2.1" fill="#22C55E"/>
+    <circle cx="24" cy="20" r="2.1" fill="#22C55E"/>
+    <circle cx="30" cy="6" r="2.1" fill="#22C55E"/>
+  </g>
+
+  <!-- Text: black -->
+  <text x="88" y="42"
+        font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Inter', sans-serif"
+        font-size="24"
+        letter-spacing="0.02em"
+        fill="#000000">
+    your-assistant
+  </text>
+</svg>
+

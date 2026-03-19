@@ -1,0 +1,436 @@
+name: Your Assistant - CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, master]
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [main, master]
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ============================================
+  # SETUP BUILD JOB - Install dependencies once and create reusable artifacts
+  # ============================================
+  setup-build:
+    name: Setup and Install Dependencies
+    runs-on: ubuntu-latest
+    outputs:
+      node-version: ${{ steps.set-node-version.outputs.version }}
+      cache-hit: ${{ steps.cache-deps.outputs.cache-hit }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        id: setup-node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Cache node_modules
+        id: cache-deps
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            ~/.npm
+          key: deps-${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            deps-${{ runner.os }}-node-
+
+      - name: Install dependencies
+        if: steps.cache-deps.outputs.cache-hit != 'true'
+        run: npm ci
+
+      - name: Set Node version output
+        id: set-node-version
+        run: echo "version=24" >> $GITHUB_OUTPUT
+
+  # ============================================
+  # LINT AND FORMAT JOB - Run quality checks in parallel with tests
+  # ============================================
+  lint-format:
+    name: Lint and Format Checks
+    runs-on: ubuntu-latest
+    needs: setup-build
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ needs.setup-build.outputs.node-version }}
+          cache: 'npm'
+
+      - name: Restore node_modules from cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            ~/.npm
+          key: deps-${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
+          fail-on-cache-miss: true
+
+      - name: Run linting
+        run: npm run lint:check
+
+      - name: Run formatting check
+        run: npm run format:check
+
+  # ============================================
+  # TEST JOB - Run tests across Node versions
+  # ============================================
+  test:
+    name: Test on Node ${{ matrix.node-version }}
+    runs-on: ubuntu-latest
+    needs: setup-build
+    strategy:
+      matrix:
+        node-version: [24.x, 25.x]
+      fail-fast: true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Restore node_modules from cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            ~/.npm
+          key: deps-${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
+          fail-on-cache-miss: true
+
+      - name: Run tests with coverage
+        run: |
+          export NODE_OPTIONS="--max-old-space-size=4096"
+          npm run test:ci
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        if: matrix.node-version == '25.x'
+        with:
+          files: ./coverage/lcov.info
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: false
+
+  # ============================================
+  # BUILD APPS JOB - Build both web and Electron Vue apps once
+  # ============================================
+  build-apps:
+    name: Build Vue Apps
+    runs-on: ubuntu-latest
+    needs: [setup-build, lint-format, test]
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/'))
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ needs.setup-build.outputs.node-version }}
+          cache: 'npm'
+
+      - name: Restore node_modules from cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            ~/.npm
+          key: deps-${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
+          fail-on-cache-miss: true
+
+      - name: Build Vue app for web
+        run: npm run build
+
+      - name: Upload Vue web build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: vue-dist-web
+          path: dist/
+          retention-days: 1
+
+      - name: Build Vue app for Electron
+        run: npm run build
+        env:
+          ELECTRON_BUILD: 'true'
+
+      - name: Upload Vue Electron build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: vue-dist-electron
+          path: dist/
+          retention-days: 1
+
+  # ============================================
+  # BUILD MACOS - Build macOS Electron app
+  # ============================================
+  build-mac:
+    name: Build macOS App
+    runs-on: macos-latest
+    needs: build-apps
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/'))
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download Electron Vue build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: vue-dist-electron
+          path: dist/
+
+      - name: Build Electron app for macOS (Universal)
+        run: npx electron-builder --mac --universal
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
+
+      - name: Find and generate build checksums
+        run: |
+          cd release
+          find . -type f \( -name "*.dmg" -o -name "*.zip" \) -exec shasum -a 256 {} \; > checksums.txt
+          cat checksums.txt
+
+      - name: Upload macOS artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: your-assistant-mac
+          path: |
+            release/*.dmg
+            release/*.zip
+            release/checksums.txt
+          retention-days: 30
+
+  # ============================================
+  # BUILD WINDOWS - Build Windows Electron app
+  # ============================================
+  build-windows:
+    name: Build Windows App
+    runs-on: windows-latest
+    needs: build-apps
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/'))
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download Electron Vue build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: vue-dist-electron
+          path: dist/
+
+      - name: Build Electron app for Windows
+        run: npx electron-builder --win
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Windows artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: your-assistant-windows
+          path: |
+            release/*.exe
+            release/*.zip
+          retention-days: 30
+
+  # ============================================
+  # BUILD LINUX - Build Linux Electron app
+  # ============================================
+  build-linux:
+    name: Build Linux App
+    runs-on: ubuntu-latest
+    needs: build-apps
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/'))
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download Electron Vue build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: vue-dist-electron
+          path: dist/
+
+      - name: Install Electron build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y fakeroot xorriso rpm libxkbfile-dev libsecret-1-dev
+
+      - name: Build Electron app for Linux
+        run: npx electron-builder --linux
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: 'true'
+
+      - name: Upload Linux artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: your-assistant-linux
+          path: |
+            release/*.AppImage
+            release/*.deb
+          retention-days: 30
+
+  # ============================================
+  # DEPLOY PAGES - Deploy to GitHub Pages
+  # ============================================
+  deploy-pages:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build-apps
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+
+    steps:
+      - name: Download Vue web build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: vue-dist-web
+          path: dist/
+
+      - name: Check build output
+        run: |
+          echo "Checking build output..."
+          if [ ! -d "dist" ]; then
+            echo "❌ Build failed: dist directory not found"
+            exit 1
+          fi
+          if [ ! -f "dist/index.html" ]; then
+            echo "❌ Build failed: index.html not found"
+            exit 1
+          fi
+          echo "✅ Build output verified"
+
+      - name: Upload artifact for Pages deployment
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./dist
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: Verify deployment
+        run: |
+          echo "🚀 Deployed to: ${{ steps.deployment.outputs.page_url }}"
+          echo "⏳ Waiting for deployment to propagate..."
+          sleep 10
+
+          url="${{ steps.deployment.outputs.page_url }}"
+          if curl -f -s -o /dev/null "$url"; then
+            echo "✅ Deployment verified: $url is accessible"
+          else
+            echo "⚠️ Warning: Could not verify deployment accessibility"
+          fi
+
+  # ============================================
+  # RELEASE - Upload artifacts to Release Please release
+  # ============================================
+  release:
+    name: Upload Release Artifacts
+    runs-on: ubuntu-latest
+    needs: [build-mac, build-windows, build-linux]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download all platform artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-artifacts/
+
+      - name: Find latest release tag
+        id: find_tag
+        run: |
+          # Get the most recent tag that starts with 'v'
+          TAG=$(git describe --tags --abbrev=0 --match 'v*' 2>/dev/null || echo "")
+          if [ -n "$TAG" ]; then
+            echo "tag=$TAG" >> $GITHUB_OUTPUT
+            echo "Found release tag: $TAG"
+          else
+            echo "No release tag found"
+            exit 1
+          fi
+
+      - name: Upload artifacts to release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.find_tag.outputs.tag }}
+          files: |
+            release-artifacts/your-assistant-mac/*.dmg
+            release-artifacts/your-assistant-mac/*.zip
+            release-artifacts/your-assistant-mac/checksums.txt
+            release-artifacts/your-assistant-windows/*.exe
+            release-artifacts/your-assistant-windows/*.zip
+            release-artifacts/your-assistant-linux/*.AppImage
+            release-artifacts/your-assistant-linux/*.deb
+          fail_on_unmatched_files: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Release Summary
+        run: |
+          echo "## Release Artifacts Uploaded Successfully :rocket:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Tag**: ${{ steps.find_tag.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
