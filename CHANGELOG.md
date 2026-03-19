@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/gannino/your-assistant/compare/your-assistant-1.1.0...your-assistant-1.2.0) (2026-03-19)
+
+
+### ✨ Features
+
+* initial release of Your Assistant with optimized CI/CD ([13774bd](https://github.com/gannino/your-assistant/commit/13774bd04661e33da9126ad1ad44c6ffaf4da921))
+
 ## [1.1.0](https://github.com/gannino/your-assistant/compare/your-assistant-v1.0.0...your-assistant-v1.1.0) (2026-03-19)
 
 
