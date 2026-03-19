@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Speech API Diagnostic Tool</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 2px solid #4CAF50;
+            padding-bottom: 10px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        #transcript {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 5px;
+            min-height: 100px;
+            white-space: pre-wrap;
+            margin: 10px 0;
+        }
+        .info-box {
+            background: #e7f3ff;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .step {
+            counter-increment: step-counter;
+            margin: 15px 0;
+            padding-left: 30px;
+            position: relative;
+        }
+        .step:before {
+            counter-increment: step-counter;
+            content: counter(step-counter) ".";
+            position: absolute;
+            left: 0;
+            font-weight: bold;
+            color: #2196F3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎤 Web Speech API Diagnostic Tool</h1>
+        <p>This tool will help diagnose why Web Speech API isn't working in your Your Assistant.</p>
+
+        <div class="info-box">
+            <strong>📋 Instructions:</strong>
+            <div class="step">Open your browser's Developer Console (press F12)</div>
+            <div class="step">Look for any error messages in the Console tab</div>
+            <div class="step">Click the test buttons below in order</div>
+            <div class="step">Report back what you see!</div>
+        </div>
+
+        <!-- Test 1: Browser Support -->
+        <div class="test-section">
+            <h2>Test 1: Browser Support Check</h2>
+            <div id="browser-support-status" class="status info">Checking...</div>
+        </div>
+
+        <!-- Test 2: Microphone Permission -->
+        <div class="test-section">
+            <h2>Test 2: Microphone Permission</h2>
+            <button onclick="testMicrophone()">Test Microphone Access</button>
+            <div id="mic-status" class="status info">Not tested yet</div>
+        </div>
+
+        <!-- Test 3: Simple Recognition Test -->
+        <div class="test-section">
+            <h2>Test 3: Basic Speech Recognition</h2>
+            <p>Click "Start Test", then say something clearly. Click "Stop" after 5 seconds.</p>
+            <button id="startBtn" onclick="startBasicTest()">Start Test</button>
+            <button id="stopBtn" onclick="stopBasicTest()" disabled>Stop Test</button>
+            <div id="basic-status" class="status info">Not tested yet</div>
+            <div id="basic-transcript"></div>
+        </div>
+
+        <!-- Test 4: Network Connectivity -->
+        <div class="test-section">
+            <h2>Test 4: Network Connectivity</h2>
+            <p>Testing if we can reach Google's servers...</p>
+            <button onclick="testNetworkConnectivity()">Test Network</button>
+            <div id="network-status" class="status info">Not tested yet</div>
+        </div>
+
+        <!-- Test 5: Continuous Recognition -->
+        <div class="test-section">
+            <h2>Test 5: Continuous Recognition (Like Your Assistant)</h2>
+            <p>This mimics how Your Assistant uses Web Speech API.</p>
+            <button id="continuousStartBtn" onclick="startContinuousTest()">Start Continuous</button>
+            <button id="continuousStopBtn" onclick="stopContinuousTest()" disabled>Stop Continuous</button>
+            <div id="continuous-status" class="status info">Not tested yet</div>
+            <div id="continuous-transcript">Transcript will appear here...</div>
+        </div>
+
+        <!-- Summary -->
+        <div class="test-section">
+            <h2>📊 Diagnostic Summary</h2>
+            <div id="summary"></div>
+        </div>
+    </div>
+
+    <script>
+        let recognition = null;
+        let continuousRecognition = null;
+        const results = {
+            browserSupport: null,
+            microphone: null,
+            basicTest: null,
+            networkTest: null,
+            continuousTest: null
+        };
+
+        // Test 1: Browser Support
+        function checkBrowserSupport() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            const statusEl = document.getElementById('browser-support-status');
+
+            if (SpeechRecognition) {
+                results.browserSupport = true;
+                statusEl.className = 'status success';
+                statusEl.innerHTML = `✅ PASS - SpeechRecognition is supported!<br>
+                Browser: ${navigator.userAgent.split(')')[0].split('/')[1] || 'Unknown'}<br>
+                Engine: ${window.webkitSpeechRecognition ? 'webkit' : 'standard'}`;
+                console.log('[Test 1] SpeechRecognition supported:', true);
+            } else {
+                results.browserSupport = false;
+                statusEl.className = 'status error';
+                statusEl.textContent = '❌ FAIL - SpeechRecognition not supported in this browser';
+                console.error('[Test 1] SpeechRecognition not supported');
+            }
+        }
+
+        // Test 2: Microphone Permission
+        async function testMicrophone() {
+            const statusEl = document.getElementById('mic-status');
+            statusEl.className = 'status info';
+            statusEl.textContent = 'Requesting microphone permission...';
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                results.microphone = true;
+                statusEl.className = 'status success';
+                statusEl.textContent = '✅ PASS - Microphone access granted!';
+                console.log('[Test 2] Microphone access granted');
+
+                // Stop the stream immediately
+                stream.getTracks().forEach(track => track.stop());
+            } catch (error) {
+                results.microphone = false;
+                statusEl.className = 'status error';
+                statusEl.textContent = `❌ FAIL - Microphone access denied: ${error.name}`;
+                console.error('[Test 2] Microphone error:', error);
+            }
+        }
+
+        // Test 3: Basic Speech Recognition
+        function startBasicTest() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            const statusEl = document.getElementById('basic-status');
+            const transcriptEl = document.getElementById('basic-transcript');
+
+            if (!SpeechRecognition) {
+                statusEl.className = 'status error';
+                statusEl.textContent = '❌ SpeechRecognition not supported';
+                return;
+            }
+
+            recognition = new SpeechRecognition();
+            recognition.lang = 'en-US';
+            recognition.continuous = false;
+            recognition.interimResults = false;
+
+            recognition.onstart = () => {
+                statusEl.className = 'status info';
+                statusEl.textContent = '🎤 Listening... Say something!';
+                transcriptEl.textContent = '';
+                document.getElementById('startBtn').disabled = true;
+                document.getElementById('stopBtn').disabled = false;
+                console.log('[Test 3] Recognition started');
+            };
+
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                transcriptEl.textContent = transcript;
+                console.log('[Test 3] Recognized:', transcript);
+            };
+
+            recognition.onerror = (event) => {
+                results.basicTest = { success: false, error: event.error };
+                statusEl.className = 'status error';
+                statusEl.textContent = `❌ Error: ${event.error}`;
+                transcriptEl.textContent = `Error: ${event.error}\n\nCommon causes:\n- No internet connection\n- VPN blocking Google service\n- Microphone not allowed`;
+                console.error('[Test 3] Recognition error:', event.error);
+                document.getElementById('startBtn').disabled = false;
+                document.getElementById('stopBtn').disabled = true;
+            };
+
+            recognition.onend = () => {
+                if (results.basicTest === null) {
+                    results.basicTest = { success: true };
+                    statusEl.className = 'status success';
+                    statusEl.textContent = '✅ Test completed - check transcript above';
+                }
+                document.getElementById('startBtn').disabled = false;
+                document.getElementById('stopBtn').disabled = true;
+                console.log('[Test 3] Recognition ended');
+            };
+
+            try {
+                recognition.start();
+            } catch (error) {
+                statusEl.className = 'status error';
+                statusEl.textContent = `❌ Failed to start: ${error.message}`;
+                console.error('[Test 3] Start error:', error);
+            }
+        }
+
+        function stopBasicTest() {
+            if (recognition) {
+                recognition.stop();
+                console.log('[Test 3] Recognition stopped');
+            }
+        }
+
+        // Test 4: Network Connectivity
+        async function testNetworkConnectivity() {
+            const statusEl = document.getElementById('network-status');
+            statusEl.className = 'status info';
+            statusEl.textContent = 'Testing network connection...';
+
+            const tests = [];
+
+            // Test Google.com
+            try {
+                const googleStart = performance.now();
+                await fetch('https://www.google.com', { mode: 'no-cors' });
+                const googleTime = Math.round(performance.now() - googleStart);
+                tests.push({ url: 'google.com', success: true, time: googleTime });
+                console.log('[Test 4] Google.com reachable:', googleTime + 'ms');
+            } catch (error) {
+                tests.push({ url: 'google.com', success: false, error: error.message });
+                console.error('[Test 4] Google.com failed:', error);
+            }
+
+            // Test Google Speech API (indirect)
+            try {
+                const speechStart = performance.now();
+                const testRecognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+
+                return new Promise((resolve) => {
+                    testRecognition.onstart = () => {
+                        const time = Math.round(performance.now() - speechStart);
+                        tests.push({ url: 'Google Speech API', success: true, time: time });
+                        testRecognition.stop();
+                        console.log('[Test 4] Google Speech API reachable:', time + 'ms');
+                    };
+
+                    testRecognition.onerror = (event) => {
+                        if (event.error === 'network') {
+                            tests.push({ url: 'Google Speech API', success: false, error: 'network error' });
+                            console.error('[Test 4] Google Speech API network error');
+                        } else {
+                            tests.push({ url: 'Google Speech API', success: false, error: event.error });
+                        }
+                        resolve();
+                    };
+
+                    testRecognition.start();
+
+                    // Timeout after 5 seconds
+                    setTimeout(() => {
+                        if (testRecognition.state === 'running') {
+                            testRecognition.stop();
+                            tests.push({ url: 'Google Speech API', success: false, error: 'timeout' });
+                            resolve();
+                        }
+                    }, 5000);
+                });
+            } catch (error) {
+                tests.push({ url: 'Google Speech API', success: false, error: error.message });
+                console.error('[Test 4] Speech API test failed:', error);
+            }
+
+            // Display results
+            if (tests.some(t => t.success)) {
+                results.networkTest = true;
+                statusEl.className = tests.every(t => t.success) ? 'status success' : 'status info';
+                let html = '<strong>Test Results:</strong><br>';
+                tests.forEach(test => {
+                    const icon = test.success ? '✅' : '❌';
+                    html += `${icon} ${test.url}: `;
+                    html += test.success ? `Reachable (${test.time}ms)` : `Failed - ${test.error}`;
+                    html += '<br>';
+                });
+                if (tests.some(t => !t.success)) {
+                    html += '<br><strong>⚠️ Some services are unreachable. This may cause speech recognition to fail.</strong>';
+                }
+                statusEl.innerHTML = html;
+            } else {
+                results.networkTest = false;
+                statusEl.className = 'status error';
+                statusEl.textContent = '❌ All network tests failed - check your internet connection';
+            }
+        }
+
+        // Test 5: Continuous Recognition
+        function startContinuousTest() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            const statusEl = document.getElementById('continuous-status');
+            const transcriptEl = document.getElementById('continuous-transcript');
+
+            if (!SpeechRecognition) {
+                statusEl.className = 'status error';
+                statusEl.textContent = '❌ SpeechRecognition not supported';
+                return;
+            }
+
+            continuousRecognition = new SpeechRecognition();
+            continuousRecognition.lang = 'en-US';
+            continuousRecognition.continuous = true;
+            continuousRecognition.interimResults = false;
+
+            let transcriptCount = 0;
+
+            continuousRecognition.onstart = () => {
+                statusEl.className = 'status info';
+                statusEl.textContent = '🎤 Continuous listening active...';
+                transcriptEl.textContent = 'Transcript:\n';
+                document.getElementById('continuousStartBtn').disabled = true;
+                document.getElementById('continuousStopBtn').disabled = false;
+                console.log('[Test 5] Continuous recognition started');
+            };
+
+            continuousRecognition.onresult = (event) => {
+                const transcript = event.results[event.resultIndex][0].transcript;
+                transcriptCount++;
+                transcriptEl.textContent += `[${transcriptCount}] ${transcript}\n`;
+                console.log('[Test 5] Result', transcriptCount, ':', transcript);
+            };
+
+            continuousRecognition.onerror = (event) => {
+                results.continuousTest = { success: false, error: event.error };
+                statusEl.className = 'status error';
+                statusEl.textContent = `❌ Error: ${event.error}`;
+                transcriptEl.textContent += `\n❌ ERROR: ${event.error}\n`;
+                console.error('[Test 5] Continuous error:', event.error);
+
+                if (event.error === 'network') {
+                    transcriptEl.textContent += `\n⚠️ This is the NETWORK ERROR you're seeing in Your Assistant!\n`;
+                    transcriptEl.textContent += `It means Google's speech service is unreachable.\n`;
+                    transcriptEl.textContent += `Try: Disable VPN, check firewall, or use a different network.\n`;
+                }
+
+                document.getElementById('continuousStartBtn').disabled = false;
+                document.getElementById('continuousStopBtn').disabled = true;
+            };
+
+            continuousRecognition.onend = () => {
+                if (results.continuousTest === null) {
+                    results.continuousTest = { success: true, transcriptCount: transcriptCount };
+                    statusEl.className = 'status success';
+                    statusEl.textContent = `✅ Test completed - captured ${transcriptCount} phrases`;
+                }
+                document.getElementById('continuousStartBtn').disabled = false;
+                document.getElementById('continuousStopBtn').disabled = true;
+                console.log('[Test 5] Continuous recognition ended');
+            };
+
+            try {
+                continuousRecognition.start();
+            } catch (error) {
+                statusEl.className = 'status error';
+                statusEl.textContent = `❌ Failed to start: ${error.message}`;
+                console.error('[Test 5] Start error:', error);
+            }
+        }
+
+        function stopContinuousTest() {
+            if (continuousRecognition) {
+                continuousRecognition.stop();
+                console.log('[Test 5] Continuous recognition stopped');
+            }
+        }
+
+        // Update summary
+        function updateSummary() {
+            const summaryEl = document.getElementById('summary');
+            let html = '<h3>Test Results Summary:</h3>';
+
+            html += `<p><strong>1. Browser Support:</strong> ${results.browserSupport ? '✅ PASS' : '❌ FAIL'}</p>`;
+            html += `<p><strong>2. Microphone:</strong> ${results.microphone ? '✅ PASS' : '❌ FAIL'}</p>`;
+            html += `<p><strong>3. Basic Recognition:</strong> ${results.basicTest ? (results.basicTest.success ? '✅ PASS' : '❌ FAIL - ' + results.basicTest.error) : '⏳ Not tested'}</p>`;
+            html += `<p><strong>4. Network:</strong> ${results.networkTest ? '✅ PASS' : '❌ FAIL'}</p>`;
+            html += `<p><strong>5. Continuous Recognition:</strong> ${results.continuousTest ? (results.continuousTest.success ? '✅ PASS' : '❌ FAIL - ' + results.continuousTest.error) : '⏳ Not tested'}</p>`;
+
+            // Diagnosis
+            html += '<h3>🔍 Diagnosis:</h3>';
+            if (results.continuousTest && !results.continuousTest.success) {
+                if (results.continuousTest.error === 'network') {
+                    html += '<p style="color: #d32f2f;"><strong>NETWORK ERROR DETECTED!</strong></p>';
+                    html += '<p><strong>Root Cause:</strong> Your browser cannot reach Google\'s speech recognition servers.</p>';
+                    html += '<p><strong>Solutions to try:</strong></p>';
+                    html += '<ol>';
+                    html += '<li><strong>Disable VPN/Proxy:</strong> This is the #1 cause of network errors</li>';
+                    html += '<li><strong>Try a different network:</strong> Switch from work to home, or use mobile hotspot</li>';
+                    html += '<li><strong>Try Chrome instead of Edge:</strong> Sometimes Chrome has better connectivity</li>';
+                    html += '<li><strong>Check firewall:</strong> Allow "speech.googleapis.com" through your firewall</li>';
+                    html += '<li><strong>Use Azure instead:</strong> Since Azure is working for you, just stick with it!</li>';
+                    html += '</ol>';
+                } else {
+                    html += `<p>Error: ${results.continuousTest.error}</p>`;
+                }
+            } else if (results.basicTest && !results.basicTest.success) {
+                html += `<p>Error: ${results.basicTest.error}</p>`;
+            } else {
+                html += '<p style="color: #388e3c;">✅ All tests passed! Web Speech API should work.</p>';
+            }
+
+            summaryEl.innerHTML = html;
+        }
+
+        // Run on load
+        window.onload = () => {
+            checkBrowserSupport();
+            updateSummary();
+
+            // Update summary every time a test completes
+            const originalSetInterval = window.setInterval;
+            window.setInterval = function(callback, delay) {
+                const wrappedCallback = () => {
+                    callback();
+                    updateSummary();
+                };
+                return originalSetInterval.call(this, wrappedCallback, delay);
+            };
+        };
+    </script>
+</body>
+</html>
