@@ -199,8 +199,9 @@ Contributions welcome! See [Development Guide](./docs/DEVELOPMENT_GUIDE.md) for 
 
 ## Release Automation
 
-This project uses Release Please for automated version management with manual releases as fallback.
-## Testing Release Please
+This project uses a hybrid release system:
 
-This section is for testing Release Please automation.
-- Release Please automation configured and working
+- **Automated**: Release Please creates Release PRs automatically based on conventional commits
+- **Manual**: Use `npm run release:patch` for immediate releases when needed
+
+Both methods create identical releases with all platform artifacts.
