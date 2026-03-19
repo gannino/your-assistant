@@ -1,6 +1,6 @@
 {
   "name": "your-assistant",
-  "version": "0.3.0",
+  "version": "0.1.0",
   "private": true,
   "main": "electron/main.js",
   "author": {
@@ -35,7 +35,10 @@
     "electron:build:win": "cross-env ELECTRON_BUILD=true vue-cli-service build && electron-builder --win",
     "electron:build:linux": "cross-env ELECTRON_BUILD=true vue-cli-service build && electron-builder --linux",
     "electron:build:linux:ci": "cross-env ELECTRON_BUILD=true vue-cli-service build && cross-env ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES=true electron-builder --linux",
-    "release": "npm version && git push --follow-tags"
+    "release": "node scripts/release-manual.js",
+    "release:patch": "node scripts/release-manual.js patch",
+    "release:minor": "node scripts/release-manual.js minor",
+    "release:major": "node scripts/release-manual.js major"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",
