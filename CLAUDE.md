@@ -4,6 +4,65 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 > **Project identity**: This is "Your Assistant" — a general-purpose real-time AI assistant.
 
+## Workflow Orchestration
+
+### 1. Planning Mode (Default)
+
+- Enter planning mode for ANY non-trivial activity (3+ steps or architectural decisions)
+- If something goes wrong, STOP and plan again immediately
+- Use the planning mode also for verification steps, not just for construction
+- Write detailed specifications in advance to reduce ambiguity
+
+### 2. Subagent Strategy
+
+- Use sub-agents freely to keep the main context window clean
+- Delegation of research, exploration and parallel analysis to sub-agents
+- For complex problems, use more computational resources through sub-agents
+- A task per subagent for a focused execution
+
+### 3. Self-Improvement Cycle
+
+- After ANY correction by the user: update lessons learned with the pattern
+- Write rules for yourself that prevent the same mistake
+- Iterate mercilessly on these lessons until the error rate decreases
+- Review the lessons at the beginning of the session for the relevant project
+
+### 4. Check Before Considering Completed
+
+- Never mark a task as completed without proving that it works
+- Compare the behavior between the main version and your changes when relevant
+- Ask yourself: "Would a senior engineer approve of this?"
+- Run tests, check logs, demonstrate correctness
+
+### 5. Expect Elegance (Balanced)
+
+- For non-trivial changes: stop and ask "is there a more elegant way?"
+- If a solution looks like a hack: "Knowing everything I know now, implement the elegant solution"
+- Skip this step for simple and obvious fixes - avoid over-engineering
+- Question your work before presenting it
+
+### 6. Autonomous Bug Resolution
+
+- When you receive a bug report: just fix it. Don't ask for step-by-step guidance
+- Analyze logs, errors, failed tests - then solve them
+- No need to change the context to the user
+- Solve failed CI tests without being told how
+
+## Task Management
+
+1. **Plan First**: Write the plan in advance with verifiable elements
+2. **Check the Plan**: Review before starting implementation
+3. **Track Progress**: Mark items as completed as you go
+4. **Explain Changes**: Provide a high-level summary at each step
+5. **Document Results**: Add review notes after completion
+6. **Record Lessons**: Update lessons learned after corrections
+
+## Fundamental Principles
+
+- **Simplicity First**: Make every change as simple as possible. Impact the minimum code.
+- **Zero Laziness**: Find the root causes. No temporary solutions. Senior developer standard.
+- **Minimal Impact**: Change only what is necessary. No side effects or new bugs.
+
 ## Development Commands
 
 ```bash
