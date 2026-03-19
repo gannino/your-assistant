@@ -7,7 +7,6 @@ const {
   ipcMain,
   screen,
   desktopCapturer,
-  session,
 } = require('electron');
 const path = require('path');
 const screenshot = require('screenshot-desktop');
@@ -336,6 +335,9 @@ app.whenReady().then(() => {
   app.commandLine.appendSwitch('enable-media-stream');
   app.commandLine.appendSwitch('enable-usermedia-screen-capture');
   app.commandLine.appendSwitch('disable-features', 'HardwareMediaKeyHandling,MediaSessionService');
+
+  // Access session from within app context
+  const { session } = require('electron');
 
   // Set up permission handlers for media devices
   session.defaultSession.setPermissionRequestHandler((_webContents, permission, callback) => {
