@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.1](https://github.com/gannino/your-assistant/compare/your-assistant-v0.1.0...your-assistant-v0.1.1) (2026-03-19)
+
+
+### ✨ Features
+
+* initial release of Your Assistant ([2db5bf9](https://github.com/gannino/your-assistant/commit/2db5bf9c96dec0552d941eb775c3a0134da80886))
+
 ## [0.1.0] - 2026-03-19
 
 ### ✨ Features
