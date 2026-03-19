@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.0.0 (2026-03-19)
+
+
+### ✨ Features
+
+* initial release of Your Assistant ([ae931ab](https://github.com/gannino/your-assistant/commit/ae931ab8ffa8b7aa1c9d469bc627d97021508259))
+
 ## [0.3.0] - 2026-03-18
 
 ### ✨ Features
@@ -37,4 +44,3 @@ All notable changes to this project will be documented in this file.
 - Auto mode with configurable silence detection
 - PDF and website context support
 - Session history and summarization
-
