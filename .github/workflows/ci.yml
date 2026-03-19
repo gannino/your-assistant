@@ -416,6 +416,43 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.find_tag.outputs.tag }}
+          body: |
+            ## 📥 Downloads
+
+            ### macOS
+            - **[DMG Installer](https://github.com/gannino/your-assistant/releases/download/${{ steps.find_tag.outputs.tag }}/Your.Assistant-${{ steps.find_tag.outputs.tag }}-universal.dmg)** - Recommended for most users
+            - **[ZIP Archive](https://github.com/gannino/your-assistant/releases/download/${{ steps.find_tag.outputs.tag }}/Your.Assistant-${{ steps.find_tag.outputs.tag }}-universal-mac.zip)** - Portable version
+
+            ### Windows
+            - **[NSIS Installer](https://github.com/gannino/your-assistant/releases/download/${{ steps.find_tag.outputs.tag }}/Your.Assistant.Setup.${{ steps.find_tag.outputs.tag }}.exe)** - Recommended installer
+            - **[Portable EXE](https://github.com/gannino/your-assistant/releases/download/${{ steps.find_tag.outputs.tag }}/Your.Assistant.${{ steps.find_tag.outputs.tag }}.exe)** - No installation required
+
+            ### Linux
+            - **[AppImage](https://github.com/gannino/your-assistant/releases/download/${{ steps.find_tag.outputs.tag }}/Your.Assistant-${{ steps.find_tag.outputs.tag }}.AppImage)** - Universal package for most distributions
+            - **[Debian Package](https://github.com/gannino/your-assistant/releases/download/${{ steps.find_tag.outputs.tag }}/your-assistant_${{ steps.find_tag.outputs.tag }}_amd64.deb)** - For Debian/Ubuntu-based systems
+
+            ## 🔐 Verification
+
+            **SHA256 Checksums:**
+            ```bash
+            # Download checksums file
+            curl -LO https://github.com/gannino/your-assistant/releases/download/${{ steps.find_tag.outputs.tag }}/checksums.txt
+
+            # Verify your download
+            shasum -a 256 -c checksums.txt
+            ```
+
+            ## 📋 System Requirements
+
+            - **macOS**: macOS 11.0+ (Apple Silicon or Intel)
+            - **Windows**: Windows 10+ (64-bit)
+            - **Linux**: Modern distribution with glibc 2.17+
+
+            ## 📚 Documentation
+
+            - [Quick Start Guide](https://github.com/gannino/your-assistant/blob/main/docs/QUICK_START.md)
+            - [Setup Instructions](https://github.com/gannino/your-assistant/blob/main/docs/INDEX.md)
+            - [Troubleshooting](https://github.com/gannino/your-assistant/blob/main/docs/TROUBLESHOOTING.md)
           files: |
             release-artifacts/your-assistant-mac/*.dmg
             release-artifacts/your-assistant-mac/*.zip
@@ -425,6 +462,7 @@ jobs:
             release-artifacts/your-assistant-linux/*.AppImage
             release-artifacts/your-assistant-linux/*.deb
           fail_on_unmatched_files: false
+          append_body: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
