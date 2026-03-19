@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.0 (2026-03-19)
+
+
+### ✨ Features
+
+* initial release of Your Assistant v1.0.0 ([03c61b0](https://github.com/gannino/your-assistant/commit/03c61b003c91788dfff95eec5bee625bfc9a7a4b))
+
 ## [1.1.0](https://github.com/gannino/your-assistant/compare/your-assistant-v1.0.0...your-assistant-v1.1.0) (2026-03-19)
 
 
