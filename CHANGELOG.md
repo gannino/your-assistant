@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.1.0 (2026-03-19)
+
+
+### ✨ Features
+
+* initial release of Your Assistant ([ae931ab](https://github.com/gannino/your-assistant/commit/ae931ab8ffa8b7aa1c9d469bc627d97021508259))
+* initial release of Your Assistant v0.1.0 ([ee75993](https://github.com/gannino/your-assistant/commit/ee759931216b07617268a2abd31adc20c01f80d8))
+
+
+### 📝 Documentation
+
+* add workflow orchestration directives to CLAUDE.md ([9e40bd3](https://github.com/gannino/your-assistant/commit/9e40bd39910bec2e696e59967cedf5a504503652))
+
 ## [0.1.0] - 2026-03-19
 
 ### ✨ Features
