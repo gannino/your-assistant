@@ -1,0 +1,32 @@
+{
+  "name": "Your Assistant",
+  "short_name": "Your Assistant",
+  "description": "Multi-provider AI-powered assistant with flexible speech recognition",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#409eff",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon-16x16.png",
+      "sizes": "16x16",
+      "type": "image/png"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ],
+  "categories": ["productivity", "education"],
+  "screenshots": [],
+  "permissions": [
+    "microphone"
+  ]
+}
