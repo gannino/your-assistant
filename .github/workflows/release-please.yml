@@ -1,0 +1,37 @@
+name: Release Please
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: read
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Release Please
+        uses: googleapis/release-please-action@v4
+        with:
+          config-file: .github/release-please-config.json
+          manifest-file: .github/release-please-manifest.json
+        id: release
+
+      - name: Create Release Summary
+        if: steps.release.outputs.release_created
+        run: |
+          echo "## Release Created :rocket:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version**: ${{ steps.release.outputs.major }}.${{ steps.release.outputs.minor }}.${{ steps.release.outputs.patch }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Changelog**: ${{ steps.release.outputs.html_url }}" >> $GITHUB_STEP_SUMMARY
+
+      - name: Trigger CI/CD on Release
+        if: steps.release.outputs.release_created
+        run: |
+          echo "Release created, triggering CI/CD workflow"
+          # This will trigger the ci.yml workflow via the tag push
