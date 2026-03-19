@@ -205,3 +205,9 @@ This project uses a hybrid release system:
 - **Manual**: Use `npm run release:patch` for immediate releases when needed
 
 Both methods create identical releases with all platform artifacts.
+## Features
+
+### Hybrid Release System
+- Release Please automation for version management
+- Manual release scripts for immediate releases
+- Both methods create identical releases
