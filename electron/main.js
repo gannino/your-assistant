@@ -203,8 +203,27 @@ function moveWindow(dx, dy) {
   mainWindow.setPosition(x + dx, y + dy);
 }
 
+/**
+ * Check macOS screen recording permission.
+ * Returns true if granted, false if denied/restricted.
+ * On non-macOS platforms always returns true.
+ */
+function hasScreenRecordingPermission() {
+  if (process.platform !== 'darwin') return true;
+  const status = require('electron').systemPreferences.getMediaAccessStatus('screen');
+  return status === 'granted';
+}
+
 async function takeScreenshot() {
   if (!mainWindow) return;
+  if (!hasScreenRecordingPermission()) {
+    console.warn('[Screenshot] Screen recording permission not granted');
+    mainWindow.webContents.send(
+      'screenshot-error',
+      'Screen recording permission is required.\n\nGo to System Settings → Privacy & Security → Screen Recording and enable "Your Assistant", then restart the app.'
+    );
+    return;
+  }
   const wasVisible = mainWindow.isVisible();
   if (wasVisible) mainWindow.hide();
   await new Promise(resolve => setTimeout(resolve, 150));
@@ -214,7 +233,6 @@ async function takeScreenshot() {
     mainWindow.webContents.send('screenshot-taken', dataUrl);
   } catch (err) {
     console.error('[Screenshot] Failed:', err.message);
-    // Send error to renderer process
     mainWindow.webContents.send('screenshot-error', err.message);
   } finally {
     if (wasVisible) mainWindow.show();
@@ -234,14 +252,15 @@ ipcMain.on('set-opacity', (_, opacity) => {
 
 // Take a screenshot via screenshot-desktop (hides overlay, captures, restores)
 ipcMain.handle('take-screenshot', async () => {
-  if (!mainWindow) {
-    throw new Error('Main window not available');
+  if (!mainWindow) throw new Error('Main window not available');
+  if (!hasScreenRecordingPermission()) {
+    throw new Error(
+      'Screen recording permission is required.\n\nGo to System Settings → Privacy & Security → Screen Recording and enable "Your Assistant", then restart the app.'
+    );
   }
-
   const wasVisible = mainWindow.isVisible();
   if (wasVisible) mainWindow.hide();
   await new Promise(resolve => setTimeout(resolve, 150));
-
   try {
     const imgBuffer = await screenshot({ format: 'png' });
     return `data:image/png;base64,${imgBuffer.toString('base64')}`;
@@ -264,6 +283,11 @@ ipcMain.on('set-content-height', (_, height) => {
 
 // Returns list of capturable sources (screens + windows)
 ipcMain.handle('get-capture-sources', async (_, types = ['screen', 'window']) => {
+  if (!hasScreenRecordingPermission()) {
+    throw new Error(
+      'Screen recording permission is required.\n\nGo to System Settings → Privacy & Security → Screen Recording and enable "Your Assistant", then restart the app.'
+    );
+  }
   const sources = await desktopCapturer.getSources({
     types,
     thumbnailSize: { width: 320, height: 180 },
@@ -277,6 +301,11 @@ ipcMain.handle('get-capture-sources', async (_, types = ['screen', 'window']) =>
 
 // Capture a frame from a specific source (or primary screen by default)
 ipcMain.handle('capture-screen', async (_, sourceId) => {
+  if (!hasScreenRecordingPermission()) {
+    throw new Error(
+      'Screen recording permission is required.\n\nGo to System Settings → Privacy & Security → Screen Recording and enable "Your Assistant", then restart the app.'
+    );
+  }
   let id = sourceId;
   if (!id) {
     // Auto-pick the primary display
@@ -315,6 +344,11 @@ ipcMain.handle('capture-screen', async (_, sourceId) => {
 
 // ── App lifecycle ─────────────────────────────────────────────────────────────
 
+// Command line switches must be set before app.whenReady()
+app.commandLine.appendSwitch('disable-background-timer-throttling');
+app.commandLine.appendSwitch('enable-usermedia-screen-capture');
+app.commandLine.appendSwitch('disable-features', 'HardwareMediaKeyHandling,MediaSessionService');
+
 // Trust self-signed localhost cert — must be registered before app.whenReady()
 app.on('certificate-error', (event, _webContents, url, _error, _cert, callback) => {
   if (url.startsWith('https://localhost') || url.startsWith('https://127.0.0.1')) {
@@ -328,36 +362,8 @@ app.on('certificate-error', (event, _webContents, url, _error, _cert, callback) 
 app.whenReady().then(() => {
   if (process.platform === 'darwin') app.dock?.hide();
 
-  // Enable media devices for macOS
-  app.commandLine.appendSwitch('disable-background-timer-throttling');
-  app.commandLine.appendSwitch('enable-media-stream');
-  app.commandLine.appendSwitch('enable-usermedia-screen-capture');
-  app.commandLine.appendSwitch('disable-features', 'HardwareMediaKeyHandling,MediaSessionService');
-
-  // Access session from within app context
-  const { session } = require('electron');
-
-  // Set up permission handlers for media devices
-  session.defaultSession.setPermissionRequestHandler((_webContents, permission, callback) => {
-    const allowedPermissions = ['media', 'mediaKeySystem', 'fullscreen', 'notifications'];
-    if (allowedPermissions.includes(permission)) {
-      callback(true); // Allow all media and notification permissions
-    } else {
-      callback(false); // Deny other permissions
-    }
-  });
-
-  // Set up permission check handler
-  session.defaultSession.setPermissionCheckHandler((_webContents, permission) => {
-    if (permission === 'media') {
-      return true; // Allow media access
-    }
-    return false;
-  });
-
   // Platform-specific initialization
   if (process.platform === 'win32') {
-    // Windows-specific: ensure shortcuts work properly
     app.setAppUserModelId('com.yourassistant.app');
   }
 

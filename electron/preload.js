@@ -17,14 +17,16 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // Listen for main-process events
   onScreenshotTaken: callback => {
-    ipcRenderer.on('screenshot-taken', (_, dataUrl) => callback(dataUrl));
-    return () => ipcRenderer.removeAllListeners('screenshot-taken');
+    const handler = (_, dataUrl) => callback(dataUrl);
+    ipcRenderer.on('screenshot-taken', handler);
+    return () => ipcRenderer.removeListener('screenshot-taken', handler);
   },
 
   // Listen for screenshot errors
   onScreenshotError: callback => {
-    ipcRenderer.on('screenshot-error', (_, error) => callback(error));
-    return () => ipcRenderer.removeAllListeners('screenshot-error');
+    const handler = (_, error) => callback(error);
+    ipcRenderer.on('screenshot-error', handler);
+    return () => ipcRenderer.removeListener('screenshot-error', handler);
   },
 
   // Detect we're running inside Electron

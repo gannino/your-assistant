@@ -116,6 +116,7 @@
       "icon": "build/icon.icns",
       "entitlements": "electron/entitlements.mac.plist",
       "entitlementsInherit": true,
+      "hardenedRuntime": true,
       "extendInfo": "electron/Info.plist"
     },
     "win": {
