@@ -176,6 +176,7 @@ npm run test:deployment # build + smoke test
 - **[Quick Start](./docs/QUICK_START.md)** — Get running in 5 minutes (web + Electron)
 - **[Architecture Guide](./docs/ARCHITECTURE.md)** — Complete technical overview including composables and security
 - **[Mobile Guide](./docs/MOBILE_GUIDE.md)** — Mobile support guide
+- **[Code Signing Guide](./docs/CODE_SIGNING.md)** — macOS code signing for microphone/camera/screen recording permissions
 - **[Release Process](./docs/RELEASE_PROCESS.md)** — How releases are managed with Release Please
 - **[GitHub Actions Setup](./docs/GITHUB_ACTIONS_SETUP.md)** — CI/CD pipeline configuration
 - **[Linting and Testing](./docs/LINTING_AND_TESTING.md)** — Code quality and testing setup

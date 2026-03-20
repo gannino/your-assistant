@@ -30,8 +30,8 @@
     "test:ci": "jest --ci --coverage --watchAll=false",
     "electron:dev": "concurrently -k \"npm run serve\" \"wait-on http://localhost:8080 && NODE_ENV=development electron .\"",
     "electron:dev:https": "concurrently -k \"npm run serve:https\" \"wait-on https-get://localhost:8080 --timeout 30000 && VUE_APP_HTTPS=true NODE_ENV=development electron .\"",
-    "electron:build": "cross-env ELECTRON_BUILD=true vue-cli-service build && electron-builder",
-    "electron:build:mac": "cross-env ELECTRON_BUILD=true vue-cli-service build && electron-builder --mac",
+    "electron:build": "node scripts/configure-notarization.js && cross-env ELECTRON_BUILD=true vue-cli-service build && electron-builder",
+    "electron:build:mac": "node scripts/configure-notarization.js && cross-env ELECTRON_BUILD=true vue-cli-service build && electron-builder --mac",
     "electron:build:win": "cross-env ELECTRON_BUILD=true vue-cli-service build && electron-builder --win",
     "electron:build:linux": "cross-env ELECTRON_BUILD=true vue-cli-service build && electron-builder --linux",
     "electron:build:linux:ci": "cross-env ELECTRON_BUILD=true vue-cli-service build && cross-env ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES=true electron-builder --linux",
@@ -97,6 +97,7 @@
       "dist/**/*",
       "electron/**/*"
     ],
+    "afterSign": "scripts/afterSign.js",
     "mac": {
       "category": "public.app-category.productivity",
       "target": [
@@ -117,7 +118,16 @@
       "entitlements": "electron/entitlements.mac.plist",
       "entitlementsInherit": true,
       "hardenedRuntime": true,
-      "extendInfo": "electron/Info.plist"
+      "gatekeeperAssess": false,
+      "extendInfo": {
+        "NSMicrophoneUsageDescription": "Your Assistant needs microphone access to transcribe your speech in real-time and provide AI-powered assistance.",
+        "NSCameraUsageDescription": "Your Assistant needs camera access for video features (optional).",
+        "NSDesktopFolderUsageDescription": "Your Assistant needs desktop folder access to save screenshots and recordings.",
+        "NSDocumentsFolderUsageDescription": "Your Assistant needs documents folder access to read PDF files and documents.",
+        "NSDownloadsFolderUsageDescription": "Your Assistant needs downloads folder access to manage files.",
+        "NSScreenCaptureDescription": "Your Assistant needs screen recording permission to capture screenshots for visual context and analysis."
+      },
+      "notarize": false
     },
     "win": {
       "target": [

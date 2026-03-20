@@ -59,6 +59,12 @@ Quick reference to all Your Assistant documentation.
 
 ## CI/CD & Builds
 
+- **[Code Signing Guide](./CODE_SIGNING.md)**
+  - macOS code signing setup for microphone/camera/screen recording permissions
+  - GitHub Actions CI/CD signing with secrets
+  - Notarization for Gatekeeper
+  - Local development signing
+
 - **[Downloads & Installation](./DOWNLOADS.md)**
   - Pre-built Electron apps for macOS, Windows, Linux
   - Installation instructions for all platforms
@@ -81,6 +87,7 @@ Quick reference to all Your Assistant documentation.
 | [Custom Language & Model](./CUSTOM_LANGUAGE_MODEL.md) | Custom config | Power users |
 | [FAQ](./FAQ.md) | Common questions | Everyone |
 | [Troubleshooting](./TROUBLESHOOTING.md) | Fix issues | Users with issues |
+| [Code Signing](./CODE_SIGNING.md) | macOS signing setup | Maintainers |
 | [Development Guide](./DEVELOPMENT_GUIDE.md) | Development info | Developers |
 
 ---
