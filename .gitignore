@@ -1,0 +1,63 @@
+.DS_Store
+node_modules
+dist
+
+# local env files
+.env.local
+.env.*.local
+
+# Log files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Editor directories and files
+.idea
+.vscode
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# HTTPS certificates (private keys and certificates)
+certs/
+*.key
+*.crt
+*.pem
+
+# Temporary files
+*.tmp
+*.temp
+.cache
+.npm
+.yarn
+.old
+
+# OS generated files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Local storage and browser data
+localStorage.json
+sessionStorage.json
+
+# Build artifacts
+build/
+coverage/
+.nyc_output/
+release/
+
+# Environment-specific files
+.env
+.env.development
+.env.production
+.env.test
