@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Web Speech API Test - Chromium Desktop</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: monospace; padding: 20px; max-width: 800px; margin: 0 auto; }
+    .log { background: #f0f0f0; padding: 10px; margin: 10px 0; border-radius: 4px; max-height: 400px; overflow-y: auto; }
+    .error { color: red; }
+    .success { color: green; }
+    .info { color: blue; }
+    button { padding: 10px 20px; font-size: 16px; margin: 5px; cursor: pointer; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .info-box { background: #e3f2fd; padding: 15px; border-radius: 4px; margin: 10px 0; }
+    .warning-box { background: #fff3cd; padding: 15px; border-radius: 4px; margin: 10px 0; border: 1px solid #ffc107; }
+    h1 { color: #333; }
+    h2 { color: #666; margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <h1>Web Speech API Test - Chromium Desktop</h1>
+
+  <div class="info-box">
+    <strong>Browser:</strong> <span id="browser"></span><br>
+    <strong>Platform:</strong> <span id="platform"></span><br>
+    <strong>Protocol:</strong> <span id="protocol"></span><br>
+    <strong>Hostname:</strong> <span id="hostname"></span>
+  </div>
+
+  <div class="warning-box">
+    <strong>Instructions:</strong>
+    <ol>
+      <li>Open DevTools (F12 or Cmd+Option+I)</li>
+      <li>Go to the Network tab</li>
+      <li>Click "Start Recognition"</li>
+      <li>Speak into your microphone</li>
+      <li>Look for failed requests (red) to Google domains</li>
+    </ol>
+  </div>
+
+  <div>
+    <button id="start">Start Recognition</button>
+    <button id="stop" disabled>Stop Recognition</button>
+    <button id="clear">Clear Log</button>
+  </div>
+
+  <h2>Event Log</h2>
+  <div id="log" class="log"></div>
+
+  <script>
+    const log = document.getElementById('log');
+    const browserSpan = document.getElementById('browser');
+    const platformSpan = document.getElementById('platform');
+    const protocolSpan = document.getElementById('protocol');
+    const hostnameSpan = document.getElementById('hostname');
+    const startBtn = document.getElementById('start');
+    const stopBtn = document.getElementById('stop');
+    const clearBtn = document.getElementById('clear');
+
+    function addLog(msg, type = 'info') {
+      const div = document.createElement('div');
+      div.className = type;
+      div.textContent = `[${new Date().toISOString().slice(11, 23)}] ${msg}`;
+      log.appendChild(div);
+      log.scrollTop = log.scrollHeight;
+      console.log(`[WebSpeechTest] ${msg}`);
+    }
+
+    // Browser info
+    browserSpan.textContent = navigator.userAgent;
+    platformSpan.textContent = navigator.platform;
+    protocolSpan.textContent = window.location.protocol;
+    hostnameSpan.textContent = window.location.hostname || 'file://';
+
+    addLog(`Platform: ${navigator.platform}`);
+    addLog(`User Agent: ${navigator.userAgent}`);
+    addLog(`Protocol: ${window.location.protocol}`);
+    addLog(`Hostname: ${window.location.hostname || 'file://'}`);
+
+    // Check support
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      addLog('❌ SpeechRecognition NOT supported in this browser', 'error');
+      startBtn.disabled = true;
+    } else {
+      addLog('✅ SpeechRecognition is supported', 'success');
+
+      const recognition = new SpeechRecognition();
+      addLog(`Recognition constructor: ${recognition.constructor.name}`);
+      addLog(`Default lang: ${recognition.lang}`);
+      addLog(`Default continuous: ${recognition.continuous}`);
+      addLog(`Default interim results: ${recognition.interimResults}`);
+
+      // Event handlers
+      recognition.onstart = () => {
+        addLog('✅ Recognition started - listening...', 'success');
+        startBtn.disabled = true;
+        stopBtn.disabled = false;
+      };
+
+      recognition.onend = () => {
+        addLog('⏹️ Recognition ended', 'info');
+        startBtn.disabled = false;
+        stopBtn.disabled = true;
+      };
+
+      recognition.onerror = (event) => {
+        addLog(`❌ Error: ${event.error}`, 'error');
+        addLog(`Error message: ${event.message || '(no message provided)'}`, 'error');
+
+        // Detailed error info
+        if (event.error === 'network') {
+          addLog('', 'info');
+          addLog('═══════════════════════════════════════', 'error');
+          addLog('NETWORK ERROR - INVESTIGATION INFO:', 'error');
+          addLog('═══════════════════════════════════════', 'error');
+          addLog(`Protocol: ${window.location.protocol}`, 'error');
+          addLog(`Hostname: ${window.location.hostname || 'file://'}`, 'error');
+          addLog(`Port: ${window.location.port || '(default)'}`, 'error');
+          addLog('', 'error');
+          addLog('ACTION REQUIRED:', 'error');
+          addLog('1. Check DevTools Network tab for failed requests', 'error');
+          addLog('2. Look for requests to Google domains:', 'error');
+          addLog('   - www.google.com', 'error');
+          addLog('   - clients1.google.com through clients5.google.com', 'error');
+          addLog('   - speech.googleapis.com', 'error');
+          addLog('3. Check if any requests are red (failed)', 'error');
+          addLog('4. Note the status code and error message', 'error');
+          addLog('', 'error');
+          addLog('COMMON CAUSES:', 'error');
+          addLog('- Google speech service is down or blocked', 'error');
+          addLog('- VPN or firewall blocking Google services', 'error');
+          addLog('- Geographic restrictions', 'error');
+          addLog('- Chrome requires API key for desktop speech', 'error');
+          addLog('═══════════════════════════════════════', 'error');
+        } else if (event.error === 'not-allowed') {
+          addLog('⚠️ Microphone permission denied', 'error');
+          addLog('Please allow microphone access in your browser settings', 'error');
+        } else if (event.error === 'no-speech') {
+          addLog('ℹ️ No speech detected (this is normal if you\'re not speaking)', 'info');
+        } else if (event.error === 'aborted') {
+          addLog('ℹ️ Recognition aborted (stopped by user or auto-restarted)', 'info');
+        } else {
+          addLog(`⚠️ Unhandled error type: ${event.error}`, 'error');
+        }
+      };
+
+      recognition.onresult = (event) => {
+        const result = event.results[event.resultIndex];
+        const transcript = result[0].transcript;
+        const confidence = result[0].confidence;
+        const isFinal = result.isFinal;
+
+        if (isFinal) {
+          addLog(`📝 Final Result: "${transcript}" (confidence: ${(confidence * 100).toFixed(1)}%)`, 'success');
+        } else {
+          addLog(`📝 Interim: "${transcript}"`, 'info');
+        }
+      };
+
+      // Buttons
+      startBtn.onclick = () => {
+        try {
+          recognition.lang = 'en-US';
+          recognition.continuous = true;
+          recognition.interimResults = true;
+          recognition.start();
+          addLog('Starting recognition with: lang=en-US, continuous=true, interimResults=true', 'info');
+        } catch (e) {
+          addLog(`Start failed: ${e.message}`, 'error');
+          addLog(`Stack: ${e.stack}`, 'error');
+        }
+      };
+
+      stopBtn.onclick = () => {
+        try {
+          recognition.stop();
+          addLog('Stopping recognition...', 'info');
+        } catch (e) {
+          addLog(`Stop failed: ${e.message}`, 'error');
+        }
+      };
+
+      clearBtn.onclick = () => {
+        log.innerHTML = '';
+        addLog('Log cleared', 'info');
+      };
+
+      // Initial button state
+      stopBtn.disabled = true;
+    }
+  </script>
+</body>
+</html>

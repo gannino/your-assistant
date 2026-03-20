@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>Your Assistant needs microphone access to transcribe your speech in real-time and provide AI-powered assistance.</string>
+    <key>NSCameraUsageDescription</key>
+    <string>Your Assistant needs camera access for video features (optional).</string>
+    <key>NSDesktopFolderUsageDescription</key>
+    <string>Your Assistant needs desktop folder access to save screenshots and recordings.</string>
+    <key>NSDocumentsFolderUsageDescription</key>
+    <string>Your Assistant needs documents folder access to read PDF files and documents.</string>
+    <key>NSDownloadsFolderUsageDescription</key>
+    <string>Your Assistant needs downloads folder access to manage files.</string>
+    <key>NSScreenCaptureDescription</key>
+    <string>Your Assistant needs screen recording permission to capture screenshots for visual context and analysis.</string>
+</dict>
+</plist>
