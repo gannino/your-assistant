@@ -27,6 +27,15 @@ export class WebSpeechTranscriptionProvider extends BaseTranscriptionProvider {
   async initialize(config) {
     // Check for iOS Safari
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    const isElectron = window.electronAPI?.isElectron;
+
+    console.log('[Web Speech Transcription] Environment:', {
+      isIOS,
+      isElectron,
+      userAgent: navigator.userAgent,
+      protocol: window.location.protocol,
+      hostname: window.location.hostname,
+    });
 
     if (isIOS) {
       console.warn('[Web Speech Transcription] iOS Safari detected - limited support');
@@ -127,10 +136,20 @@ export class WebSpeechTranscriptionProvider extends BaseTranscriptionProvider {
     try {
       this.recognition.start();
       this.isRecording = true;
-      console.log('[Web Speech Transcription] Started recognition');
+      console.log('[Web Speech Transcription] Started recognition successfully');
+      console.log('[Web Speech Transcription] Config:', {
+        language: this.recognition.lang,
+        continuous: this.recognition.continuous,
+        interimResults: this.recognition.interimResults,
+      });
     } catch (error) {
       this.isRecording = false;
       console.error('[Web Speech Transcription] Error starting recognition:', error);
+      console.error('[Web Speech Transcription] Error details:', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack,
+      });
       this.handleError(error, onError);
       throw error;
     }
@@ -393,6 +412,7 @@ export class WebSpeechTranscriptionProvider extends BaseTranscriptionProvider {
         'Using VPN? Try disabling it',
         'Microphone blocked? Allow microphone access in browser settings',
         'iOS Safari: Web Speech may stop after 60 seconds - this is a browser limitation',
+        'Desktop Chrome/Electron not working? Check console logs for detailed error messages',
         'Still not working? Try Azure, Whisper, or Deepgram providers instead',
       ],
     };

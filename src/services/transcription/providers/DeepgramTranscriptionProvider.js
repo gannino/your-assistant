@@ -7,6 +7,7 @@
 
 import { createClient, LiveTranscriptionEvents } from '@deepgram/sdk';
 import { BaseTranscriptionProvider } from '../BaseTranscriptionProvider';
+import { fetchDeepgramModels, getDefaultDeepgramModels } from '../../../utils/deepgram_util';
 
 export class DeepgramTranscriptionProvider extends BaseTranscriptionProvider {
   constructor() {
@@ -328,6 +329,26 @@ export class DeepgramTranscriptionProvider extends BaseTranscriptionProvider {
     await this.stopRecognition();
     this.deepgram = null;
     this.initialized = false;
+  }
+
+  /**
+   * Fetch available models from Deepgram API
+   * @returns {Promise<Array<{id: string, name: string}>>}
+   */
+  async fetchAvailableModels() {
+    if (!this.config?.apiKey) {
+      console.warn('[Deepgram Transcription] No API key, returning default models');
+      return getDefaultDeepgramModels();
+    }
+
+    try {
+      const models = await fetchDeepgramModels(this.config.apiKey);
+      console.log('[Deepgram Transcription] Fetched', models.length, 'models from API');
+      return models.map(m => ({ id: m.id, name: m.name }));
+    } catch (error) {
+      console.error('[Deepgram Transcription] Failed to fetch models, using defaults:', error);
+      return getDefaultDeepgramModels();
+    }
   }
 
   /**
