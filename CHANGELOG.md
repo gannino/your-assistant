@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.2.1](https://github.com/gannino/your-assistant/compare/v1.2.0...v1.2.1) (2026-03-20)
+
+
+### 🐛 Bug Fixes
+
+* **electron:** fix macOS screen recording permissions and listener leak ([69f5240](https://github.com/gannino/your-assistant/commit/69f5240b1b6b67daa1b4e834ac608e0498fa1cef))
+* use process.env instead of import.meta.env for VUE_APP_VERSION ([9eb3b49](https://github.com/gannino/your-assistant/commit/9eb3b49db648e5418ad00b2a99fdc0f6133c00ad))
+
 ## [1.2.0](https://github.com/gannino/your-assistant/compare/v1.1.0...v1.2.0) (2026-03-20)
 
 
