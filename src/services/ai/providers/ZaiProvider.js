@@ -1,15 +1,13 @@
 /**
  * ZaiProvider - Zhipu AI (Z.ai) GLM models provider
  *
- * Supports Zhipu AI's GLM-4 series models via REST API.
- * Uses OpenAI-compatible API format for streaming responses.
+ * Supports Zhipu AI's GLM-4 series models via OpenAI-compatible API.
+ * Uses OpenAI SDK for model fetching and API communication.
  *
  * API Documentation: https://z.ai
- *
- * Note: Zhipu AI does not provide an official JavaScript SDK.
- * Manual HTTP implementation is the recommended approach.
  */
 
+import OpenAI from 'openai';
 import { BaseAIProvider } from './BaseAIProvider';
 import { StreamParser } from '../streaming';
 import {
@@ -22,6 +20,14 @@ import {
 export class ZaiProvider extends BaseAIProvider {
   constructor() {
     super({});
+    /** @type {OpenAI | null} */
+    this.client = null;
+    /** @type {Array<string> | null} */
+    this.modelsCache = null;
+    /** @type {number | null} */
+    this.modelsCacheTime = null;
+    /** @type {number} */
+    this.CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
   }
 
   /**
@@ -42,6 +48,13 @@ export class ZaiProvider extends BaseAIProvider {
         temperature: config.temperature ?? 0.3,
         ...config,
       };
+
+      // Initialize OpenAI SDK client with Z.ai endpoint
+      this.client = new OpenAI({
+        apiKey: this.config.apiKey,
+        baseURL: this.config.endpoint,
+        dangerouslyAllowBrowser: true,
+      });
 
       this.initialized = true;
     } catch (error) {
@@ -318,12 +331,82 @@ export class ZaiProvider extends BaseAIProvider {
   /**
    * Get available Z.ai models (GLM models)
    * @returns {Promise<Array<string>>} Array of model names
+   *
+   * Fetches available models from Z.ai API using OpenAI SDK.
+   * Z.ai uses an OpenAI-compatible API with a /models endpoint.
    */
   async getAvailableModels() {
-    // Z.ai/Subscription-based GLM models
-    // These are the actual GLM model names supported by Z.ai
+    // Check cache first
+    if (this.modelsCache && this.modelsCacheTime) {
+      const cacheAge = Date.now() - this.modelsCacheTime;
+      if (cacheAge < this.CACHE_DURATION) {
+        console.log(`[Z.ai] Using cached models (${Math.round(cacheAge / 1000)}s old)`);
+        return this.modelsCache;
+      }
+      // Cache expired
+      console.log('[Z.ai] Cache expired, refetching models...');
+      this.modelsCache = null;
+      this.modelsCacheTime = null;
+    }
+
+    if (!this.client) {
+      console.log('[Z.ai] SDK not initialized, using hardcoded model list');
+      return this.getDefaultModels();
+    }
+
+    // Fetch from Z.ai API using OpenAI SDK
+    try {
+      console.log('[Z.ai] Fetching models from API via SDK...');
+
+      const modelsList = await this.client.models.list();
+
+      if (modelsList.data && Array.isArray(modelsList.data)) {
+        const models = modelsList.data.map(model => model.id);
+
+        if (models.length > 0) {
+          console.log(`[Z.ai] ✅ Fetched ${models.length} models from API`);
+
+          // Filter to only GLM models
+          const glmModels = models.filter(id => id.startsWith('glm-') || id.startsWith('GLM-'));
+
+          // Cache the results
+          this.modelsCache = glmModels.length > 0 ? glmModels : models;
+          this.modelsCacheTime = Date.now();
+
+          return this.modelsCache;
+        }
+      }
+
+      console.warn('[Z.ai] ⚠️ No models found in API response');
+      return this.modelsCache || this.getDefaultModels();
+    } catch (error) {
+      // Handle common API errors
+      if (error.status === 401) {
+        console.error('[Z.ai] ❌ Authentication failed (401)');
+        console.error('[Z.ai] 💡 Your API key may be invalid or expired');
+      } else if (error.status === 403) {
+        console.error('[Z.ai] ❌ Access forbidden (403)');
+        console.error('[Z.ai] 💡 Your API key may not have access to this endpoint');
+      } else if (error.status === 429) {
+        console.warn('[Z.ai] ⚠️ Rate limited by API (429)');
+        console.warn('[Z.ai] 💡 Models are cached to avoid rate limits');
+      } else {
+        console.error('[Z.ai] ❌ Fetch failed:', error.message);
+        console.error('[Z.ai] 💡 Falling back to hardcoded model list');
+      }
+
+      return this.modelsCache || this.getDefaultModels();
+    }
+  }
+
+  /**
+   * Get default hardcoded model list
+   * @returns {Array<string>} Array of model names
+   */
+  getDefaultModels() {
     return [
       // Latest GLM models
+      'glm-5',
       'glm-4.7',
       'glm-4.7-ari',
 
@@ -360,7 +443,15 @@ export class ZaiProvider extends BaseAIProvider {
       requiresApiKey: true,
       requiresLocalServer: false,
       documentationUrl: 'https://z.ai',
-      defaultModels: ['glm-4.7', 'glm-4.7-ari', 'glm-4.6', 'glm-4.6-ari', 'glm-4.5', 'glm-4.5-ari'],
+      defaultModels: [
+        'glm-5',
+        'glm-4.7',
+        'glm-4.7-ari',
+        'glm-4.6',
+        'glm-4.6-ari',
+        'glm-4.5',
+        'glm-4.5-ari',
+      ],
       configFields: [
         { name: 'apiKey', label: 'API Key', type: 'password', required: true },
         {
@@ -368,7 +459,7 @@ export class ZaiProvider extends BaseAIProvider {
           label: 'Model',
           type: 'select',
           required: false,
-          options: ['glm-4.7', 'glm-4.6', 'glm-4.5', 'glm-4'],
+          options: ['glm-5', 'glm-4.7', 'glm-4.6', 'glm-4.5', 'glm-4'],
         },
         {
           name: 'endpoint',

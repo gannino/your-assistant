@@ -530,12 +530,16 @@ describe('WebSpeechTranscriptionProvider', () => {
 
       const result = await provider.validateConfig();
 
-      expect(result.diagnostics).toEqual({
+      expect(result.diagnostics).toMatchObject({
         language: 'en-US',
         continuous: true,
         browserSupported: true,
         isIOS: false,
+        isEdgeDesktop: false,
+        isEdgeMobileAndroid: false,
       });
+      // isElectron is undefined in test environment (no window.electronAPI)
+      expect(result.diagnostics.isElectron).toBeUndefined();
     });
   });
 
@@ -597,7 +601,7 @@ describe('WebSpeechTranscriptionProvider', () => {
     it('should include browser support info', () => {
       const info = provider.getProviderInfo();
 
-      expect(info.browserSupport).toBe('chrome-edge-safari');
+      expect(info.browserSupport).toBe('chrome-safari');
     });
 
     it('should include language config field', () => {

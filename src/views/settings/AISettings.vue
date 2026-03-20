@@ -26,15 +26,6 @@
         </el-select>
 
         <div v-if="ai_provider" class="test-section">
-          <el-button size="small" :loading="loading_models" :icon="Refresh" @click="refreshModels">
-            <span v-if="loading_models">
-              <span class="loading-dots">Loading models</span>
-              <span class="loading-dots">Loading models.</span>
-              <span class="loading-dots">Loading models..</span>
-              <span class="loading-dots">Loading models...</span>
-            </span>
-            <span v-else>Refresh Models</span>
-          </el-button>
           <el-button
             size="small"
             :loading="testing_connection"
@@ -74,22 +65,39 @@
 
         <div class="form-group">
           <label>Model</label>
-          <el-select
-            v-model="gpt_model"
-            style="width: 100%"
-            :loading="loading_models"
-            allow-create
-            filterable
-            @change="onKeyChange('gpt_model')"
+          <div class="model-selector">
+            <el-select
+              v-model="gpt_model"
+              style="width: 100%"
+              :loading="loading_models && ai_provider === 'openai'"
+              allow-create
+              filterable
+              placeholder="Select a model"
+              @change="onKeyChange('gpt_model')"
+            >
+              <el-option
+                v-for="model in openai_models"
+                :key="model"
+                :label="getModelLabel(model)"
+                :value="model"
+              />
+            </el-select>
+            <el-button
+              size="small"
+              style="margin-left: 8px"
+              :loading="loading_models && ai_provider === 'openai'"
+              :disabled="!openai_key"
+              :icon="Refresh"
+              @click="refreshModels"
+            >
+              <span v-if="loading_models && ai_provider === 'openai'">Refreshing...</span>
+              <span v-else>Refresh Models</span>
+            </el-button>
+          </div>
+          <p
+            v-if="openai_models.length === 0 && !(loading_models && ai_provider === 'openai')"
+            class="field-hint"
           >
-            <el-option
-              v-for="model in openai_models"
-              :key="model"
-              :label="getModelLabel(model)"
-              :value="model"
-            />
-          </el-select>
-          <p v-if="openai_models.length === 0 && !loading_models" class="field-hint">
             Enter API key to load available models
           </p>
           <p v-else class="field-hint">
@@ -136,20 +144,35 @@
 
         <div class="form-group">
           <label>Model</label>
-          <el-select
-            v-model="zai_model"
-            style="width: 100%"
-            allow-create
-            filterable
-            @change="onKeyChange('zai_model')"
-          >
-            <el-option
-              v-for="model in zai_models"
-              :key="model"
-              :label="getModelLabel(model)"
-              :value="model"
-            />
-          </el-select>
+          <div class="model-selector">
+            <el-select
+              v-model="zai_model"
+              style="width: 100%"
+              :loading="loading_models && ai_provider === 'zai'"
+              allow-create
+              filterable
+              placeholder="Select a model"
+              @change="onKeyChange('zai_model')"
+            >
+              <el-option
+                v-for="model in zai_models"
+                :key="model"
+                :label="getModelLabel(model)"
+                :value="model"
+              />
+            </el-select>
+            <el-button
+              size="small"
+              style="margin-left: 8px"
+              :loading="loading_models && ai_provider === 'zai'"
+              :disabled="!zai_api_key"
+              :icon="Refresh"
+              @click="refreshModels"
+            >
+              <span v-if="loading_models && ai_provider === 'zai'">Refreshing...</span>
+              <span v-else>Refresh Models</span>
+            </el-button>
+          </div>
           <p class="field-hint">
             Type custom model name if needed.
             <a href="https://open.bigmodel.cn/dev/api" target="_blank">View all models</a>
@@ -333,22 +356,39 @@
 
         <div class="form-group">
           <label>Model</label>
-          <el-select
-            v-model="anthropic_model"
-            style="width: 100%"
-            :loading="loading_models"
-            allow-create
-            filterable
-            @change="onKeyChange('anthropic_model')"
+          <div class="model-selector">
+            <el-select
+              v-model="anthropic_model"
+              style="width: 100%"
+              :loading="loading_models && ai_provider === 'anthropic'"
+              allow-create
+              filterable
+              placeholder="Select a model"
+              @change="onKeyChange('anthropic_model')"
+            >
+              <el-option
+                v-for="model in anthropic_models"
+                :key="model"
+                :label="getModelLabel(model)"
+                :value="model"
+              />
+            </el-select>
+            <el-button
+              size="small"
+              style="margin-left: 8px"
+              :loading="loading_models && ai_provider === 'anthropic'"
+              :disabled="!anthropic_api_key"
+              :icon="Refresh"
+              @click="refreshModels"
+            >
+              <span v-if="loading_models && ai_provider === 'anthropic'">Refreshing...</span>
+              <span v-else>Refresh Models</span>
+            </el-button>
+          </div>
+          <p
+            v-if="anthropic_models.length === 0 && !(loading_models && ai_provider === 'anthropic')"
+            class="field-hint"
           >
-            <el-option
-              v-for="model in anthropic_models"
-              :key="model"
-              :label="getModelLabel(model)"
-              :value="model"
-            />
-          </el-select>
-          <p v-if="anthropic_models.length === 0 && !loading_models" class="field-hint">
             Enter API key to load available models
           </p>
           <p v-else class="field-hint">
@@ -547,6 +587,7 @@ const loading_models = ref(false);
 const model_error = ref(null);
 const testing_connection = ref(false);
 const connection_result = ref(null);
+const isLoadingModelsGuard = ref(false); // Prevent concurrent model loading
 
 const defaultEndpoints = {
   zai: 'https://api.z.ai/api/coding/paas/v4',
@@ -696,7 +737,14 @@ const setDefaultModels = providerId => {
 };
 
 const loadModelsForProvider = async providerId => {
+  // Prevent concurrent calls
+  if (isLoadingModelsGuard.value) {
+    console.log('[AI Settings] Model loading already in progress, skipping...');
+    return;
+  }
+
   loading_models.value = true;
+  isLoadingModelsGuard.value = true;
   model_error.value = null;
 
   try {
@@ -745,6 +793,7 @@ const loadModelsForProvider = async providerId => {
     setDefaultModels(providerId);
   } finally {
     loading_models.value = false;
+    isLoadingModelsGuard.value = false;
   }
 };
 
@@ -838,7 +887,11 @@ const onKeyChange = key_name => {
     gemini_api_key: 'gemini',
     openrouter_api_key: 'openrouter',
   };
-  if (reloadTriggers[key_name] && reloadTriggers[key_name] === ai_provider.value) {
+  if (
+    reloadTriggers[key_name] &&
+    reloadTriggers[key_name] === ai_provider.value &&
+    !isLoadingModelsGuard.value
+  ) {
     loadModelsForProvider(ai_provider.value);
   }
 };
@@ -889,21 +942,9 @@ onMounted(() => {
   max-width: 100%;
 }
 
-.loading-dots {
-  animation: dots 1.4s infinite;
-}
-
-@keyframes dots {
-  0%,
-  20% {
-    opacity: 0.2;
-  }
-  50% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0.2;
-  }
+.model-selector {
+  display: flex;
+  align-items: flex-start;
 }
 
 .info-text {

@@ -7,7 +7,6 @@
 
 import { BaseAIProvider } from './BaseAIProvider';
 import Anthropic from '@anthropic-ai/sdk';
-import { fetchWithCorsProxy } from '@/utils/corsProxyUtil';
 
 // Model definitions for consistency
 const ACTIVE_MODELS = [
@@ -53,6 +52,13 @@ export class AnthropicProvider extends BaseAIProvider {
    * @param {string} config.model - Model name (default: claude-sonnet-4-6)
    */
   async initialize(config) {
+    console.log('[Anthropic] initialize called with config:', {
+      hasApiKey: !!config.apiKey,
+      apiKeyLength: config.apiKey?.length || 0,
+      apiKeyPrefix: config.apiKey?.substring(0, 10) || 'none',
+      model: config.model,
+    });
+
     if (!config.apiKey) {
       throw new Error('Anthropic API key is required');
     }
@@ -64,6 +70,12 @@ export class AnthropicProvider extends BaseAIProvider {
       temperature: config.temperature ?? 0.3,
       ...config,
     };
+
+    console.log('[Anthropic] Config set:', {
+      hasApiKey: !!this.config.apiKey,
+      apiKeyLength: this.config.apiKey?.length || 0,
+      apiKeyPrefix: this.config.apiKey?.substring(0, 10) || 'none',
+    });
 
     // Warn if using deprecated/retired models
     if (LEGACY_MODELS.includes(this.config.model)) {
@@ -301,8 +313,7 @@ export class AnthropicProvider extends BaseAIProvider {
    * Get available Anthropic models
    * @returns {Promise<Array<string>>} Array of model names
    *
-   * Fetches models from Anthropic's API endpoint.
-   * Tries direct fetch first, falls back to CORS proxy, then hardcoded list.
+   * Fetches models from Anthropic's API using the SDK's models.list() method.
    */
   async getAvailableModels() {
     // Check cache first
@@ -318,141 +329,39 @@ export class AnthropicProvider extends BaseAIProvider {
       this.modelsCacheTime = null;
     }
 
-    if (!this.config?.apiKey) {
-      console.log('[Anthropic] No API key, using hardcoded model list');
+    if (!this.client) {
+      console.log('[Anthropic] SDK not initialized, using hardcoded model list');
       return ALL_MODELS;
     }
 
-    // Try direct fetch first (may work in non-browser environments)
+    // Fetch from Anthropic API using SDK's models.list() method
     try {
-      console.log('[Anthropic] Attempting direct fetch to API...');
-      const response = await fetch('https://api.anthropic.com/v1/models', {
-        method: 'GET',
-        headers: {
-          'anthropic-version': '2023-06-01',
-          'X-Api-Key': this.config.apiKey,
-          'Content-Type': 'application/json',
-        },
-      });
+      console.log('[Anthropic] Fetching models from API via SDK...');
 
-      // Handle common HTTP errors with helpful messages
-      if (!response.ok) {
-        const errorText = await response.text().catch(() => '');
-
-        switch (response.status) {
-          case 401:
-            console.error('[Anthropic] ❌ Authentication failed (401)');
-            console.error('[Anthropic] 💡 Your API key may be invalid or expired');
-            console.error(
-              '[Anthropic] 💡 Check your API key at: https://console.anthropic.com/settings/keys'
-            );
-            return this.modelsCache || ALL_MODELS;
-
-          case 403:
-            console.error('[Anthropic] ❌ Access forbidden (403)');
-            console.error('[Anthropic] 💡 Your API key may not have access to this endpoint');
-            console.error('[Anthropic] 💡 Verify your API key has the correct permissions');
-            return this.modelsCache || ALL_MODELS;
-
-          case 429: {
-            const waitTime = Math.ceil(this.CACHE_DURATION / 1000);
-            console.warn(`[Anthropic] ⚠️ Rate limited by API (429)`);
-            console.warn(
-              `[Anthropic] 💡 Tip: Models are cached for ${waitTime}s to avoid rate limits`
-            );
-            console.warn(
-              '[Anthropic] 💡 The hardcoded model list includes all latest Claude models'
-            );
-            return this.modelsCache || ALL_MODELS;
-          }
-
-          case 500:
-          case 502:
-          case 503:
-            console.error(
-              `[Anthropic] ❌ Server error (${response.status}) - Anthropic API is experiencing issues`
-            );
-            console.error(
-              '[Anthropic] 💡 Try again in a few moments or use the hardcoded model list'
-            );
-            return this.modelsCache || ALL_MODELS;
-
-          default:
-            console.error(
-              `[Anthropic] ❌ API error (${response.status}): ${errorText || 'Unknown error'}`
-            );
-            console.error('[Anthropic] 💡 Falling back to hardcoded model list');
-            return this.modelsCache || ALL_MODELS;
+      const models = [];
+      for await (const modelInfo of this.client.models.list()) {
+        if (modelInfo.id && modelInfo.id.startsWith('claude-')) {
+          models.push(modelInfo.id);
         }
       }
 
-      if (response.ok) {
-        const data = await response.json();
-        if (data.data && Array.isArray(data.data)) {
-          const models = data.data
-            .map(model => model.id)
-            .filter(id => id && id.startsWith('claude-'));
+      if (models.length > 0) {
+        console.log(`[Anthropic] ✅ Fetched ${models.length} models from API`);
 
-          if (models.length > 0) {
-            console.log(`[Anthropic] ✅ Fetched ${models.length} models via direct fetch`);
+        // Cache the results
+        this.modelsCache = models.sort();
+        this.modelsCacheTime = Date.now();
 
-            // Cache the results
-            this.modelsCache = models;
-            this.modelsCacheTime = Date.now();
-
-            return models.sort();
-          }
-        }
+        return this.modelsCache;
       }
+
+      console.warn('[Anthropic] ⚠️ No models found in API response');
+      return this.modelsCache || ALL_MODELS;
     } catch (error) {
-      console.log('[Anthropic] Direct fetch failed:', error.message);
-      console.log('[Anthropic] Retrying with CORS proxy...');
+      console.error('[Anthropic] ❌ Fetch failed:', error.message);
+      console.error('[Anthropic] 💡 Falling back to hardcoded model list');
+      return this.modelsCache || ALL_MODELS;
     }
-
-    // Try CORS proxy
-    try {
-      const response = await fetchWithCorsProxy('https://api.anthropic.com/v1/models', {
-        method: 'GET',
-        headers: {
-          'anthropic-version': '2023-06-01',
-          'X-Api-Key': this.config.apiKey,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      // Handle rate limiting
-      if (response.status === 429) {
-        const waitTime = Math.ceil(this.CACHE_DURATION / 1000);
-        console.warn(`[Anthropic] ⚠️ Rate limited by API (429)`);
-        console.warn(`[Anthropic] 💡 Tip: Models are cached for ${waitTime}s to avoid rate limits`);
-        console.warn('[Anthropic] 💡 The hardcoded model list includes all latest Claude models');
-        return this.modelsCache || ALL_MODELS;
-      }
-
-      const data = await response.json();
-
-      if (data.data && Array.isArray(data.data)) {
-        const models = data.data
-          .map(model => model.id)
-          .filter(id => id && id.startsWith('claude-'));
-
-        if (models.length > 0) {
-          console.log(`[Anthropic] ✅ Fetched ${models.length} models via CORS proxy`);
-
-          // Cache the results
-          this.modelsCache = models;
-          this.modelsCacheTime = Date.now();
-
-          return models.sort();
-        }
-      }
-    } catch (error) {
-      console.warn('[Anthropic] ⚠️ CORS proxy fetch also failed:', error.message);
-    }
-
-    // Final fallback to hardcoded list
-    console.log('[Anthropic] Using hardcoded model list');
-    return ALL_MODELS;
   }
 
   /**

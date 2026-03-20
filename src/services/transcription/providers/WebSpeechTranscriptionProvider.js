@@ -28,14 +28,66 @@ export class WebSpeechTranscriptionProvider extends BaseTranscriptionProvider {
     // Check for iOS Safari
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
     const isElectron = window.electronAPI?.isElectron;
+    // Edge detection: Desktop (Chromium-based) vs Mobile (iOS uses WebKit, Android uses Chromium)
+    const isEdgeDesktop =
+      /Edg/.test(navigator.userAgent) &&
+      !/Mobile|Android|iPhone|iPad|iPod/.test(navigator.userAgent);
+    const isEdgeMobileiOS = /EdgiOS/.test(navigator.userAgent); // Edge on iOS uses WebKit (Safari)
+    const isEdgeMobileAndroid = /EdgA/.test(navigator.userAgent); // Edge on Android uses Chromium
+    const isChrome = /Chrome/.test(navigator.userAgent) && !/Edg/.test(navigator.userAgent);
 
     console.log('[Web Speech Transcription] Environment:', {
       isIOS,
       isElectron,
+      isEdgeDesktop,
+      isEdgeMobileiOS,
+      isEdgeMobileAndroid,
+      isChrome,
       userAgent: navigator.userAgent,
       protocol: window.location.protocol,
       hostname: window.location.hostname,
     });
+
+    // Warn about Edge Desktop
+    if (isEdgeDesktop) {
+      console.warn('[Web Speech Transcription] ⚠️ Microsoft Edge Desktop detected');
+      console.warn('[Web Speech Transcription] Web Speech API is not supported in Edge Desktop');
+      console.warn('[Web Speech Transcription] For Web Speech API, use Chrome desktop browser');
+      console.warn(
+        '[Web Speech Transcription] Or use Azure, Deepgram, or Whisper provider (works in any browser)'
+      );
+    }
+
+    // Warn about Edge Mobile Android
+    if (isEdgeMobileAndroid) {
+      console.warn('[Web Speech Transcription] ⚠️ Microsoft Edge Mobile (Android) detected');
+      console.warn(
+        '[Web Speech Transcription] Web Speech API may not work in Edge Mobile on Android'
+      );
+      console.warn('[Web Speech Transcription] For Web Speech API on Android, use Chrome browser');
+      console.warn(
+        '[Web Speech Transcription] Or use Azure, Deepgram, or Whisper provider (works in any browser)'
+      );
+    }
+
+    // Note about Edge iOS
+    if (isEdgeMobileiOS) {
+      console.log(
+        '[Web Speech Transcription] ℹ️ Microsoft Edge iOS detected (uses WebKit - should work like Safari)'
+      );
+    }
+
+    // Warn about Electron
+    if (isElectron) {
+      console.warn('[Web Speech Transcription] ⚠️ Electron detected');
+      console.warn('[Web Speech Transcription] Web Speech API is not supported in Electron');
+      console.warn(
+        '[Web Speech Transcription] For Web Speech API, use Chrome web browser instead of this app'
+      );
+      console.warn(
+        '[Web Speech Transcription] Or use Azure, Deepgram, or Whisper provider (works in Electron)'
+      );
+    }
 
     if (isIOS) {
       console.warn('[Web Speech Transcription] iOS Safari detected - limited support');
@@ -68,10 +120,9 @@ export class WebSpeechTranscriptionProvider extends BaseTranscriptionProvider {
       typeof navigator.mediaDevices.getSupportedConstraints === 'function'
     ) {
       try {
-        // This API might not exist on iOS, but check safely
-        navigator.mediaDevices.getSupportedConstraints({ audio: true }).catch(() => {
-          // Ignore errors from this optional check
-        });
+        // getSupportedConstraints returns a plain object synchronously, not a Promise
+        const constraints = navigator.mediaDevices.getSupportedConstraints();
+        console.log('[Web Speech Transcription] Supported constraints:', constraints);
       } catch (e) {
         console.warn('[Web Speech Transcription] getSupportedConstraints check failed:', e.message);
         // Continue anyway, this isn't critical
@@ -187,18 +238,76 @@ export class WebSpeechTranscriptionProvider extends BaseTranscriptionProvider {
         this.retryCount = this.maxRetries; // Prevent onend from restarting
 
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        const isElectron = window.electronAPI?.isElectron;
+        const isEdgeDesktop =
+          /Edg/.test(navigator.userAgent) &&
+          !/Mobile|Android|iPhone|iPad|iPod/.test(navigator.userAgent);
+        const isEdgeMobileAndroid = /EdgA/.test(navigator.userAgent);
 
-        const error = new Error(
-          'Speech recognition service unavailable. ' +
-            (isIOS
-              ? '\n\niOS Safari Note: Web Speech API has limited support on iOS. ' +
-                'Consider using the Azure, Whisper, or Deepgram provider for better reliability.'
-              : '\n\nThis usually means:\n' +
-                "1. No internet connection (Chrome uses Google's servers)\n" +
-                '2. VPN or firewall blocking the service\n' +
-                '3. Google speech service is down\n\n' +
-                'Try: Check your internet, disable VPN, or use a different transcription provider.')
+        // Log detailed diagnostics
+        console.error('[Web Speech Transcription] Network error diagnostics:', {
+          userAgent: navigator.userAgent,
+          platform: navigator.platform,
+          protocol: window.location.protocol,
+          hostname: window.location.hostname,
+          port: window.location.port,
+          isIOS,
+          isElectron,
+          isEdgeDesktop,
+          isEdgeMobileAndroid,
+          timestamp: new Date().toISOString(),
+        });
+        console.error(
+          '[Web Speech Transcription] Check DevTools Network tab for failed requests to Google domains'
         );
+
+        let errorMessage = 'Speech recognition service unavailable.';
+
+        if (isEdgeDesktop) {
+          errorMessage +=
+            '\n\n⚠️ Microsoft Edge Desktop detected.\n\n' +
+            'Web Speech API is not supported in Edge Desktop.\n' +
+            'For Web Speech API, use Chrome desktop browser instead.\n\n' +
+            'Or use these providers (work in any browser):\n' +
+            '• Azure Speech (5 free hours/month)\n' +
+            '• Deepgram (200 free hours/month)\n' +
+            '• OpenAI Whisper (paid API)\n\n' +
+            'Go to Settings → Speech → Transcription Provider to change.';
+        } else if (isEdgeMobileAndroid) {
+          errorMessage +=
+            '\n\n⚠️ Microsoft Edge Mobile (Android) detected.\n\n' +
+            'Web Speech API may not work in Edge on Android.\n' +
+            'For Web Speech API on Android, use Chrome browser instead.\n\n' +
+            'Or use these providers (work in any browser):\n' +
+            '• Azure Speech (5 free hours/month)\n' +
+            '• Deepgram (200 free hours/month)\n' +
+            '• OpenAI Whisper (paid API)\n\n' +
+            'Go to Settings → Speech → Transcription Provider to change.';
+        } else if (isElectron) {
+          errorMessage +=
+            '\n\n⚠️ Electron desktop app detected.\n\n' +
+            'Web Speech API is not supported in Electron.\n\n' +
+            'For Web Speech API, use Chrome web browser instead of this app.\n\n' +
+            'Or use these providers (work in Electron):\n' +
+            '• Azure (5 free hours/month)\n' +
+            '• Deepgram (200 free hours/month)\n' +
+            '• Whisper (local, requires Python setup)\n\n' +
+            'Go to Settings → Speech → Transcription Provider to change.';
+        } else if (isIOS) {
+          errorMessage +=
+            '\n\n⚠️ iOS Safari detected.\n' +
+            'Web Speech API has limited support on iOS.\n' +
+            'Consider using Azure, Whisper, or Deepgram for better reliability.';
+        } else {
+          errorMessage +=
+            '\n\nThis usually means:\n' +
+            "1. No internet connection (Chrome uses Google's servers)\n" +
+            '2. VPN or firewall blocking the service\n' +
+            '3. Google speech service is down\n\n' +
+            'Try: Check your internet, disable VPN, or use a different transcription provider.';
+        }
+
+        const error = new Error(errorMessage);
         this.handleError(error, this.onErrorCallback);
         return;
       }
@@ -312,9 +421,35 @@ export class WebSpeechTranscriptionProvider extends BaseTranscriptionProvider {
     const errors = [];
     const warnings = [];
 
-    // Check for iOS Safari
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    const isElectron = window.electronAPI?.isElectron;
+    const isEdgeDesktop =
+      /Edg/.test(navigator.userAgent) &&
+      !/Mobile|Android|iPhone|iPad|iPod/.test(navigator.userAgent);
+    const isEdgeMobileAndroid = /EdgA/.test(navigator.userAgent);
 
+    // Add error for Edge Desktop - it's not supported
+    if (isEdgeDesktop) {
+      errors.push(
+        'Web Speech API is NOT supported in Edge Desktop. For Web Speech API, use Chrome desktop browser. Or use Azure, Deepgram, or Whisper provider (works in any browser).'
+      );
+    }
+
+    // Add warning for Edge Mobile Android - may not work
+    if (isEdgeMobileAndroid) {
+      warnings.push(
+        'Web Speech API may not work in Edge on Android. For Web Speech API on Android, use Chrome browser. Or use Azure, Deepgram, or Whisper provider (works in any browser).'
+      );
+    }
+
+    // Add error for Electron - it's not supported
+    if (isElectron) {
+      errors.push(
+        'Web Speech API is NOT supported in Electron. For Web Speech API, use Chrome web browser. Or use Azure, Deepgram, or Whisper provider (works in Electron).'
+      );
+    }
+
+    // Add warning for iOS - limited support
     if (isIOS) {
       warnings.push(
         'iOS Safari has limited Web Speech API support. Consider using Azure, Whisper, or Deepgram providers for better reliability.'
@@ -328,7 +463,7 @@ export class WebSpeechTranscriptionProvider extends BaseTranscriptionProvider {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
       errors.push(
-        'SpeechRecognition not supported in this browser (requires Chrome, Edge, or Safari 14.1+)'
+        'SpeechRecognition not supported in this browser (requires Chrome or Safari 14.1+)'
       );
     }
 
@@ -340,7 +475,10 @@ export class WebSpeechTranscriptionProvider extends BaseTranscriptionProvider {
         language: this.config.language,
         continuous: this.config.continuous,
         browserSupported: !!SpeechRecognition,
-        isIOS: isIOS,
+        isIOS,
+        isEdgeDesktop,
+        isEdgeMobileAndroid,
+        isElectron,
       },
     };
   }
@@ -358,21 +496,44 @@ export class WebSpeechTranscriptionProvider extends BaseTranscriptionProvider {
   getProviderInfo() {
     const isSupported = this.checkBrowserSupport();
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    const isEdgeDesktop =
+      /Edg/.test(navigator.userAgent) &&
+      !/Mobile|Android|iPhone|iPad|iPod/.test(navigator.userAgent);
+    const isEdgeMobileiOS = /EdgiOS/.test(navigator.userAgent);
+    const isElectron = window.electronAPI?.isElectron;
+
+    let description;
+    if (isElectron) {
+      description =
+        '⚠️ NOT SUPPORTED in Electron. For Web Speech API, use Chrome web browser. Or use Azure, Deepgram, or Whisper provider (works in Electron).';
+    } else if (isEdgeDesktop) {
+      description =
+        '⚠️ NOT SUPPORTED in Edge Desktop. For Web Speech API, use Chrome desktop browser. Or use Azure, Deepgram, or Whisper provider (works in any browser).';
+    } else if (isSupported) {
+      if (isIOS || isEdgeMobileiOS) {
+        description =
+          'Browser built-in speech recognition (FREE, no API key). iOS Safari has limited support - may stop after ~60 seconds.';
+      } else {
+        description =
+          'Browser built-in speech recognition (FREE, no API key). Requires internet connection in Chrome.';
+      }
+    } else {
+      description = 'Not supported in this browser (requires Chrome or Safari 14.1+)';
+    }
 
     return {
       id: 'webspeech',
       name: 'Web Speech API',
-      description: isSupported
-        ? isIOS
-          ? 'Browser built-in speech recognition (FREE, no API key). iOS Safari has limited support - may stop after ~60 seconds.'
-          : 'Browser built-in speech recognition (FREE, no API key). Requires internet connection in Chrome/Edge.'
-        : 'Not supported in this browser (requires Chrome, Edge, or Safari 14.1+)',
-      supportsContinuous: !isIOS, // iOS doesn't support true continuous mode
+      description,
+      supportsContinuous: !(isIOS || isEdgeMobileiOS), // iOS doesn't support true continuous mode
       requiresApiKey: false,
       requiresLocalServer: false,
       requiresInternet: true,
-      browserSupport: 'chrome-edge-safari',
+      browserSupport: 'chrome-safari',
+      edgeDesktopSupport: 'not-supported',
+      edgeMobileiOSSupport: 'supported',
       iosSupport: 'limited',
+      electronSupport: 'not-supported',
       documentationUrl: 'https://developer.mozilla.org/en-US/docs/Web/API/SpeechRecognition',
       configFields: [
         {
@@ -387,7 +548,7 @@ export class WebSpeechTranscriptionProvider extends BaseTranscriptionProvider {
           label: 'Continuous Mode',
           type: 'checkbox',
           required: false,
-          disabled: isIOS,
+          disabled: isIOS || isEdgeMobileiOS,
         },
         {
           name: 'interimResults',
@@ -407,12 +568,13 @@ export class WebSpeechTranscriptionProvider extends BaseTranscriptionProvider {
         { code: 'ko-KR', name: 'Korean' },
       ],
       troubleshooting: [
-        'Using iPhone/iPad? Consider using Azure or Whisper provider for better iOS support',
-        'Network error? Check your internet connection',
+        '⚠️ Edge Desktop? Web Speech API is NOT supported. Use Chrome browser for Web Speech, or use Azure/Deepgram/Whisper providers.',
+        '⚠️ Electron app? Web Speech API is NOT supported. Use Chrome web browser for Web Speech, or use Azure/Deepgram/Whisper providers.',
+        'Using iPhone/iPad or Edge iOS? Consider using Azure or Whisper provider for better iOS support',
+        'Network error in Chrome? Check your internet connection',
         'Using VPN? Try disabling it',
         'Microphone blocked? Allow microphone access in browser settings',
-        'iOS Safari: Web Speech may stop after 60 seconds - this is a browser limitation',
-        'Desktop Chrome/Electron not working? Check console logs for detailed error messages',
+        'iOS Safari/Edge iOS: Web Speech may stop after 60 seconds - this is a browser limitation',
         'Still not working? Try Azure, Whisper, or Deepgram providers instead',
       ],
     };

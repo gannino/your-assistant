@@ -4,9 +4,9 @@ let registered = false;
 
 /**
  * Register all global shortcuts.
- * @param {{ toggleVisibility, moveWindow, takeScreenshot }} handlers
+ * @param {{ toggleVisibility, moveWindow, takeScreenshot, toggleDevTools }} handlers
  */
-function registerShortcuts({ toggleVisibility, moveWindow, takeScreenshot }) {
+function registerShortcuts({ toggleVisibility, moveWindow, takeScreenshot, toggleDevTools }) {
   if (registered) return;
 
   // Show / hide overlay
@@ -23,6 +23,15 @@ function registerShortcuts({ toggleVisibility, moveWindow, takeScreenshot }) {
     takeScreenshot().catch(err => {
       console.error('[Shortcuts] takeScreenshot error:', err);
     });
+  });
+
+  // Toggle DevTools
+  globalShortcut.register('CommandOrControl+Shift+I', () => {
+    try {
+      toggleDevTools();
+    } catch (err) {
+      console.error('[Shortcuts] toggleDevTools error:', err);
+    }
   });
 
   // Move window with arrow keys

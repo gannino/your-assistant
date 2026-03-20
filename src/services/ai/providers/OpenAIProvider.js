@@ -11,7 +11,14 @@ import OpenAI from 'openai';
 export class OpenAIProvider extends BaseAIProvider {
   constructor() {
     super({});
+    /** @type {OpenAI | null} */
     this.client = null;
+    /** @type {Array<string> | null} */
+    this.modelsCache = null;
+    /** @type {number | null} */
+    this.modelsCacheTime = null;
+    /** @type {number} */
+    this.CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
   }
 
   /**
@@ -211,31 +218,74 @@ export class OpenAIProvider extends BaseAIProvider {
    * @returns {Promise<Array<string>>} Array of model names
    */
   async getAvailableModels() {
-    // Try to fetch from API, fallback to common models
-    try {
-      if (!this.client && this.config?.apiKey) {
-        this.client = new OpenAI({
-          apiKey: this.config.apiKey,
-          dangerouslyAllowBrowser: true,
-        });
+    // Check cache first
+    if (this.modelsCache && this.modelsCacheTime) {
+      const cacheAge = Date.now() - this.modelsCacheTime;
+      if (cacheAge < this.CACHE_DURATION) {
+        console.log(`[OpenAI] Using cached models (${Math.round(cacheAge / 1000)}s old)`);
+        return this.modelsCache;
       }
+      // Cache expired
+      console.log('[OpenAI] Cache expired, refetching models...');
+      this.modelsCache = null;
+      this.modelsCacheTime = null;
+    }
 
-      if (this.client) {
-        const models = await this.client.models.list();
+    if (!this.client) {
+      console.log('[OpenAI] SDK not initialized, using hardcoded model list');
+      return this.getDefaultModels();
+    }
+
+    // Fetch from OpenAI API using SDK
+    try {
+      console.log('[OpenAI] Fetching models from API via SDK...');
+
+      const modelsList = await this.client.models.list();
+
+      if (modelsList.data && Array.isArray(modelsList.data)) {
         // Filter for chat models and extract IDs
-        const chatModels = models.data
+        const chatModels = modelsList.data
           .filter(model => model.id.includes('gpt'))
           .map(model => model.id);
 
         if (chatModels.length > 0) {
-          return chatModels.sort();
+          console.log(`[OpenAI] ✅ Fetched ${chatModels.length} GPT models from API`);
+
+          // Cache the results
+          this.modelsCache = chatModels.sort();
+          this.modelsCacheTime = Date.now();
+
+          return this.modelsCache;
         }
       }
-    } catch (error) {
-      console.warn('Failed to fetch OpenAI models:', error.message);
-    }
 
-    // Fallback to common models
+      console.warn('[OpenAI] ⚠️ No GPT models found in API response');
+      return this.modelsCache || this.getDefaultModels();
+    } catch (error) {
+      // Handle common API errors
+      if (error.status === 401) {
+        console.error('[OpenAI] ❌ Authentication failed (401)');
+        console.error('[OpenAI] 💡 Your API key may be invalid or expired');
+      } else if (error.status === 403) {
+        console.error('[OpenAI] ❌ Access forbidden (403)');
+        console.error('[OpenAI] 💡 Your API key may not have access to this endpoint');
+      } else if (error.status === 429) {
+        console.warn('[OpenAI] ⚠️ Rate limited by API (429)');
+        console.warn('[OpenAI] 💡 Models are cached to avoid rate limits');
+      } else {
+        console.error('[OpenAI] ❌ Fetch failed:', error.message);
+        console.error('[OpenAI] 💡 Falling back to hardcoded model list');
+      }
+
+      return this.modelsCache || this.getDefaultModels();
+    }
+  }
+
+  /**
+   * Get default hardcoded model list
+   * @returns {Array<string>} Array of model names
+   */
+  getDefaultModels() {
     return [
       'gpt-3.5-turbo',
       'gpt-3.5-turbo-16k',

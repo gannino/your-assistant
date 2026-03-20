@@ -178,6 +178,8 @@ function createTray() {
     Menu.buildFromTemplate([
       { label: 'Show / Hide', click: toggleVisibility },
       { type: 'separator' },
+      { label: 'Toggle DevTools', click: () => mainWindow?.webContents.toggleDevTools() },
+      { type: 'separator' },
       { label: 'Quit', accelerator: 'CmdOrCtrl+Q', click: () => app.quit() },
     ])
   );
@@ -369,7 +371,12 @@ app.whenReady().then(() => {
 
   createWindow();
   createTray();
-  registerShortcuts({ toggleVisibility, moveWindow, takeScreenshot });
+  registerShortcuts({
+    toggleVisibility,
+    moveWindow,
+    takeScreenshot,
+    toggleDevTools: () => mainWindow?.webContents.toggleDevTools()
+  });
 }).catch(err => {
   console.error('[Electron] app.whenReady() failed:', err);
   process.exit(1);

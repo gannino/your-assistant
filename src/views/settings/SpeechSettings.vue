@@ -273,22 +273,55 @@
 
         <div class="form-group">
           <label>Model</label>
-          <el-select
-            v-model="deepgram_model"
-            style="width: 100%"
-            allow-create
-            filterable
-            @change="onKeyChange('deepgram_model')"
-          >
-            <el-option label="Nova-2 (Latest & Fastest)" value="nova-2" />
-            <el-option label="Nova" value="nova" />
-            <el-option label="Enhanced" value="enhanced" />
-          </el-select>
+          <div class="model-selector">
+            <el-select
+              v-model="deepgram_model"
+              style="width: 100%"
+              allow-create
+              filterable
+              placeholder="Select a model"
+              @change="onKeyChange('deepgram_model')"
+            >
+              <!-- Discovered models -->
+              <el-option
+                v-for="model in deepgram_discovered_models"
+                :key="model.id"
+                :label="`${model.name} ${model.version ? `(${model.version})` : ''}`"
+                :value="model.id"
+              />
+              <!-- Fallback to default models if none discovered -->
+              <template v-if="deepgram_discovered_models.length === 0">
+                <el-option
+                  v-for="model in getDefaultDeepgramModels()"
+                  :key="model.id"
+                  :label="model.name"
+                  :value="model.id"
+                />
+              </template>
+            </el-select>
+            <el-button
+              size="small"
+              style="margin-left: 8px"
+              :loading="deepgram_discovering"
+              :disabled="!deepgram_api_key"
+              :icon="Refresh"
+              @click="discoverDeepgramModels"
+            >
+              <span v-if="deepgram_discovering">Refreshing...</span>
+              <span v-else>Refresh Models</span>
+            </el-button>
+          </div>
           <p class="field-hint">
-            Type custom model name if needed.
+            Enter API key and click "Refresh Models" to fetch available models from Deepgram API.
             <a href="https://developers.deepgram.com/docs/models-overview" target="_blank"
               >View all models</a
             >
+          </p>
+          <p v-if="deepgram_discovery_error" class="field-error">
+            {{ deepgram_discovery_error }}
+          </p>
+          <p v-if="deepgram_discovered_models.length > 0" class="field-success">
+            Found {{ deepgram_discovered_models.length }} model(s)
           </p>
         </div>
 
@@ -323,10 +356,11 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import { Upload } from '@element-plus/icons-vue';
+import { Upload, Refresh } from '@element-plus/icons-vue';
 import SettingsLayout from './SettingsLayout.vue';
 import config_util from '../../utils/config_util';
 import { transcriptionRegistry } from '../../services/transcription/transcriptionRegistry';
+import { fetchDeepgramModels, getDefaultDeepgramModels } from '@/utils/deepgram_util';
 
 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
@@ -352,6 +386,11 @@ const webspeech_interim_results = ref(false);
 const deepgram_api_key = ref('');
 const deepgram_model = ref('nova-2');
 const deepgram_language = ref('en');
+
+// Deepgram model discovery
+const deepgram_discovering = ref(false);
+const deepgram_discovered_models = ref([]);
+const deepgram_discovery_error = ref(null);
 
 // Testing
 const testing_transcription = ref(false);
@@ -489,10 +528,45 @@ const onKeyChange = key_name => {
       value = null;
   }
   localStorage.setItem(key_name, value);
+
+  // Auto-discover Deepgram models when API key is entered
+  if (key_name === 'deepgram_api_key' && deepgram_api_key.value) {
+    discoverDeepgramModels();
+  }
 };
 
 const onTranscriptionProviderChange = value => {
   localStorage.setItem('transcription_provider', value);
+};
+
+const discoverDeepgramModels = async () => {
+  if (!deepgram_api_key.value) {
+    deepgram_discovery_error.value = 'Please enter your API key first';
+    return;
+  }
+
+  deepgram_discovering.value = true;
+  deepgram_discovery_error.value = null;
+
+  try {
+    const models = await fetchDeepgramModels(deepgram_api_key.value);
+    deepgram_discovered_models.value = models;
+
+    // Clear error on success
+    deepgram_discovery_error.value = null;
+
+    // Auto-select the first model if current model is not in list
+    if (models.length > 0 && !models.find(m => m.id === deepgram_model.value)) {
+      deepgram_model.value = models[0].id;
+      onKeyChange('deepgram_model');
+    }
+  } catch (error) {
+    deepgram_discovery_error.value = error.message;
+    // Use fallback models
+    deepgram_discovered_models.value = getDefaultDeepgramModels();
+  } finally {
+    deepgram_discovering.value = false;
+  }
 };
 
 onMounted(() => {
@@ -610,6 +684,23 @@ onMounted(() => {
 .checkbox-desc {
   font-size: 12px;
   color: var(--text-secondary);
+  margin: 4px 0 0 0;
+}
+
+.model-selector {
+  display: flex;
+  align-items: flex-start;
+}
+
+.field-error {
+  color: #f56c6c;
+  font-size: 12px;
+  margin: 4px 0 0 0;
+}
+
+.field-success {
+  color: #67c23a;
+  font-size: 12px;
   margin: 4px 0 0 0;
 }
 </style>
