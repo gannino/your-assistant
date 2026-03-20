@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/gannino/your-assistant/compare/v1.2.1...v1.3.0) (2026-03-20)
+
+
+### ✨ Features
+
+* add flexible code signing with adhoc fallback for macOS ([d5a11ee](https://github.com/gannino/your-assistant/commit/d5a11eef242aca894669ff2809720696da1f434e))
+
 ## [1.2.1](https://github.com/gannino/your-assistant/compare/v1.2.0...v1.2.1) (2026-03-20)
 
 
