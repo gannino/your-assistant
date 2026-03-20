@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.0 (2026-03-20)
+
+
+### ✨ Features
+
+* Your Assistant v1.0.0 - AI-Powered Voice Assistant with Real-time Transcription ([9b20fac](https://github.com/gannino/your-assistant/commit/9b20facbd838aaf473da48969fbe21195c2ee992))
+
 ## [1.3.0](https://github.com/gannino/your-assistant/compare/v1.2.1...v1.3.0) (2026-03-20)
 
 
