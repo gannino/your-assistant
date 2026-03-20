@@ -317,7 +317,9 @@
 
             <div ref="aiResponseContainer" class="panel-content" @scroll="onContainerScroll">
               <div v-if="show_ai_thinking_effect && !ai_result" class="loading-state">
-                <el-icon class="is-loading" :size="32" color="#409eff"><Loading /></el-icon>
+                <el-icon class="is-loading" :size="32" color="#409eff">
+                  <Loading />
+                </el-icon>
                 <p>AI is thinking...</p>
               </div>
               <div v-else-if="!ai_result" class="empty-state">
@@ -2088,7 +2090,7 @@ const getTranscriptionProviderConfig = providerId => {
 
 .auto-status {
   font-size: 12px;
-  color: #e6a23c;
+  color: var(--warning-color, #e6a23c);
   white-space: nowrap;
 }
 
@@ -2259,6 +2261,7 @@ const getTranscriptionProviderConfig = providerId => {
   height: 100%;
   overflow: hidden;
   gap: 16px;
+  background: transparent;
   width: 90%;
   margin: 0 auto;
 }
@@ -3007,7 +3010,7 @@ const getTranscriptionProviderConfig = providerId => {
   gap: 8px;
   font-size: 16px;
   font-weight: 600;
-  color: #303133;
+  color: var(--text-primary);
   /* Safari text rendering optimization */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -3027,11 +3030,11 @@ const getTranscriptionProviderConfig = providerId => {
   overflow-y: auto;
   overflow-x: hidden;
   border-radius: 8px;
-  background: #f5f7fa;
+  background: var(--bg-secondary);
   padding: 16px;
   /* Custom scrollbar for webkit browsers */
   scrollbar-width: thin;
-  scrollbar-color: #c1c1c1 #f1f1f1;
+  scrollbar-color: var(--bg-scrollbar-thumb) var(--bg-scrollbar-track);
 }
 
 /* Webkit browser scrollbar styling (Chrome, Safari, Edge) */
@@ -3041,17 +3044,17 @@ const getTranscriptionProviderConfig = providerId => {
 }
 
 .context-preview-dialog .context-preview-content::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: var(--bg-scrollbar-track);
   border-radius: 4px;
 }
 
 .context-preview-dialog .context-preview-content::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
+  background: var(--bg-scrollbar-thumb);
   border-radius: 4px;
 }
 
 .context-preview-dialog .context-preview-content::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
+  background: var(--bg-scrollbar-thumb-hover);
 }
 
 .context-preview-dialog .context-text {
@@ -3067,7 +3070,7 @@ const getTranscriptionProviderConfig = providerId => {
     -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   font-size: 14px;
   line-height: 1.6;
-  color: #303133;
+  color: var(--text-primary);
   background: transparent;
   padding: 0;
   border: none;
@@ -3098,8 +3101,8 @@ const getTranscriptionProviderConfig = providerId => {
 
 .context-preview-dialog .context-info {
   padding: 12px;
-  background: #f0f9ff;
-  border-left: 4px solid #409eff;
+  background: var(--bg-info-light);
+  border-left: 4px solid var(--primary-color);
   border-radius: 4px;
   line-height: 1.5;
 }
@@ -3110,7 +3113,7 @@ const getTranscriptionProviderConfig = providerId => {
 
 .context-preview-dialog .context-info .el-descriptions .el-descriptions__label {
   font-weight: 600;
-  color: #606266;
+  color: var(--text-regular);
 }
 
 .context-preview-dialog .context-info .el-divider {
@@ -3154,8 +3157,8 @@ const getTranscriptionProviderConfig = providerId => {
   .context-preview-dialog .context-preview-content {
     max-height: 70vh;
     padding: 12px;
-    background: #ffffff;
-    border: 1px solid #e4e7ed;
+    background: var(--bg-solid);
+    border: 1px solid var(--border-base);
     /* Mobile-specific scrolling */
     -webkit-overflow-scrolling: touch;
   }
@@ -3173,7 +3176,7 @@ const getTranscriptionProviderConfig = providerId => {
   .context-preview-dialog .context-text pre {
     font-size: 13px;
     line-height: 1.8;
-    color: #2c3e50;
+    color: var(--text-primary);
     /* Mobile text optimization */
     text-rendering: optimizeLegibility;
   }
@@ -3270,7 +3273,7 @@ const getTranscriptionProviderConfig = providerId => {
 
   .context-preview-dialog .context-preview-content {
     scrollbar-width: thin;
-    scrollbar-color: #409eff #f1f1f1;
+    scrollbar-color: var(--primary-color) var(--bg-scrollbar-track);
   }
 }
 
@@ -3309,33 +3312,33 @@ const getTranscriptionProviderConfig = providerId => {
 }
 
 /* ========== Dark Mode Support ========== */
-@media (prefers-color-scheme: dark) {
-  .context-preview-dialog .context-preview-content {
-    background: #1a1a1a;
-    border-color: #3a3a3a;
-  }
+[data-theme='dark'] .context-preview-dialog .context-preview-content {
+  background: var(--bg-secondary);
+  border-color: var(--border-base);
+}
 
-  .context-preview-dialog .context-preview-content::-webkit-scrollbar-track {
-    background: #2a2a2a;
-  }
+[data-theme='dark'] .context-preview-dialog .context-preview-content::-webkit-scrollbar-track {
+  background: var(--bg-tertiary);
+}
 
-  .context-preview-dialog .context-preview-content::-webkit-scrollbar-thumb {
-    background: #4a4a4a;
-  }
+[data-theme='dark'] .context-preview-dialog .context-preview-content::-webkit-scrollbar-thumb {
+  background: var(--border-base);
+}
 
-  .context-preview-dialog .context-preview-content::-webkit-scrollbar-thumb:hover {
-    background: #5a5a5a;
-  }
+[data-theme='dark']
+  .context-preview-dialog
+  .context-preview-content::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
 
-  .context-preview-dialog .context-text pre {
-    color: #e4e7ed;
-  }
+[data-theme='dark'] .context-preview-dialog .context-text pre {
+  color: var(--text-primary);
+}
 
-  .context-preview-dialog .context-info {
-    background: #1e3a5f;
-    border-left-color: #66b1ff;
-    color: #e4e7ed;
-  }
+[data-theme='dark'] .context-preview-dialog .context-info {
+  background: rgba(30, 58, 95, 0.8);
+  border-left-color: var(--primary-light);
+  color: var(--text-primary);
 }
 
 /* ========== High Contrast Mode Support ========== */

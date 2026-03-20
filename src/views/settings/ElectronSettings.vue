@@ -34,9 +34,30 @@
             :step="2"
             :show-tooltip="false"
             style="width: 100%"
-            @input="onBlurChange"
+            @change="onBlurChange"
           />
           <p class="field-hint">Frosted-glass blur behind panels. 0 = no blur.</p>
+        </div>
+
+        <div class="form-group">
+          <label>Theme</label>
+          <el-radio-group v-model="theme" @change="onThemeChange">
+            <el-radio-button label="light">
+              <el-icon><Sunny /></el-icon>
+              Light
+            </el-radio-button>
+            <el-radio-button label="dark">
+              <el-icon><Moon /></el-icon>
+              Dark
+            </el-radio-button>
+            <el-radio-button label="system">
+              <el-icon><Monitor /></el-icon>
+              System
+            </el-radio-button>
+          </el-radio-group>
+          <p class="field-hint">
+            System theme automatically switches between light and dark based on your OS settings.
+          </p>
         </div>
 
         <div class="form-group">
@@ -167,6 +188,9 @@
       <section class="settings-section">
         <h2>Status</h2>
         <el-descriptions :column="1" border size="small">
+          <el-descriptions-item label="App Version">
+            <el-tag type="info">{{ appVersion }}</el-tag>
+          </el-descriptions-item>
           <el-descriptions-item label="Running in Electron">
             <el-tag :type="isElectron ? 'success' : 'info'">
               {{ isElectron ? 'Yes' : 'No — browser mode' }}
@@ -192,10 +216,12 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import SettingsLayout from './SettingsLayout.vue';
 import { useElectron } from '../../composables/useElectron';
 import { AUTO_DEFAULTS } from '../../composables/useAutoMode';
+import { Sunny, Moon, Monitor } from '@element-plus/icons-vue';
+import { getThemePreference, setThemePreference } from '../../utils/theme_util';
 
 const { isElectron } = useElectron();
 
@@ -221,6 +247,8 @@ const blurAmount = ref(DEFAULT_BLUR);
 const scrollSpeed = ref(DEFAULT_SCROLL_SPEED);
 const windowWidth = ref(DEFAULT_WIN_WIDTH);
 const windowHeight = ref(DEFAULT_WIN_HEIGHT);
+const theme = ref(getThemePreference());
+const appVersion = ref(import.meta.env.VUE_APP_VERSION || '1.0.0');
 
 // Auto mode
 const triggerDelay = ref(AUTO_DEFAULTS.triggerDelay);
@@ -238,12 +266,23 @@ const shortcuts = [
 
 /**
  * Write CSS variables onto :root so all panels update immediately.
+ * Respects the current theme (light/dark) when applying opacity.
  */
 function applyAppearance(op, blur) {
   const root = document.documentElement;
-  root.style.setProperty('--bg-primary', `rgba(255,255,255,${op.toFixed(2)})`);
-  root.style.setProperty('--bg-secondary', `rgba(245,247,250,${(op * 0.9).toFixed(2)})`);
-  root.style.setProperty('--bg-tertiary', `rgba(250,250,250,${(op * 0.83).toFixed(2)})`);
+  const isDark = root.getAttribute('data-theme') === 'dark';
+
+  if (isDark) {
+    // Dark theme base colors with opacity
+    root.style.setProperty('--bg-primary', `rgba(30,30,30,${op.toFixed(2)})`);
+    root.style.setProperty('--bg-secondary', `rgba(40,40,40,${(op * 0.9).toFixed(2)})`);
+    root.style.setProperty('--bg-tertiary', `rgba(50,50,50,${(op * 0.83).toFixed(2)})`);
+  } else {
+    // Light theme base colors with opacity
+    root.style.setProperty('--bg-primary', `rgba(255,255,255,${op.toFixed(2)})`);
+    root.style.setProperty('--bg-secondary', `rgba(245,247,250,${(op * 0.9).toFixed(2)})`);
+    root.style.setProperty('--bg-tertiary', `rgba(250,250,250,${(op * 0.83).toFixed(2)})`);
+  }
   root.style.setProperty('--backdrop-blur', `blur(${blur}px)`);
 }
 
@@ -262,14 +301,22 @@ function onScrollSpeedChange(val) {
   localStorage.setItem(SCROLL_SPEED_KEY, val);
 }
 
+function onThemeChange(val) {
+  setThemePreference(val);
+  // applyAppearance is called via the 'theme-changed' event listener
+}
+
 function resetAppearance() {
   opacity.value = DEFAULT_OPACITY;
   blurAmount.value = DEFAULT_BLUR;
   scrollSpeed.value = DEFAULT_SCROLL_SPEED;
+  theme.value = 'system';
   localStorage.removeItem(OPACITY_KEY);
   localStorage.removeItem(BLUR_KEY);
   localStorage.removeItem(SCROLL_SPEED_KEY);
+  localStorage.removeItem('app_theme');
   applyAppearance(DEFAULT_OPACITY, DEFAULT_BLUR);
+  setThemePreference('system');
 }
 
 function onWindowSizeChange() {
@@ -284,6 +331,8 @@ function onAutoSettingsChange() {
 }
 
 // ── Lifecycle ─────────────────────────────────────────────────────────────────
+const handleThemeChanged = () => applyAppearance(opacity.value, blurAmount.value);
+
 onMounted(() => {
   const savedOpacity = localStorage.getItem(OPACITY_KEY);
   const savedBlur = localStorage.getItem(BLUR_KEY);
@@ -303,6 +352,13 @@ onMounted(() => {
 
   // Apply saved appearance on load
   applyAppearance(opacity.value, blurAmount.value);
+
+  // Re-apply appearance when system/manual theme changes
+  window.addEventListener('theme-changed', handleThemeChanged);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('theme-changed', handleThemeChanged);
 });
 </script>
 
@@ -312,7 +368,7 @@ onMounted(() => {
 }
 
 .info-text {
-  color: #606266;
+  color: var(--text-regular);
   font-size: 14px;
   margin-bottom: 32px;
   line-height: 1.6;
@@ -325,13 +381,13 @@ onMounted(() => {
 .settings-section h2 {
   font-size: 20px;
   font-weight: 600;
-  color: #303133;
+  color: var(--text-primary);
   margin: 0 0 8px 0;
 }
 
 .section-desc {
   font-size: 14px;
-  color: #909399;
+  color: var(--text-secondary);
   margin: 0 0 16px 0;
 }
 
@@ -343,13 +399,13 @@ onMounted(() => {
   display: block;
   font-size: 14px;
   font-weight: 500;
-  color: #303133;
+  color: var(--text-primary);
   margin-bottom: 8px;
 }
 
 .field-hint {
   font-size: 12px;
-  color: #909399;
+  color: var(--text-secondary);
   margin: 6px 0 0 0;
 }
 
@@ -360,8 +416,8 @@ onMounted(() => {
 }
 
 .shortcut-key {
-  background: #f5f7fa;
-  border: 1px solid #dcdfe6;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-base);
   border-radius: 4px;
   padding: 2px 8px;
   font-size: 13px;

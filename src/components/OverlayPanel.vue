@@ -109,7 +109,7 @@ function startDrag(e) {
 }
 
 .overlay-panel.is-thinking {
-  border-color: #409eff;
+  border-color: var(--primary-color);
 }
 
 .overlay-header {
@@ -117,8 +117,8 @@ function startDrag(e) {
   align-items: center;
   justify-content: space-between;
   padding: 10px 12px;
-  background: var(--bg-secondary, rgba(245, 247, 250, 0.95));
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-light);
   cursor: move;
   user-select: none;
   border-radius: 14px 14px 0 0;
@@ -127,7 +127,7 @@ function startDrag(e) {
 .overlay-title {
   font-size: 13px;
   font-weight: 600;
-  color: #303133;
+  color: var(--text-primary);
 }
 
 .overlay-actions {
@@ -142,7 +142,7 @@ function startDrag(e) {
   padding: 12px;
   font-size: 13px;
   line-height: 1.7;
-  color: #303133;
+  color: var(--text-primary);
   -webkit-overflow-scrolling: touch;
 }
 
@@ -150,12 +150,12 @@ function startDrag(e) {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #409eff;
+  color: var(--primary-color);
   font-size: 13px;
 }
 
 .overlay-empty {
-  color: #c0c4cc;
+  color: var(--text-placeholder);
   font-size: 13px;
   text-align: center;
   margin-top: 40px;
@@ -170,13 +170,13 @@ function startDrag(e) {
   margin-bottom: 8px;
 }
 .overlay-text :deep(code) {
-  background: #f5f7fa;
+  background: var(--bg-secondary);
   padding: 1px 4px;
   border-radius: 3px;
   font-size: 12px;
 }
 .overlay-text :deep(pre) {
-  background: #f5f7fa;
+  background: var(--bg-secondary);
   padding: 8px;
   border-radius: 6px;
   overflow-x: auto;

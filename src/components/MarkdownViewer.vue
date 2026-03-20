@@ -326,9 +326,9 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: #ffffff;
+  background: var(--bg-solid);
   border-radius: 8px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-light);
   overflow: hidden;
   position: relative;
 }
@@ -341,8 +341,8 @@ onMounted(() => {
 
 /* Header Styles */
 .viewer-header {
-  background: #f8f9fa;
-  border-bottom: 1px solid #e4e7ed;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-base);
   padding: 12px 16px;
 }
 
@@ -364,7 +364,7 @@ onMounted(() => {
   margin: 0;
   font-size: 18px;
   font-weight: 600;
-  color: #303133;
+  color: var(--text-primary);
 }
 
 .header-actions {
@@ -395,10 +395,10 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   padding: 8px 12px;
-  background: #f5f7fa;
-  border-bottom: 1px solid #e4e7ed;
+  background: var(--bg-tertiary);
+  border-bottom: 1px solid var(--border-base);
   font-size: 12px;
-  color: #909399;
+  color: var(--text-secondary);
   flex-shrink: 0;
   height: 40px; /* Fixed height for header */
 }
@@ -430,8 +430,8 @@ onMounted(() => {
   font-size: 14px;
   line-height: 1.6;
   resize: none;
-  background: #ffffff;
-  color: #303133;
+  background: var(--bg-solid);
+  color: var(--text-primary);
   box-sizing: border-box;
   min-height: 200px; /* Ensure minimum height */
 }
@@ -439,19 +439,19 @@ onMounted(() => {
 /* Resize Handle */
 .resize-handle {
   height: 8px;
-  background: linear-gradient(to bottom, transparent, #e4e7ed, transparent);
+  background: linear-gradient(to bottom, transparent, var(--border-base), transparent);
   cursor: ns-resize;
-  border-top: 1px solid #dcdfe6;
-  border-bottom: 1px solid #dcdfe6;
+  border-top: 1px solid var(--border-base);
+  border-bottom: 1px solid var(--border-base);
   margin: 0 -16px; /* Extend to container edges */
   position: relative;
   z-index: 10;
 }
 
 .resize-handle:hover {
-  background: linear-gradient(to bottom, transparent, #409eff, transparent);
-  border-top-color: #409eff;
-  border-bottom-color: #409eff;
+  background: linear-gradient(to bottom, transparent, var(--primary-color), transparent);
+  border-top-color: var(--primary-color);
+  border-bottom-color: var(--primary-color);
 }
 
 /* Preview Section */
@@ -467,10 +467,10 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   padding: 8px 12px;
-  background: #f5f7fa;
-  border-bottom: 1px solid #e4e7ed;
+  background: var(--bg-tertiary);
+  border-bottom: 1px solid var(--border-base);
   font-size: 12px;
-  color: #909399;
+  color: var(--text-secondary);
 }
 
 .preview-label {
@@ -485,13 +485,13 @@ onMounted(() => {
   flex: 1;
   overflow-y: auto;
   padding: 16px;
-  background: #ffffff;
+  background: var(--bg-solid);
 }
 
 /* Markdown Content Styles */
 .markdown-content {
   line-height: 1.8;
-  color: #303133;
+  color: var(--text-primary);
 }
 
 .markdown-content :deep(h1),
@@ -508,19 +508,19 @@ onMounted(() => {
 
 .markdown-content :deep(h1) {
   font-size: 1.8em;
-  color: #303133;
-  border-bottom: 2px solid #e4e7ed;
+  color: var(--text-primary);
+  border-bottom: 2px solid var(--border-base);
   padding-bottom: 8px;
 }
 
 .markdown-content :deep(h2) {
   font-size: 1.5em;
-  color: #409eff;
+  color: var(--primary-color);
 }
 
 .markdown-content :deep(h3) {
   font-size: 1.3em;
-  color: #606266;
+  color: var(--text-regular);
 }
 
 .markdown-content :deep(p) {
@@ -538,42 +538,41 @@ onMounted(() => {
 }
 
 .markdown-content :deep(code) {
-  background: #f5f7fa;
+  background: var(--bg-secondary);
   padding: 2px 6px;
   border-radius: 4px;
   font-family: 'Monaco', 'Consolas', monospace;
   font-size: 0.9em;
-  color: #e6a23c;
+  color: var(--warning-color, #e6a23c);
 }
 
 .markdown-content :deep(pre) {
-  background: #f5f7fa;
+  background: var(--bg-secondary);
   padding: 12px;
   border-radius: 6px;
   overflow-x: auto;
   margin-bottom: 12px;
-  border-left: 4px solid #409eff;
+  border-left: 4px solid var(--primary-color);
 }
 
 .markdown-content :deep(pre code) {
   background: transparent;
   padding: 0;
-  color: #303133;
+  color: var(--text-primary);
 }
 
 .markdown-content :deep(blockquote) {
-  border-left: 4px solid #409eff;
-  padding-left: 16px;
+  border-left: 4px solid var(--primary-color);
   margin: 12px 0;
-  color: #909399;
+  color: var(--text-secondary);
   font-style: italic;
-  background: #f8f9fa;
+  background: var(--bg-secondary);
   padding: 8px 12px;
   border-radius: 4px;
 }
 
 .markdown-content :deep(a) {
-  color: #409eff;
+  color: var(--primary-color);
   text-decoration: none;
 }
 
@@ -589,13 +588,13 @@ onMounted(() => {
 
 .markdown-content :deep(th),
 .markdown-content :deep(td) {
-  border: 1px solid #e4e7ed;
+  border: 1px solid var(--border-base);
   padding: 8px 12px;
   text-align: left;
 }
 
 .markdown-content :deep(th) {
-  background: #f5f7fa;
+  background: var(--bg-secondary);
   font-weight: 600;
 }
 
@@ -605,8 +604,8 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   padding: 12px 16px;
-  background: #f8f9fa;
-  border-top: 1px solid #e4e7ed;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border-base);
   gap: 16px;
 }
 
@@ -614,7 +613,7 @@ onMounted(() => {
   display: flex;
   gap: 16px;
   font-size: 12px;
-  color: #909399;
+  color: var(--text-secondary);
 }
 
 .source-info,
@@ -685,17 +684,17 @@ onMounted(() => {
 
 .preview-container::-webkit-scrollbar-track,
 .editor-container::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: var(--bg-scrollbar-track);
 }
 
 .preview-container::-webkit-scrollbar-thumb,
 .editor-container::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
+  background: var(--bg-scrollbar-thumb);
   border-radius: 4px;
 }
 
 .preview-container::-webkit-scrollbar-thumb:hover,
 .editor-container::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
+  background: var(--bg-scrollbar-thumb-hover);
 }
 </style>

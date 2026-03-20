@@ -2,6 +2,10 @@ const { defineConfig } = require('@vue/cli-service');
 const path = require('path');
 const fs = require('fs');
 
+// Read version from package.json
+const packageJson = require('./package.json');
+const appVersion = packageJson.version;
+
 module.exports = defineConfig({
   transpileDependencies: ['openai', 'element-plus', '@element-plus/icons-vue'],
   css: {
@@ -39,6 +43,11 @@ module.exports = defineConfig({
   },
 
   configureWebpack: {
+    plugins: [
+      new (require('webpack')).DefinePlugin({
+        'process.env.VUE_APP_VERSION': JSON.stringify(appVersion),
+      }),
+    ],
     module: {
       rules: [
         {

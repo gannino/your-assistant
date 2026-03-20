@@ -46,15 +46,36 @@ const navigateTo = path => {
 
 <style scoped>
 .settings-layout {
-  width: 400px;
-  max-width: 100%;
+  width: 90%;
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 24px;
+  padding: 32px;
+  background: var(--bg-solid);
+  min-height: 100vh;
 }
 
-@media (min-width: 1400px) {
+@media (min-width: 1920px) {
   .settings-layout {
-    width: 960px;
+    width: 1600px;
+    max-width: 80%;
+    padding: 48px;
+  }
+
+  .settings-header h1 {
+    font-size: 42px;
+  }
+
+  .settings-subtitle {
+    font-size: 16px;
+  }
+
+  .settings-nav .el-menu-item {
+    font-size: 18px;
+    padding: 0 24px;
+  }
+
+  .settings-content {
+    padding: 48px;
   }
 }
 
@@ -65,19 +86,19 @@ const navigateTo = path => {
 .settings-header h1 {
   font-size: 32px;
   font-weight: 600;
-  color: #303133;
+  color: var(--text-primary);
   margin: 0 0 8px 0;
 }
 
 .settings-subtitle {
   font-size: 14px;
-  color: #909399;
+  color: var(--text-secondary);
   margin: 0;
 }
 
 .settings-nav {
   margin-bottom: 32px;
-  border-bottom: 2px solid #e4e7ed;
+  border-bottom: 2px solid var(--border-base);
 }
 
 .settings-nav .el-menu-item {
@@ -94,11 +115,11 @@ const navigateTo = path => {
 }
 
 .settings-content {
-  background: #ffffff;
+  background: var(--bg-solid);
   border-radius: 12px;
   padding: 32px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-  border: 1px solid #e4e7ed;
+  box-shadow: var(--shadow-light);
+  border: 1px solid var(--border-base);
   min-height: 600px;
 }
 

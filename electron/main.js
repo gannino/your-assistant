@@ -58,8 +58,6 @@ function createWindow() {
 
     transparent: true,
     frame: false,
-    vibrancy: 'under-window',
-    visualEffectState: 'active',
     backgroundColor: '#00000000',
 
     alwaysOnTop: true,

@@ -1294,7 +1294,7 @@ onMounted(() => {
 }
 
 .info-text {
-  color: #606266;
+  color: var(--text-regular);
   font-size: 14px;
   margin-bottom: 32px;
   line-height: 1.6;
@@ -1302,7 +1302,7 @@ onMounted(() => {
 
 .info-text a,
 .section-desc a {
-  color: #409eff;
+  color: var(--primary-color);
   text-decoration: none;
 }
 
@@ -1316,13 +1316,13 @@ onMounted(() => {
 .settings-section h2 {
   font-size: 20px;
   font-weight: 600;
-  color: #303133;
+  color: var(--text-primary);
   margin: 0 0 8px 0;
 }
 
 .section-desc {
   font-size: 14px;
-  color: #909399;
+  color: var(--text-secondary);
   margin: 0 0 16px 0;
 }
 
@@ -1338,20 +1338,20 @@ onMounted(() => {
 
 .upload-icon {
   font-size: 48px;
-  color: #c0c4cc;
+  color: var(--text-placeholder);
   margin-bottom: 12px;
 }
 .upload-text {
   font-size: 14px;
-  color: #606266;
+  color: var(--text-regular);
 }
 .upload-text em {
-  color: #409eff;
+  color: var(--primary-color);
   font-style: normal;
 }
 .upload-tip {
   font-size: 12px;
-  color: #909399;
+  color: var(--text-secondary);
   margin-top: 8px;
 }
 
@@ -1364,7 +1364,7 @@ onMounted(() => {
   align-items: center;
   gap: 12px;
   padding: 12px;
-  background: #f5f7fa;
+  background: var(--bg-secondary);
   border-radius: 8px;
   margin-bottom: 8px;
 }
@@ -1372,7 +1372,7 @@ onMounted(() => {
 .attachment-name {
   flex: 1;
   font-size: 14px;
-  color: #303133;
+  color: var(--text-primary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1403,7 +1403,7 @@ onMounted(() => {
   gap: 8px;
   font-size: 16px;
   font-weight: 600;
-  color: #303133;
+  color: var(--text-primary);
 }
 
 .context-preview-dialog .header-actions {
@@ -1417,10 +1417,10 @@ onMounted(() => {
   overflow-y: auto;
   overflow-x: hidden;
   border-radius: 8px;
-  background: #f5f7fa;
+  background: var(--bg-secondary);
   padding: 16px;
   scrollbar-width: thin;
-  scrollbar-color: #c1c1c1 #f1f1f1;
+  scrollbar-color: var(--bg-scrollbar-thumb) var(--bg-scrollbar-track);
 }
 
 .context-preview-dialog .context-preview-content::-webkit-scrollbar {
@@ -1429,17 +1429,17 @@ onMounted(() => {
 }
 
 .context-preview-dialog .context-preview-content::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: var(--bg-scrollbar-track);
   border-radius: 4px;
 }
 
 .context-preview-dialog .context-preview-content::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
+  background: var(--bg-scrollbar-thumb);
   border-radius: 4px;
 }
 
 .context-preview-dialog .context-preview-content::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
+  background: var(--bg-scrollbar-thumb-hover);
 }
 
 .context-preview-dialog .context-text {
@@ -1455,7 +1455,7 @@ onMounted(() => {
     -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   font-size: 14px;
   line-height: 1.6;
-  color: #303133;
+  color: var(--text-primary);
   background: transparent;
   padding: 0;
   border: none;
@@ -1484,8 +1484,8 @@ onMounted(() => {
 
 .context-preview-dialog .context-info {
   padding: 12px;
-  background: #f0f9ff;
-  border-left: 4px solid #409eff;
+  background: var(--bg-info-light);
+  border-left: 4px solid var(--primary-color);
   border-radius: 4px;
   line-height: 1.5;
 }
@@ -1496,7 +1496,7 @@ onMounted(() => {
 
 .context-preview-dialog .context-info .el-descriptions .el-descriptions__label {
   font-weight: 600;
-  color: #606266;
+  color: var(--text-regular);
 }
 
 .context-preview-dialog .context-info .el-divider {
@@ -1537,8 +1537,8 @@ onMounted(() => {
   .context-preview-dialog .context-preview-content {
     max-height: 70vh;
     padding: 12px;
-    background: #ffffff;
-    border: 1px solid #e4e7ed;
+    background: var(--bg-solid);
+    border: 1px solid var(--border-base);
     -webkit-overflow-scrolling: touch;
   }
 
@@ -1554,7 +1554,7 @@ onMounted(() => {
   .context-preview-dialog .context-text pre {
     font-size: 13px;
     line-height: 1.8;
-    color: #2c3e50;
+    color: var(--text-primary);
     text-rendering: optimizeLegibility;
   }
 
@@ -1615,8 +1615,8 @@ onMounted(() => {
 .prepare-actions {
   margin-top: 16px;
   padding: 20px;
-  background: #f0f9ff;
-  border: 2px dashed #409eff;
+  background: var(--bg-info-light);
+  border: 2px dashed var(--primary-color);
   border-radius: 8px;
   display: flex;
   flex-direction: column;
@@ -1636,7 +1636,7 @@ onMounted(() => {
 .preparation-progress {
   margin-top: 16px;
   padding: 20px;
-  background: #f5f7fa;
+  background: var(--bg-secondary);
   border-radius: 8px;
   text-align: center;
 }
@@ -1646,32 +1646,32 @@ onMounted(() => {
 }
 
 /* Dark Mode Support */
-@media (prefers-color-scheme: dark) {
-  .context-preview-dialog .context-preview-content {
-    background: #1a1a1a;
-    border-color: #3a3a3a;
-  }
+[data-theme='dark'] .context-preview-dialog .context-preview-content {
+  background: var(--bg-secondary);
+  border-color: var(--border-base);
+}
 
-  .context-preview-dialog .context-preview-content::-webkit-scrollbar-track {
-    background: #2a2a2a;
-  }
+[data-theme='dark'] .context-preview-dialog .context-preview-content::-webkit-scrollbar-track {
+  background: var(--bg-tertiary);
+}
 
-  .context-preview-dialog .context-preview-content::-webkit-scrollbar-thumb {
-    background: #4a4a4a;
-  }
+[data-theme='dark'] .context-preview-dialog .context-preview-content::-webkit-scrollbar-thumb {
+  background: var(--border-base);
+}
 
-  .context-preview-dialog .context-preview-content::-webkit-scrollbar-thumb:hover {
-    background: #5a5a5a;
-  }
+[data-theme='dark']
+  .context-preview-dialog
+  .context-preview-content::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
 
-  .context-preview-dialog .context-text pre {
-    color: #e4e7ed;
-  }
+[data-theme='dark'] .context-preview-dialog .context-text pre {
+  color: var(--text-primary);
+}
 
-  .context-preview-dialog .context-info {
-    background: #1e3a5f;
-    border-left-color: #66b1ff;
-    color: #e4e7ed;
-  }
+[data-theme='dark'] .context-preview-dialog .context-info {
+  background: rgba(30, 58, 95, 0.8);
+  border-left-color: var(--primary-light);
+  color: var(--text-primary);
 }
 </style>

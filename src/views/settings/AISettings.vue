@@ -907,14 +907,14 @@ onMounted(() => {
 }
 
 .info-text {
-  color: #606266;
+  color: var(--text-regular);
   font-size: 14px;
   margin-bottom: 32px;
   line-height: 1.6;
 }
 
 .info-text a {
-  color: #409eff;
+  color: var(--primary-color);
   text-decoration: none;
 }
 
@@ -925,18 +925,18 @@ onMounted(() => {
 .settings-section h2 {
   font-size: 20px;
   font-weight: 600;
-  color: #303133;
+  color: var(--text-primary);
   margin: 0 0 8px 0;
 }
 
 .section-desc {
   font-size: 14px;
-  color: #909399;
+  color: var(--text-secondary);
   margin: 0 0 16px 0;
 }
 
 .section-desc a {
-  color: #409eff;
+  color: var(--primary-color);
   text-decoration: none;
 }
 
@@ -949,12 +949,12 @@ onMounted(() => {
 }
 
 .success-text {
-  color: #67c23a;
+  color: var(--success-color);
   font-size: 14px;
 }
 
 .error-text {
-  color: #f56c6c;
+  color: var(--danger-color);
   font-size: 14px;
 }
 
@@ -966,29 +966,29 @@ onMounted(() => {
   display: block;
   font-size: 14px;
   font-weight: 500;
-  color: #303133;
+  color: var(--text-primary);
   margin-bottom: 8px;
 }
 
 .field-hint {
   font-size: 12px;
-  color: #909399;
+  color: var(--text-secondary);
   margin: 6px 0 0 0;
 }
 
 .field-hint {
   font-size: 12px;
-  color: #909399;
+  color: var(--text-secondary);
   margin: 6px 0 0 0;
 }
 
 .field-hint a {
-  color: #409eff;
+  color: var(--primary-color);
   text-decoration: none;
 }
 
 .field-hint code {
-  background: #f5f7fa;
+  background: var(--bg-secondary);
   padding: 2px 6px;
   border-radius: 4px;
   font-family: monospace;
