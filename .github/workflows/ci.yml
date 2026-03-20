@@ -215,17 +215,23 @@ jobs:
           path: dist/
 
       - name: Build Electron app for macOS (Universal)
-        run: npx electron-builder --mac --universal
+        run: |
+          # Only export env vars if secrets are non-empty to avoid electron-builder errors
+          if [ -n "${{ secrets.MACOS_CERTIFICATE }}" ]; then
+            export CSC_LINK="${{ secrets.MACOS_CERTIFICATE }}"
+            export CSC_KEY_PASSWORD="${{ secrets.MACOS_CERTIFICATE_PWD }}"
+            echo "[CI] Code signing certificate detected"
+          fi
+          if [ -n "${{ secrets.APPLE_ID }}" ]; then
+            export APPLE_ID="${{ secrets.APPLE_ID }}"
+            export APPLE_APP_SPECIFIC_PASSWORD="${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}"
+            export APPLE_TEAM_ID="${{ secrets.APPLE_TEAM_ID }}"
+            echo "[CI] Notarization secrets detected"
+          fi
+          npm run electron:build:mac
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
-          # Code signing (optional - if not provided, uses adhoc signing with entitlements)
-          CSC_LINK: ${{ secrets.MACOS_CERTIFICATE }}
-          CSC_KEY_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PWD }}
-          # Notarization (optional - only runs if all three are provided)
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
 
       - name: Find and generate build checksums
         run: |

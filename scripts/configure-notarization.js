@@ -35,8 +35,8 @@ if (hasSigningCertificate) {
     packageJson.build.mac.notarize = false;
   }
 } else {
-  console.log('[notarize-config] ⚠️  No signing certificate, using adhoc signing');
-  console.log('[notarize-config] Disabling hardenedRuntime to allow entitlements in adhoc builds');
+  console.log('[notarize-config] ⚠️  No signing certificate detected');
+  console.log('[notarize-config] Using adhoc signing with entitlements (hardenedRuntime=false)');
   packageJson.build.mac.hardenedRuntime = false;
   packageJson.build.mac.notarize = false;
 }
