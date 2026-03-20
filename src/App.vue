@@ -33,8 +33,8 @@ import { initializeTheme } from './utils/theme_util';
 const route = useRoute();
 const { isElectron, hideWindow, moveWindow } = useElectron();
 
-// App version - injected during build
-const appVersion = ref(import.meta.env.VUE_APP_VERSION || '1.0.0');
+// App version - injected during build from package.json
+const appVersion = ref(process.env.VUE_APP_VERSION || '1.0.0');
 
 const activeIndex = computed(() => {
   if (route.path.startsWith('/settings')) return '/settings/content';

@@ -248,7 +248,7 @@ const scrollSpeed = ref(DEFAULT_SCROLL_SPEED);
 const windowWidth = ref(DEFAULT_WIN_WIDTH);
 const windowHeight = ref(DEFAULT_WIN_HEIGHT);
 const theme = ref(getThemePreference());
-const appVersion = ref(import.meta.env.VUE_APP_VERSION || '1.0.0');
+const appVersion = ref(process.env.VUE_APP_VERSION || '1.0.0');
 
 // Auto mode
 const triggerDelay = ref(AUTO_DEFAULTS.triggerDelay);
