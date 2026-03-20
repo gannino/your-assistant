@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.2.0](https://github.com/gannino/your-assistant/compare/v1.1.0...v1.2.0) (2026-03-20)
+
+
+### ✨ Features
+
+* comprehensive Electron enablement and cross-platform improvements ([30ed966](https://github.com/gannino/your-assistant/commit/30ed966efa704a68db7a7e37f5b21023616cd28d))
+
+
+### 🐛 Bug Fixes
+
+* correct session access in Electron main process ([b60bc7d](https://github.com/gannino/your-assistant/commit/b60bc7d5866419df433675e782820838bf002f78))
+* implement dark mode and fix backdrop-filter blur in Electron ([4cf599e](https://github.com/gannino/your-assistant/commit/4cf599e247d64628009306c421bc5a5e47c0dd12))
+
 ## [1.1.0](https://github.com/gannino/your-assistant/compare/v1.0.0...v1.1.0) (2026-03-19)
 
 
