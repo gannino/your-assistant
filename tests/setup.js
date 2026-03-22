@@ -1,3 +1,14 @@
+// Mock import.meta.url BEFORE any imports happen
+// This must be at the top of setup.js
+if (typeof global.import === 'undefined') {
+  Object.defineProperty(global, 'import', {
+    value: {
+      meta: { url: 'http://localhost:8080/src/utils/pdf_util.js' }
+    },
+    writable: true,
+  });
+}
+
 // Mock global objects that might be used in components
 global.console = {
   ...console,
@@ -57,4 +68,15 @@ if (typeof TextEncoder === 'undefined') {
 }
 if (typeof TextDecoder === 'undefined') {
   global.TextDecoder = require('util').TextDecoder;
+}
+
+// Polyfill File.prototype.arrayBuffer if not available (needed for pdf_util tests)
+if (typeof File !== 'undefined' && !File.prototype.arrayBuffer) {
+  File.prototype.arrayBuffer = function() {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.readAsArrayBuffer(this);
+    });
+  };
 }

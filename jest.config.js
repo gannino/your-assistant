@@ -11,6 +11,7 @@ module.exports = {
   collectCoverage: true,
   collectCoverageFrom: [
     'src/**/*.js',
+    'src/**/*.vue',
     '!src/main.js',
     '!src/router/index.js',
     '!src/**/*.spec.js',
@@ -20,6 +21,7 @@ module.exports = {
   coverageReporters: ['text', 'lcov', 'html'],
   testMatch: [
     '<rootDir>/tests/**/*.(spec|test).js',
+    '<rootDir>/tests/**/*.(spec|test).vue',
     '<rootDir>/src/**/__tests__/**/*.js',
     '<rootDir>/src/**/*.spec.js',
   ],
@@ -27,4 +29,15 @@ module.exports = {
   testEnvironmentOptions: {
     customExportConditions: ['node', 'node-addons'],
   },
+  coverageThreshold: {
+    global: {
+      statements: 80,
+      branches: 75,
+      functions: 65,
+      lines: 80,
+    },
+  },
+  transformIgnorePatterns: [
+    'node_modules/(?!(pdfjs-dist)/)',
+  ],
 };
