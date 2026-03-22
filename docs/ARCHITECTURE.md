@@ -52,13 +52,17 @@ The application uses a sophisticated provider abstraction pattern that allows fo
 The application supports multiple providers for both AI and transcription services:
 
 **AI Providers:**
-- OpenAI (GPT-3.5, GPT-4, GPT-4 Turbo)
-- Z.ai (GLM-4 series models)
+
+- OpenAI (GPT-3.5, GPT-4, GPT-4o)
+- Zai (GLM-4 series models)
 - Ollama (Local models)
 - MLX (Apple Silicon optimized)
 - Anthropic (Claude 3 models)
+- Gemini (Gemini 1.5 and 2.0 with vision support)
+- OpenRouter (300+ models including GPT-4, Claude, Gemini, Llama)
 
 **Transcription Providers:**
+
 - Azure Speech Service
 - OpenAI Whisper
 - Web Speech API
@@ -126,6 +130,8 @@ class ProviderRegistry {
     this.register(new OllamaProvider());
     this.register(new MLXProvider());
     this.register(new AnthropicProvider());
+    this.register(new GeminiProvider());
+    this.register(new OpenRouterProvider());
   }
 }
 
@@ -338,10 +344,12 @@ const apiKey = config.openai_api_key()
 
 #### AI Provider Configuration
 - **OpenAI**: API key, model selection, temperature
-- **Z.ai**: API key, model, endpoint URL
+- **Zai**: API key, model, endpoint URL
 - **Ollama**: Local endpoint, model selection
 - **MLX**: Local endpoint, model selection
 - **Anthropic**: API key, model selection
+- **Gemini**: API key, model selection, vision support
+- **OpenRouter**: API key, model selection (300+ models)
 
 #### Transcription Provider Configuration
 - **Azure**: Subscription key, region, language

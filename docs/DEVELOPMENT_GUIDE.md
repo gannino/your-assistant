@@ -28,7 +28,9 @@ your-assistant/
 ├── src/
 │   ├── components/             # Vue components
 │   │   ├── LoadingIcon.vue    # Loading animation component
-│   │   └── MyTimer.vue        # Session timer component
+│   │   ├── MyTimer.vue        # Session timer component
+│   │   ├── MarkdownViewer.vue # Markdown rendering component
+│   │   └── OverlayPanel.vue   # Floating overlay panel component
 │   │
 │   ├── services/              # Core business logic
 │   │   ├── ai/               # AI provider system
@@ -39,7 +41,9 @@ your-assistant/
 │   │   │       ├── ZaiProvider.js
 │   │   │       ├── OllamaProvider.js
 │   │   │       ├── MLXProvider.js
-│   │   │       └── AnthropicProvider.js
+│   │   │       ├── AnthropicProvider.js
+│   │   │       ├── GeminiProvider.js
+│   │   │       └── OpenRouterProvider.js
 │   │   │
 │   │   └── transcription/    # Transcription provider system
 │   │       ├── BaseTranscriptionProvider.js  # Abstract base class
@@ -54,9 +58,13 @@ your-assistant/
 │   │   └── config_util.js    # Configuration management (localStorage)
 │   │
 │   ├── views/                 # Vue views/pages
-│   │   ├── About.vue         # About page
 │   │   ├── HomeView.vue      # Main application view
-│   │   └── Setting.vue       # Settings configuration view
+│   │   └── settings/         # Settings pages
+│   │       ├── SettingsLayout.vue  # Settings shell with tab navigation
+│   │       ├── AISettings.vue      # AI provider configuration
+│   │       ├── SpeechSettings.vue  # Transcription configuration
+│   │       ├── ContentSettings.vue # System prompt & context
+│   │       └── ElectronSettings.vue # Desktop app configuration
 │   │
 │   ├── App.vue               # Root component
 │   └── main.js               # Application entry point
@@ -335,7 +343,7 @@ class CustomTranscriptionProvider extends BaseTranscriptionProvider {
 
 4. **Update Settings UI**
 
-   Update `src/views/Setting.vue`:
+   Update `src/views/settings/AISettings.vue`:
    - Add provider to dropdown
    - Add configuration form
    - Add test connection logic
@@ -538,7 +546,7 @@ npm run electron:dev
    - Verify all providers can connect
 
 3. **Test Full Flow**
-   - Start copilot with different provider combinations
+   - Start Session with different provider combinations
    - Verify transcription works
    - Verify AI responses work
 

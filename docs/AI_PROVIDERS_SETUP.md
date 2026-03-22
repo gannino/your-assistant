@@ -241,6 +241,69 @@ This guide walks you through setting up each AI provider available in Your Assis
 
 ---
 
+## Google Gemini
+
+### Overview
+
+- **Models**: Gemini 2.0 Flash, Gemini 1.5 Flash, Gemini 1.5 Pro
+- **API Key Required**: Yes
+- **Streaming Support**: Yes
+- **Vision Support**: Yes (screenshots, images)
+- **Best For**: Fast responses, multimodal inputs, Google ecosystem integration
+
+### Setup Steps
+
+1. **Get API Key**
+   - Visit <https://aistudio.google.com/app/apikey>
+   - Sign in with your Google account
+   - Create a new API key
+   - Copy the key
+
+2. **Configure in Your Assistant**
+   - Open Settings
+   - Select "Google Gemini" as AI Provider
+   - Paste your API Key
+   - Choose a model:
+     - `gemini-2.0-flash` - Fast, latest (recommended)
+     - `gemini-2.0-flash-lite` - Ultra-fast, lightweight
+     - `gemini-1.5-flash` - Fast and balanced
+     - `gemini-1.5-flash-8b` - Fast with expanded context
+     - `gemini-1.5-pro` - Best quality, larger context
+
+3. **Test Connection**
+   - Click "Test Connection" button
+   - Verify connection is successful
+
+### Vision Support
+
+Gemini supports image inputs for multimodal conversations:
+
+- **Screenshots**: Automatically captured when using auto-mode
+- **Image Files**: Drag and drop images into the chat
+- **Use Cases**: Visual debugging, document analysis, chart interpretation
+
+### Pricing
+
+- Gemini 1.5 Flash: Free tier available, then ~$0.075 per million tokens
+- Gemini 1.5 Pro: ~$1.25 per million tokens (input)
+- Gemini 2.0 Flash: Free tier available, then ~$0.075 per million tokens
+
+Check <https://ai.google.dev/gemini-api/docs/pricing> for current pricing.
+
+### Pros & Cons
+
+✅ Fast response times
+✅ Excellent vision capabilities
+✅ Generous free tier
+✅ Official Google SDK support
+✅ Multimodal (text + images)
+
+❌ API key required
+❌ Google account required
+❌ Newer service (long-term track record unknown)
+
+---
+
 ## MLX (Apple Silicon Local)
 
 ### Overview

@@ -126,74 +126,6 @@ Common language codes:
 
 ---
 
-## Web Speech API
-
-### Overview
-- **API Key Required**: No (FREE)
-- **Languages**: Browser-dependent (typically 20-50 languages)
-- **Latency**: Very low
-- **Best For**: Quick testing, cost-free usage, Chrome/Edge users
-
-### Setup Steps
-
-1. **Configure in Your Assistant**
-   - Open Settings
-   - Select "Web Speech" as Transcription Provider
-   - Choose Language (e.g., `en-US`, `zh-CN`)
-   - No API key required!
-
-2. **Test Connection**
-   - Click "Test Connection" button
-   - Allow microphone permissions when prompted
-   - Verify service is reachable
-
-3. **Start Using**
-   - Click "Start Copilot"
-   - Allow microphone access if prompted
-   - Begin speaking!
-
-### Browser Requirements
-- **Supported Browsers**: Chrome, Edge (Chromium-based)
-- **Not Supported**: Firefox, Safari (desktop)
-- **Mobile**: Chrome Android, Edge Android
-
-### How It Works
-- Uses browser's built-in speech recognition
-- Powered by Google's speech service (in Chrome/Edge)
-- Requires internet connection
-- Continuous real-time transcription
-
-### Troubleshooting Web Speech API
-
-**"Network error"**
-- Cause: Cannot reach Google's speech servers
-- Solutions:
-  - Check your internet connection
-  - Disable VPN or proxy
-  - Try a different network (home vs. work)
-  - Check firewall settings
-  - Try Chrome instead of Edge (or vice versa)
-
-**"Not allowed" error**
-- Cause: Microphone permission denied
-- Solution: Allow microphone access in browser settings
-
-For detailed troubleshooting, use the diagnostic tool:
-- Open `http://localhost:8080/speech-test.html` when dev server is running
-- Run all 5 tests to diagnose the issue
-
-### Pros & Cons
-✅ Completely FREE
-✅ No setup required
-✅ Very low latency
-✅ Real-time continuous transcription
-❌ Requires internet connection
-❌ Chrome/Edge only
-❌ May have network issues in some regions
-❌ Lower accuracy than paid options
-
----
-
 ## Deepgram
 
 ### Overview
@@ -258,7 +190,7 @@ Popular languages include:
 
 ---
 
-## Web Speech API (Enhanced)
+## Web Speech API
 
 ### Overview
 - **API Key Required**: No (FREE)
@@ -280,7 +212,7 @@ Popular languages include:
    - Verify service is reachable
 
 3. **Start Using**
-   - Click "Start Copilot"
+   - Click "Start Session"
    - Allow microphone access if prompted
    - Begin speaking!
 
@@ -289,7 +221,7 @@ Popular languages include:
 - **Not Supported**: Firefox, Safari (desktop)
 - **Mobile**: Chrome Android, Edge Android
 
-### iOS Safari Support (Enhanced)
+### iOS Safari Support
 
 **Important iOS Notes:**
 - iOS Safari has **limited Web Speech API support**
@@ -507,7 +439,7 @@ You can switch providers at any time:
 2. Select a different Transcription Provider
 3. Configure the new provider (if needed)
 4. Click "Test Connection" to verify
-5. Start Copilot with the new provider
+5. Start Session with the new provider
 
 ### Data Portability
 

@@ -44,7 +44,7 @@ Get Your Assistant running in 5 minutes.
 1. Get **OpenAI API key**: https://platform.openai.com/api-keys
 2. Go to **Settings → AI Provider**
    - Select **OpenAI**
-   - Choose model: `gpt-4` or `gpt-4-turbo`
+   - Choose model: `gpt-4o` or `gpt-4o-mini`
 3. Go to **Settings → Speech Recognition**
    - Select **Whisper** (best accuracy)
 4. Click **Start Session**
@@ -94,14 +94,14 @@ You can add your own messages alongside the transcribed speech:
 
 ## Electron Desktop App
 
-**💡 Want to skip building?** Download pre-built apps for macOS, Windows, and Linux from [GitHub Releases](https://github.com/gma/your-assistant/releases). See [Downloads & Installation Guide](./DOWNLOADS.md) for detailed instructions.
+**💡 Pre-built apps available:** Download from [GitHub Releases](https://github.com/gannino/your-assistant/releases) for macOS, Windows, and Linux.
 
 ---
 
 Run Your Assistant as a transparent always-on-top overlay on your desktop.
 
 ### Prerequisites
-- Node.js 18+ installed
+- Node.js 24+ installed
 - Dependencies installed: `npm install`
 
 ### Start in development

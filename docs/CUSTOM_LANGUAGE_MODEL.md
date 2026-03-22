@@ -113,6 +113,27 @@ mlx-community/Mistral-7B-v0.1-4bit
 mlx-community/phi-2-4bit
 ```
 
+#### Google Gemini
+```
+gemini-2.0-flash
+gemini-2.0-flash-lite
+gemini-2.0-flash-thinking-exp-01-21
+gemini-1.5-pro
+gemini-1.5-flash
+gemini-1.5-flash-8b
+```
+
+#### OpenRouter
+```
+anthropic/claude-sonnet-4
+anthropic/claude-opus-4
+openai/gpt-4o
+openai/gpt-4o-mini
+google/gemini-pro-1.5
+google/gemini-flash-1.5
+meta-llama/llama-3.1-70b-instruct
+```
+
 #### Transcription Providers
 
 **OpenAI Whisper**
@@ -141,6 +162,8 @@ Every provider includes a link to official model documentation:
 - **Z.ai**: [API Documentation](https://open.bigmodel.cn/dev/api)
 - **Ollama**: [Model Library](https://ollama.ai/library)
 - **MLX**: [MLX Examples](https://github.com/ml-explore/mlx-examples)
+- **Gemini**: [Gemini Models](https://ai.google.dev/gemini-api/docs/models)
+- **OpenRouter**: [Available Models](https://openrouter.ai/models)
 
 **Transcription Providers:**
 - **OpenAI Whisper**: [Whisper Models](https://platform.openai.com/docs/models/whisper)

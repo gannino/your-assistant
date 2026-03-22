@@ -53,15 +53,16 @@ npm test -- src/utils/config_util.spec.js
 
 ## Configuration Files
 
-### ESLint Configuration (`.eslintrc.js`)
+### ESLint Configuration (`eslint.config.js`)
 
-- Extends `eslint:recommended` and `plugin:vue/vue3-recommended`
+- Uses ESLint 9.0 flat config format
+- Extends `@eslint/js` recommended and `eslint-plugin-vue` flat/recommended
 - Includes Prettier integration
 - Configured for Vue 3 Composition API
 - Disables console warnings in production
 - Allows multi-word component names (for existing components)
 
-### Prettier Configuration (`.prettierrc.js`)
+### Prettier Configuration (`.prettierrc.cjs`)
 
 - Single quotes for strings
 - Semicolons required
@@ -70,7 +71,7 @@ npm test -- src/utils/config_util.spec.js
 - LF line endings
 - Arrow function parentheses avoided when possible
 
-### Jest Configuration (`.jest.config.js`)
+### Jest Configuration (`jest.config.js`)
 
 - Uses jsdom test environment
 - Supports Vue 3 single-file components

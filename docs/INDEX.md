@@ -22,7 +22,7 @@ Quick reference to all Your Assistant documentation.
 **Setting up specific providers:**
 
 - **[AI Providers Setup](./AI_PROVIDERS_SETUP.md)**
-  - OpenAI, Z.ai, Ollama, MLX, Anthropic
+  - OpenAI, Zai, Ollama, MLX, Anthropic, Gemini, OpenRouter
   - Detailed setup for each provider
   - Pricing and pros/cons
 
@@ -65,15 +65,10 @@ Quick reference to all Your Assistant documentation.
   - Notarization for Gatekeeper
   - Local development signing
 
-- **[Downloads & Installation](./DOWNLOADS.md)**
-  - Pre-built Electron apps for macOS, Windows, Linux
-  - Installation instructions for all platforms
-  - System requirements and troubleshooting
-
-- **[GitHub Actions Build](./GITHUB_ACTIONS_BUILD.md)**
-  - Automated Electron app builds for macOS, Windows, Linux
-  - GitHub Releases with installers
-  - Build artifacts and checksums
+- **[Linting and Testing](./LINTING_AND_TESTING.md)**
+  - Jest unit testing configuration
+  - ESLint and Prettier setup
+  - Coverage reporting
 
 ## Document Overview
 

@@ -7,7 +7,7 @@ Quick reference for choosing the right providers.
 ### By Use Case
 
 **Best Quality**
-- OpenAI GPT-4 (95-98% accuracy)
+- OpenAI GPT-4o (95-98% accuracy)
 - Anthropic Claude Opus (95-98% accuracy)
 
 **Best Speed**
@@ -49,8 +49,8 @@ Quick reference for choosing the right providers.
 
 **OpenAI**
 - GPT-3.5 Turbo: $0.10-0.20
-- GPT-4: $0.80-1.50
-- GPT-4 Turbo: $0.30-0.60
+- GPT-4o: $0.30-0.60
+- GPT-4o-mini: $0.10-0.20
 
 **Z.ai**
 - GLM-4.7: $0.05-0.10
@@ -142,15 +142,15 @@ Quick reference for choosing the right providers.
 - **Setup:** 10 minutes
 
 ### For Practice (Recommended)
-- **AI:** OpenAI GPT-3.5 Turbo ($0.10-0.20/hour)
+- **AI:** OpenAI GPT-3.5 Turbo or GPT-4o-mini ($0.10-0.20/hour)
 - **Transcription:** Web Speech API (free) or Azure (5 free hours)
 - **Cost:** $0.10-0.20/hour
 - **Setup:** 15 minutes
 
 ### For Quality (Premium)
-- **AI:** OpenAI GPT-4 ($0.80-1.50/hour) or OpenRouter with Claude Opus 4 ($0.80-1.20/hour)
+- **AI:** OpenAI GPT-4o ($0.30-0.60/hour) or OpenRouter with Claude Opus 4 ($0.80-1.20/hour)
 - **Transcription:** Whisper ($0.36/hour)
-- **Cost:** $1.16-1.86/hour
+- **Cost:** $0.66-0.96/hour
 - **Setup:** 15 minutes
 
 ### For Maximum Flexibility
@@ -161,7 +161,7 @@ Quick reference for choosing the right providers.
 - **Benefits:** Switch between GPT-4, Claude, Gemini, and more instantly
 
 ### For Real-time (live sessions)
-- **AI:** OpenAI GPT-3.5 Turbo ($0.10-0.20/hour)
+- **AI:** OpenAI GPT-4o-mini ($0.10-0.20/hour)
 - **Transcription:** Deepgram ($0.54/hour)
 - **Cost:** $0.64-0.74/hour
 - **Setup:** 15 minutes
@@ -227,12 +227,12 @@ Total = AI Cost + Transcription Cost
    - Ollama + Web Speech: $0.00
 
 2. **50 hours/month intensive**
-   - OpenAI GPT-4 + Whisper: $58-93
+   - OpenAI GPT-4o + Whisper: $33-48
    - OpenAI GPT-3.5 + Deepgram: $32-37
    - Z.ai + Azure: $52-55
 
 3. **100 hours/month professional**
-   - OpenAI GPT-4 + Whisper: $116-186
+   - OpenAI GPT-4o + Whisper: $66-96
    - OpenAI GPT-3.5 + Deepgram: $64-74
    - Z.ai + Azure: $104-110
 

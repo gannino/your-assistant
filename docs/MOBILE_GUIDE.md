@@ -452,11 +452,12 @@ When reporting mobile issues, include:
 ### AI Providers on Mobile
 
 All AI providers work equally well on mobile:
-- **OpenAI**: GPT-3.5, GPT-4, GPT-4 Turbo
+- **OpenAI**: GPT-3.5, GPT-4o, GPT-4o-mini
 - **Z.ai**: GLM-4 series models
-- **Ollama**: Local models (if server accessible)
-- **MLX**: Apple Silicon local models (iOS only)
-- **Anthropic**: Claude 3 models
+- **Gemini**: Gemini 2.0 Flash, Gemini 1.5 Flash/Pro (with vision support)
+- **OpenRouter**: 300+ models through a single API
+- **Anthropic**: Claude 3 models (Haiku, Sonnet, Opus)
+- **Ollama/MLX**: Local models (requires accessible local server)
 
 ---
 
@@ -709,9 +710,11 @@ npm run serve:https
 | Deepgram | Full | Full | Lowest latency |
 | OpenAI | Full | Full | All models supported |
 | Z.ai | Full | Full | Chinese language support |
-| Ollama | Limited | Limited | Requires local server |
-| MLX | Full | No | Apple Silicon only |
+| Gemini | Full | Full | Vision support |
+| OpenRouter | Full | Full | 300+ models |
 | Anthropic | Full | Full | Claude 3 models |
+| Ollama | Limited | Limited | Requires accessible local server |
+| MLX | No | No | macOS only (Apple Silicon) |
 
 ---
 

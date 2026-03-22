@@ -36,7 +36,7 @@ It works for any scenario where you need an AI copilot — meetings, research se
 - MLX (AI) — free for Apple Silicon users
 
 **Paid Options:**
-- OpenAI, Anthropic, Z.ai, Gemini — require API keys with usage costs
+- OpenAI, Anthropic, Z.ai, Gemini, OpenRouter — require API keys with usage costs
 - Azure, Whisper, Deepgram — have free tiers, paid for heavy use
 
 **Typical Cost:** $0–2 per hour depending on providers chosen
@@ -71,15 +71,17 @@ For fully offline use, self-host the application.
 
 ### Which AI provider should I choose?
 
-**For Beginners:** OpenAI (GPT-3.5 Turbo) — best balance of quality and ease
+**For Beginners:** OpenAI (GPT-3.5 Turbo or GPT-4o-mini) — best balance of quality and ease
 
-**For Quality:** OpenAI (GPT-4) or Anthropic (Claude Opus) — highest quality
+**For Quality:** OpenAI (GPT-4o) or Anthropic (Claude Opus) — highest quality
 
 **For Cost Savings:** Ollama (free, local) or Z.ai (cost-effective)
 
 **For Privacy:** Ollama or MLX (everything stays local)
 
-**For Vision (screenshots):** Gemini or GPT-4V — support image inputs
+**For Vision (screenshots):** Gemini or OpenRouter (with vision-capable models) — support image inputs
+
+**For Maximum Flexibility:** OpenRouter — 300+ models through a single API
 
 ### Can I switch between AI providers?
 
@@ -94,7 +96,7 @@ Settings persist between sessions.
 
 ### Which AI model should I use?
 
-**OpenAI:** `gpt-3.5-turbo` (fast/cheap) or `gpt-4` (best quality)
+**OpenAI:** `gpt-3.5-turbo` (fast/cheap), `gpt-4o-mini` (balanced), or `gpt-4o` (best quality)
 
 **Z.ai:** `glm-4.7` (latest) or `glm-4.6` (previous)
 
@@ -102,7 +104,9 @@ Settings persist between sessions.
 
 **Ollama:** `mistral` (excellent quality), `codellama` (best for code), `llama2` (general)
 
-**Gemini:** `gemini-1.5-flash` (fast) or `gemini-1.5-pro` (best quality)
+**Gemini:** `gemini-2.0-flash` (fast, latest), `gemini-1.5-flash` (fast), or `gemini-1.5-pro` (best quality)
+
+**OpenRouter:** `anthropic/claude-sonnet-4` (balanced) or `openai/gpt-4o` (latest)
 
 ---
 
@@ -181,9 +185,9 @@ Your Assistant is a general-purpose tool. Whether it's appropriate to use in a g
 
 **Budget:** Web Speech API + Z.ai = $0.05–0.10
 
-**Standard:** Web Speech API + GPT-3.5 = $0.10–0.20
+**Standard:** Web Speech API + GPT-3.5 or GPT-4o-mini = $0.10–0.20
 
-**Premium:** Whisper + GPT-4 = $1.36–1.86
+**Premium:** Whisper + GPT-4o = $0.66–0.96
 
 ### Are there free tiers?
 
