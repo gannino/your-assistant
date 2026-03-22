@@ -425,6 +425,10 @@ jobs:
             exit 1
           fi
 
+      - name: Set version output (strip 'v' prefix)
+        id: set_version
+        run: echo "version=${{ steps.find_tag.outputs.tag }}" | sed 's/^v//' >> $GITHUB_OUTPUT
+
       - name: Upload artifacts to release
         uses: softprops/action-gh-release@v2
         with:
@@ -433,16 +437,16 @@ jobs:
             ## 📥 Downloads
 
             ### macOS
-            - **[DMG Installer](https://github.com/gannino/your-assistant/releases/download/${{ steps.find_tag.outputs.tag }}/Your%20Assistant-${{ steps.find_tag.outputs.tag }}-universal.dmg)** - Recommended for most users
-            - **[ZIP Archive](https://github.com/gannino/your-assistant/releases/download/${{ steps.find_tag.outputs.tag }}/Your%20Assistant-${{ steps.find_tag.outputs.tag }}-universal-mac.zip)** - Portable version
+            - **[DMG Installer](https://github.com/gannino/your-assistant/releases/download/${{ steps.find_tag.outputs.tag }}/Your.Assistant-${{ steps.set_version.outputs.version }}-universal.dmg)** - Recommended for most users
+            - **[ZIP Archive](https://github.com/gannino/your-assistant/releases/download/${{ steps.find_tag.outputs.tag }}/Your.Assistant-${{ steps.set_version.outputs.version }}-universal-mac.zip)** - Portable version
 
             ### Windows
-            - **[NSIS Installer](https://github.com/gannino/your-assistant/releases/download/${{ steps.find_tag.outputs.tag }}/Your%20Assistant%20Setup%20${{ steps.find_tag.outputs.tag }}.exe)** - Recommended installer
-            - **[Portable EXE](https://github.com/gannino/your-assistant/releases/download/${{ steps.find_tag.outputs.tag }}/Your%20Assistant%20${{ steps.find_tag.outputs.tag }}.exe)** - No installation required
+            - **[NSIS Installer](https://github.com/gannino/your-assistant/releases/download/${{ steps.find_tag.outputs.tag }}/Your.Assistant.Setup.${{ steps.set_version.outputs.version }}.exe)** - Recommended installer
+            - **[Portable EXE](https://github.com/gannino/your-assistant/releases/download/${{ steps.find_tag.outputs.tag }}/Your.Assistant.${{ steps.set_version.outputs.version }}.exe)** - No installation required
 
             ### Linux
-            - **[AppImage](https://github.com/gannino/your-assistant/releases/download/${{ steps.find_tag.outputs.tag }}/Your-Assistant-${{ steps.find_tag.outputs.tag }}.AppImage)** - Universal package for most distributions
-            - **[Debian Package](https://github.com/gannino/your-assistant/releases/download/${{ steps.find_tag.outputs.tag }}/your-assistant_${{ steps.find_tag.outputs.tag }}_amd64.deb)** - For Debian/Ubuntu-based systems
+            - **[AppImage](https://github.com/gannino/your-assistant/releases/download/${{ steps.find_tag.outputs.tag }}/Your.Assistant-${{ steps.set_version.outputs.version }}.AppImage)** - Universal package for most distributions
+            - **[Debian Package](https://github.com/gannino/your-assistant/releases/download/${{ steps.find_tag.outputs.tag }}/your-assistant_${{ steps.set_version.outputs.version }}_amd64.deb)** - For Debian/Ubuntu-based systems
 
             ## 🔐 Verification
 
