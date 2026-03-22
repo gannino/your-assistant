@@ -2,10 +2,8 @@ import * as pdfjsLib from 'pdfjs-dist';
 
 // Configure worker using bundled version (NOT CDN)
 // For PDF.js 5.x, we need to use the correct worker path
-pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-  'pdfjs-dist/build/pdf.worker.min.mjs',
-  import.meta.url
-).toString();
+// NOTE: Worker configuration is done in main.js to avoid import.meta issues in tests
+// This allows the utility to be tested without ES module complications
 
 /**
  * Browser capability detection and optimization

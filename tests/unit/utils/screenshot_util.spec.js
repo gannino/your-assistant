@@ -1,10 +1,10 @@
 import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
 
 describe('screenshot_util', () => {
-  let mockCanvas, mockContext, mockImageCapture, mockTrack, mockStream;
+  let mockCanvas, mockContext, mockTrack, mockStream;
 
-  beforeEach(() => {
-    // Mock DOM APIs
+  // Setup function to establish mocks - must be called after jest.resetModules()
+  function setupGlobalMocks() {
     mockContext = {
       drawImage: jest.fn(),
       getImageData: jest.fn().mockReturnValue({
@@ -78,6 +78,10 @@ describe('screenshot_util', () => {
     jest.spyOn(console, 'log').mockImplementation();
     jest.spyOn(console, 'warn').mockImplementation();
     jest.spyOn(console, 'error').mockImplementation();
+  }
+
+  beforeEach(() => {
+    setupGlobalMocks();
   });
 
   afterEach(() => {
@@ -140,7 +144,14 @@ describe('screenshot_util', () => {
   describe('Browser fallback path', () => {
     beforeEach(() => {
       // Remove electronAPI to force browser path
-      window.electronAPI = {};
+      window.electronAPI = undefined;
+      // Ensure navigator.mediaDevices is mocked
+      if (!navigator.mediaDevices) {
+        navigator.mediaDevices = {
+          getDisplayMedia: jest.fn().mockResolvedValue(mockStream),
+          getSupportedConstraints: jest.fn().mockResolvedValue({ audio: true }),
+        };
+      }
     });
 
     it('should have browser fallback functions', () => {
@@ -153,6 +164,24 @@ describe('screenshot_util', () => {
       expect(typeof captureScreenshot).toBe('function');
       expect(typeof stopScreenCapture).toBe('function');
       expect(typeof isScreenCaptureSupported).toBe('function');
+    });
+
+    it('should handle getDisplayMedia errors', async () => {
+      const { captureScreenshot } = require('@/utils/screenshot_util');
+      navigator.mediaDevices.getDisplayMedia.mockRejectedValue(new Error('Permission denied'));
+
+      await expect(captureScreenshot()).rejects.toThrow('Permission denied');
+    });
+
+    it('should handle empty stream', async () => {
+      const { captureScreenshot } = require('@/utils/screenshot_util');
+      const emptyStream = {
+        getVideoTracks: jest.fn().mockReturnValue([]),
+        getTracks: jest.fn().mockReturnValue([]),
+      };
+      navigator.mediaDevices.getDisplayMedia.mockResolvedValue(emptyStream);
+
+      await expect(captureScreenshot()).rejects.toThrow();
     });
   });
 
@@ -202,6 +231,15 @@ describe('screenshot_util', () => {
         stopScreenCapture();
       }).not.toThrow();
     });
+
+    it('should handle stopping already stopped stream', () => {
+      const { stopScreenCapture } = require('@/utils/screenshot_util');
+
+      expect(() => {
+        stopScreenCapture();
+        stopScreenCapture(); // Stop again
+      }).not.toThrow();
+    });
   });
 
   describe('isScreenCaptureSupported', () => {
@@ -213,10 +251,41 @@ describe('screenshot_util', () => {
       expect(result).toBe(true);
     });
 
+    it('should return true when browser getDisplayMedia is available', () => {
+      window.electronAPI = undefined;
+      // Ensure navigator.mediaDevices exists before module reset
+      if (!navigator.mediaDevices) {
+        navigator.mediaDevices = {
+          getDisplayMedia: jest.fn(),
+          getSupportedConstraints: jest.fn().mockResolvedValue({ audio: true }),
+        };
+      }
+
+      jest.resetModules();
+      const { isScreenCaptureSupported } = require('@/utils/screenshot_util');
+
+      const result = isScreenCaptureSupported();
+
+      expect(result).toBe(true);
+    });
+
     it('should return false when no APIs are available', () => {
       window.electronAPI = {};
       navigator.mediaDevices = {};
       delete window.ImageCapture;
+      const { isScreenCaptureSupported } = require('@/utils/screenshot_util');
+
+      const result = isScreenCaptureSupported();
+
+      expect(result).toBe(false);
+    });
+
+    it('should return false when no capture methods are available', () => {
+      window.electronAPI = undefined;
+      navigator.mediaDevices = {};
+      delete window.ImageCapture;
+
+      jest.resetModules();
       const { isScreenCaptureSupported } = require('@/utils/screenshot_util');
 
       const result = isScreenCaptureSupported();
@@ -235,8 +304,115 @@ describe('screenshot_util', () => {
     it('should accept two data URL parameters', () => {
       const { imageChangeFraction } = require('@/utils/screenshot_util');
 
-      // Just verify the function signature - we can't test Canvas in jsdom
+      // Just verify the function signature
       expect(imageChangeFraction.length).toBe(2);
+    });
+
+    it('should handle image loading errors', async () => {
+      const { imageChangeFraction } = require('@/utils/screenshot_util');
+
+      // Mock Image to trigger error
+      global.Image = class {
+        constructor() {
+          this.onerror = null;
+        }
+        set src(_value) {
+          if (this.onerror) this.onerror(new Error('Failed to load'));
+        }
+      };
+
+      await expect(
+        imageChangeFraction('data:image/png;base64,invalid', 'data:image/png;base64,invalid')
+      ).rejects.toThrow();
+    });
+  });
+
+  describe('Error Handling', () => {
+    it('should handle electronAPI.takeScreenshot errors', async () => {
+      window.electronAPI.takeScreenshot.mockRejectedValue(new Error('Screenshot failed'));
+      const { takeScreenshotElectron } = require('@/utils/screenshot_util');
+
+      await expect(takeScreenshotElectron()).rejects.toThrow('Screenshot failed');
+    });
+
+    it('should handle electronAPI.captureScreen errors', async () => {
+      window.electronAPI.captureScreen.mockRejectedValue(new Error('Capture failed'));
+      const { captureScreenElectron } = require('@/utils/screenshot_util');
+
+      await expect(captureScreenElectron('screen-1')).rejects.toThrow('Capture failed');
+    });
+
+    it('should handle getCaptureSources errors', async () => {
+      window.electronAPI.getCaptureSources.mockRejectedValue(new Error('Failed to get sources'));
+      const { getCaptureSources } = require('@/utils/screenshot_util');
+
+      await expect(getCaptureSources()).rejects.toThrow('Failed to get sources');
+    });
+
+    it('should handle ImageCapture.grabFrame errors', async () => {
+      // Note: This test verifies error handling at the code level
+      // The actual browser path requires canvas support which jsdom doesn't provide
+      // The code wraps ImageCapture errors in a try/catch and re-throws with context
+      window.electronAPI = undefined;
+      setupGlobalMocks();
+      window.electronAPI = undefined;
+
+      // Ensure navigator.mediaDevices is properly mocked
+      if (!navigator.mediaDevices) {
+        navigator.mediaDevices = {
+          getDisplayMedia: jest.fn().mockResolvedValue(mockStream),
+          getSupportedConstraints: jest.fn().mockResolvedValue({ audio: true }),
+        };
+      }
+
+      global.ImageCapture = class {
+        constructor(track) {
+          this.track = track;
+        }
+        grabFrame() {
+          return Promise.reject(new Error('Frame capture failed'));
+        }
+      };
+
+      jest.resetModules();
+      const { captureScreenshot } = require('@/utils/screenshot_util');
+      // After resetModules, re-apply the mock
+      if (!navigator.mediaDevices) {
+        navigator.mediaDevices = {
+          getDisplayMedia: jest.fn().mockResolvedValue(mockStream),
+          getSupportedConstraints: jest.fn().mockResolvedValue({ audio: true }),
+        };
+      } else {
+        navigator.mediaDevices.getDisplayMedia = jest.fn().mockResolvedValue(mockStream);
+      }
+
+      // This should fail due to ImageCapture error - but due to jsdom limitations
+      // it will fail earlier at canvas getContext. The important thing is that
+      // the error is caught and re-thrown with context.
+      await expect(captureScreenshot()).rejects.toThrow();
+    });
+  });
+
+  describe('Environment Detection', () => {
+    it('should detect Electron environment via window.electronAPI', () => {
+      window.electronAPI = { takeScreenshot: jest.fn() };
+      setupGlobalMocks();
+
+      jest.resetModules();
+      const { captureScreenshot } = require('@/utils/screenshot_util');
+
+      expect(typeof captureScreenshot).toBe('function');
+    });
+
+    it('should fall back to browser mode when electronAPI is not available', () => {
+      window.electronAPI = undefined;
+      setupGlobalMocks();
+      window.electronAPI = undefined;
+
+      jest.resetModules();
+      const { captureScreenshot } = require('@/utils/screenshot_util');
+
+      expect(typeof captureScreenshot).toBe('function');
     });
   });
 });

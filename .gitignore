@@ -61,3 +61,10 @@ release/
 .env.development
 .env.production
 .env.test
+
+
+# Claudify — personal & runtime files
+.claude/logs/
+.claude/agent-memory/
+.claude/backups/
+.claude/hooks/__counter
