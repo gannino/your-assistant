@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.1.1](https://github.com/gannino/your-assistant/compare/v1.1.0...v1.1.1) (2026-03-22)
+
+
+### 🐛 Bug Fixes
+
+* correct release file name patterns in download links ([1465449](https://github.com/gannino/your-assistant/commit/1465449614fcad2f4333bf0a9c12c3750ef634c9))
+
+
+### 📝 Documentation
+
+* align documentation with codebase - add Gemini/OpenRouter providers ([5d7acf7](https://github.com/gannino/your-assistant/commit/5d7acf7e945bcd2e496264dd7d817b1d542e26e7))
+
+
+### 🤖 CI
+
+* update GitHub Actions for Node.js 24 and Codecov ([e08c43c](https://github.com/gannino/your-assistant/commit/e08c43cdec783551eb60e7cafded32e5b2aa54b3))
+
 ## [1.1.0](https://github.com/gannino/your-assistant/compare/v1.0.0...v1.1.0) (2026-03-22)
 
 
