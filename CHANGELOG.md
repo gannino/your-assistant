@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.1.0](https://github.com/gannino/your-assistant/compare/v1.0.0...v1.1.0) (2026-03-22)
+
+
+### ✨ Features
+
+* Your Assistant v1.0.0 - AI-Powered Voice Assistant with Real-time Transcription ([aba2e02](https://github.com/gannino/your-assistant/commit/aba2e02118835c9c7f762eaad804854496bb0a70))
+
+
+### 🔧 Maintenance
+
+* **main:** release 1.0.0 ([3463b76](https://github.com/gannino/your-assistant/commit/3463b7645a775c680c82d4da041398bb068f2923))
+* **main:** release 1.0.0 ([192110a](https://github.com/gannino/your-assistant/commit/192110a799d2c6a7a2bc9b943f7fd3029b3dc911))
+
+
+### ✅ Testing
+
+* improve test coverage from 79.94% to 81.79% statements ([536a4df](https://github.com/gannino/your-assistant/commit/536a4dfafac11b12e8da35be02198d2e54a1b32c))
+
 ## 1.0.0 (2026-03-20)
 
 
